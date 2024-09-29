@@ -32,4 +32,4 @@ jobs:
 
       - name: Test
         working-directory: build
-        run: ctest -C ${{ env.BUILD_TYPE }} -j $(sysctl -n hw.ncpu) --output-on-failure
+        run: make check

@@ -59,7 +59,7 @@ jobs:
               ;;
           esac
 
-          dnf install -y cmake ninja-build git
+          dnf install -y cmake git
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -77,16 +77,12 @@ jobs:
               ;;
           esac
 
-          cmake -B build -G Ninja \
-           -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
-           -DCMAKE_C_COMPILER="${CC}" \
-           -DCMAKE_CXX_COMPILER="${CXX}" \
-           -DCXX_STD=${{ matrix.cxx_std }}
+          mkdir build
+          cd build
+          cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCMAKE_C_COMPILER="${CC}" -DCMAKE_CXX_COMPILER="${CXX}" -DCXX_STD=${{ matrix.cxx_std }}
 
       - name: Build
-        working-directory: build
-        run: cmake --build .
+        run: cd build ; make -j4
 
       - name: Test
-        working-directory: build/test
-        run: ctest -C ${{ env.BUILD_TYPE }} -j $(nproc) --output-on-failure
+        run: cd build ; make check

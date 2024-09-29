@@ -176,21 +176,24 @@ namespace boost::parser::detail { namespace text {
             requires std::sentinel_for<sentinel_type, std::ranges::iterator_t<detail::maybe_const<OtherConst, V>>>
 #endif
         friend constexpr bool operator==(const iterator<OtherConst> & x,
-                                         const sentinel & y);
+                                         const sentinel & y)
+            { return x.it_ == y.end_; }
 
         template<bool OtherConst>
 #if BOOST_PARSER_DETAIL_TEXT_USE_CONCEPTS
             requires std::sized_sentinel_for<sentinel_type, std::ranges::iterator_t<detail::maybe_const<OtherConst, V>>>
 #endif
         friend constexpr detail::range_difference_t<detail::maybe_const<OtherConst, V>>
-        operator-(const iterator<OtherConst> & x, const sentinel & y);
+        operator-(const iterator<OtherConst> & x, const sentinel & y)
+           { return x.it_ - y.end_; }
 
         template<bool OtherConst>
 #if BOOST_PARSER_DETAIL_TEXT_USE_CONCEPTS
             requires std::sized_sentinel_for<sentinel_type, std::ranges::iterator_t<detail::maybe_const<OtherConst, V>>>
 #endif
         friend constexpr detail::range_difference_t<detail::maybe_const<OtherConst, V>>
-        operator-(const sentinel & y, const iterator<OtherConst> & x);
+        operator-(const sentinel & y, const iterator<OtherConst> & x)
+            { return y.end_ - x.it_; }
 
     public:
         constexpr iterator() = default;

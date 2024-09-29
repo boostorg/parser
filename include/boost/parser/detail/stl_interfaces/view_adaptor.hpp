@@ -18,7 +18,7 @@
 #if !defined(BOOST_STL_INTERFACES_DOXYGEN)
 
 #if BOOST_PARSER_USE_CONCEPTS && defined(__cpp_lib_ranges) &&                  \
-    202202L <= __cpp_lib_ranges
+    202202L <= __cpp_lib_ranges && (!defined(_MSC_VER) || 1939 < _MSC_VER)
 #define BOOST_PARSER_USE_CPP23_STD_RANGE_ADAPTOR_CLOSURE 1
 #else
 #define BOOST_PARSER_USE_CPP23_STD_RANGE_ADAPTOR_CLOSURE 0

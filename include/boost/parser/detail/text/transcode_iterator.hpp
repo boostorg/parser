@@ -2888,7 +2888,7 @@ namespace boost::parser::detail { namespace text {
             */
                 // clang-format on
 
-                char8_type curr_c = char8_type(cp);
+                unsigned char curr_c = (unsigned char)cp;
 
                 auto error = [&]() {
                     return ErrorHandler{}("Ill-formed UTF-8.");

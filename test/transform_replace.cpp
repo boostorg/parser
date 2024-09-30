@@ -201,13 +201,6 @@ namespace detail_utf_rvalue_shim {
 
     bp::detail::utf_rvalue_shim<std::u8string, decltype(f_u16str), attr_t>
         u8_u16_shim(f_u16str);
-#if BOOST_PARSER_DETAIL_TEXT_USE_ALIAS_CTAD
-    static_assert(std::is_same_v<
-                  decltype(u8_u16_shim(attr_t{})),
-                  bp::detail::text::utf_view<
-                      bp::detail::text::format::utf8,
-                      std::ranges::owning_view<std::u16string>> &>);
-#endif
     static_assert(bp::detail::transform_replacement_for<
                   decltype(u8_u16_shim),
                   std::u8string,
@@ -215,13 +208,6 @@ namespace detail_utf_rvalue_shim {
 
     bp::detail::utf_rvalue_shim<std::u8string, decltype(f_u16str_ref), attr_t>
         u8_u16_ref_shim(f_u16str_ref);
-#if BOOST_PARSER_DETAIL_TEXT_USE_ALIAS_CTAD
-    static_assert(std::is_same_v<
-                  decltype(u8_u16_ref_shim(attr_t{})),
-                  bp::detail::text::utf_view<
-                      bp::detail::text::format::utf8,
-                      std::ranges::ref_view<std::u16string>> &>);
-#endif
     static_assert(bp::detail::transform_replacement_for<
                   decltype(u8_u16_ref_shim),
                   std::u8string,
@@ -231,13 +217,6 @@ namespace detail_utf_rvalue_shim {
 
     bp::detail::utf_rvalue_shim<std::u8string, decltype(f_u32str), attr_t>
         u8_u32_shim(f_u32str);
-#if BOOST_PARSER_DETAIL_TEXT_USE_ALIAS_CTAD
-    static_assert(std::is_same_v<
-                  decltype(u8_u32_shim(attr_t{})),
-                  bp::detail::text::utf_view<
-                      bp::detail::text::format::utf8,
-                      std::ranges::owning_view<std::u32string>> &>);
-#endif
     static_assert(bp::detail::transform_replacement_for<
                   decltype(u8_u32_shim),
                   std::u8string,
@@ -245,13 +224,6 @@ namespace detail_utf_rvalue_shim {
 
     bp::detail::utf_rvalue_shim<std::u8string, decltype(f_u32str_ref), attr_t>
         u8_u32_ref_shim(f_u32str_ref);
-#if BOOST_PARSER_DETAIL_TEXT_USE_ALIAS_CTAD
-    static_assert(std::is_same_v<
-                  decltype(u8_u32_ref_shim(attr_t{})),
-                  bp::detail::text::utf_view<
-                      bp::detail::text::format::utf8,
-                      std::ranges::ref_view<std::u32string>> &>);
-#endif
     static_assert(bp::detail::transform_replacement_for<
                   decltype(u8_u32_ref_shim),
                   std::u8string,
@@ -261,13 +233,6 @@ namespace detail_utf_rvalue_shim {
 
     bp::detail::utf_rvalue_shim<std::u16string, decltype(f_u8str), attr_t>
         u16_u8_shim(f_u8str);
-#if BOOST_PARSER_DETAIL_TEXT_USE_ALIAS_CTAD
-    static_assert(std::is_same_v<
-                  decltype(u16_u8_shim(attr_t{})),
-                  bp::detail::text::utf_view<
-                      bp::detail::text::format::utf16,
-                      std::ranges::owning_view<std::u8string>> &>);
-#endif
     static_assert(bp::detail::transform_replacement_for<
                   decltype(u16_u8_shim),
                   std::u16string,
@@ -275,13 +240,6 @@ namespace detail_utf_rvalue_shim {
 
     bp::detail::utf_rvalue_shim<std::u16string, decltype(f_u8str_ref), attr_t>
         u16_u8_ref_shim(f_u8str_ref);
-#if BOOST_PARSER_DETAIL_TEXT_USE_ALIAS_CTAD
-    static_assert(std::is_same_v<
-                  decltype(u16_u8_ref_shim(attr_t{})),
-                  bp::detail::text::utf_view<
-                      bp::detail::text::format::utf16,
-                      std::ranges::ref_view<std::u8string const>> &>);
-#endif
     static_assert(bp::detail::transform_replacement_for<
                   decltype(u16_u8_ref_shim),
                   std::u16string,
@@ -291,13 +249,6 @@ namespace detail_utf_rvalue_shim {
 
     bp::detail::utf_rvalue_shim<std::u32string, decltype(f_u8str), attr_t>
         u32_u8_shim(f_u8str);
-#if BOOST_PARSER_DETAIL_TEXT_USE_ALIAS_CTAD
-    static_assert(std::is_same_v<
-                  decltype(u32_u8_shim(attr_t{})),
-                  bp::detail::text::utf_view<
-                      bp::detail::text::format::utf32,
-                      std::ranges::owning_view<std::u8string>> &>);
-#endif
     static_assert(bp::detail::transform_replacement_for<
                   decltype(u32_u8_shim),
                   std::u32string,
@@ -305,13 +256,6 @@ namespace detail_utf_rvalue_shim {
 
     bp::detail::utf_rvalue_shim<std::u32string, decltype(f_u8str_ref), attr_t>
         u32_u8_ref_shim(f_u8str_ref);
-#if BOOST_PARSER_DETAIL_TEXT_USE_ALIAS_CTAD
-    static_assert(std::is_same_v<
-                  decltype(u32_u8_ref_shim(attr_t{})),
-                  bp::detail::text::utf_view<
-                      bp::detail::text::format::utf32,
-                      std::ranges::ref_view<std::u8string const>> &>);
-#endif
     static_assert(bp::detail::transform_replacement_for<
                   decltype(u32_u8_ref_shim),
                   std::u32string,
@@ -341,15 +285,7 @@ namespace detail_utf_rvalue_shim {
 
     bp::detail::utf_rvalue_shim<std::u16string, decltype(f_u32str), attr_t>
     u16_u32_shim(f_u32str);
-#if BOOST_PARSER_USE_CONCEPTS
-#if BOOST_PARSER_DETAIL_TEXT_USE_ALIAS_CTAD
-    static_assert(std::is_same_v<
-                  decltype(u16_u32_shim(attr_t{})),
-                  bp::detail::text::utf_view<
-                      bp::detail::text::format::utf16,
-                      std::ranges::owning_view<std::u32string>> &>);
-#endif
-#else
+#if !BOOST_PARSER_USE_CONCEPTS
     static_assert(
         std::is_same_v<
             decltype(u16_u32_shim(attr_t{})),
@@ -363,15 +299,7 @@ namespace detail_utf_rvalue_shim {
 
     bp::detail::utf_rvalue_shim<std::u16string, decltype(f_u32str_ref), attr_t>
         u16_u32_ref_shim(f_u32str_ref);
-#if BOOST_PARSER_USE_CONCEPTS
-#if BOOST_PARSER_DETAIL_TEXT_USE_ALIAS_CTAD
-    static_assert(std::is_same_v<
-                  decltype(u16_u32_ref_shim(attr_t{})),
-                  bp::detail::text::utf_view<
-                      bp::detail::text::format::utf16,
-                      std::ranges::ref_view<std::u32string>> &>);
-#endif
-#else
+#if !BOOST_PARSER_USE_CONCEPTS
     static_assert(std::is_same_v<
                   decltype(u16_u32_ref_shim(attr_t{})),
                   bp::detail::text::utf16_view<
@@ -406,15 +334,7 @@ namespace detail_utf_rvalue_shim {
 
     bp::detail::utf_rvalue_shim<std::u32string, decltype(f_u16str), attr_t>
         u32_u16_shim(f_u16str);
-#if BOOST_PARSER_USE_CONCEPTS
-#if BOOST_PARSER_DETAIL_TEXT_USE_ALIAS_CTAD
-    static_assert(std::is_same_v<
-                  decltype(u32_u16_shim(attr_t{})),
-                  bp::detail::text::utf_view<
-                      bp::detail::text::format::utf32,
-                      std::ranges::owning_view<std::u16string>> &>);
-#endif
-#else
+#if !BOOST_PARSER_USE_CONCEPTS
     static_assert(
         std::is_same_v<
             decltype(u32_u16_shim(attr_t{})),
@@ -428,15 +348,7 @@ namespace detail_utf_rvalue_shim {
 
     bp::detail::utf_rvalue_shim<std::u32string, decltype(f_u16str_ref), attr_t>
         u32_u16_ref_shim(f_u16str_ref);
-#if BOOST_PARSER_USE_CONCEPTS
-#if BOOST_PARSER_DETAIL_TEXT_USE_ALIAS_CTAD
-    static_assert(std::is_same_v<
-                  decltype(u32_u16_ref_shim(attr_t{})),
-                  bp::detail::text::utf_view<
-                      bp::detail::text::format::utf32,
-                      std::ranges::ref_view<std::u16string>> &>);
-#endif
-#else
+#if !BOOST_PARSER_USE_CONCEPTS
     static_assert(std::is_same_v<
                   decltype(u32_u16_ref_shim(attr_t{})),
                   bp::detail::text::utf32_view<

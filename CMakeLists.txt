@@ -41,12 +41,12 @@ set(CXX_STD 17 CACHE STRING "Set to 14, 17, etc., to enable C++14, C++17, etc.")
 message("-- Using -std=c++${CXX_STD}")
 
 # to just check the different frontend flavours we could use the following code
-if (CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
+if (MSVC)
     get_filename_component(CNAME "${CMAKE_CXX_COMPILER}" NAME)
     message(STATUS "Detected MSVC style compiler frontend '" ${CNAME} "'")
     add_definitions(/W3)
     add_compile_options(/Zc:__cplusplus) # not sure, if it necessary for clang-cl
-elseif (CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "GNU")
+else()
     get_filename_component(CNAME "${CMAKE_CXX_COMPILER}" NAME)
     message(STATUS "Detected GNU style compiler frontend '" ${CNAME} "'")
     add_definitions(-Wall)

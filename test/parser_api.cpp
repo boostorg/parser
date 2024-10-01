@@ -249,7 +249,7 @@ int main()
         auto callbacks = [&out](auto tag, auto x) { out = x; };
         auto ws_copy = ws;
         BOOST_TEST(callback_parse(
-            str.c_str(), callback_char_rule, ws_copy, callbacks));
+            null_term(str.c_str()), callback_char_rule, ws_copy, callbacks));
         BOOST_TEST(out == 'a');
     }
 }

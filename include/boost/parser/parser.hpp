@@ -9038,7 +9038,7 @@ namespace boost { namespace parser {
             input is non-`char`. */
 #if BOOST_PARSER_USE_CONCEPTS
     template<
-        parsable_range_like R,
+        parsable_range R,
         typename Parser,
         typename GlobalState,
         typename ErrorHandler,
@@ -9052,7 +9052,7 @@ namespace boost { namespace parser {
         typename ErrorHandler,
         typename SkipParser,
         typename Callbacks,
-        typename Enable = std::enable_if_t<detail::is_parsable_range_like_v<R>>>
+        typename Enable = std::enable_if_t<detail::is_parsable_range_v<R>>>
 #endif
     bool callback_parse(
         R const & r,

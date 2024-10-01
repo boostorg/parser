@@ -8430,7 +8430,7 @@ namespace boost { namespace parser {
         `!detail::derived_from_parser_interface_v<std::remove_cvref_t<Attr>`. */
 #if BOOST_PARSER_USE_CONCEPTS
     template<
-        parsable_range_like R,
+        parsable_range R,
         typename Parser,
         typename GlobalState,
         typename ErrorHandler,
@@ -8443,7 +8443,7 @@ namespace boost { namespace parser {
         typename ErrorHandler,
         typename Attr,
         typename Enable = std::enable_if_t<
-            detail::is_parsable_range_like_v<R> &&
+            detail::is_parsable_range_v<R> &&
             !detail::derived_from_parser_interface_v<
                 detail::remove_cv_ref_t<Attr>>>>
 #endif
@@ -8543,7 +8543,7 @@ namespace boost { namespace parser {
         `!detail::derived_from_parser_interface_v<std::remove_cvref_t<Attr>`. */
 #if BOOST_PARSER_USE_CONCEPTS
     template<
-        parsable_range_like R,
+        parsable_range R,
         typename Parser,
         typename GlobalState,
         typename ErrorHandler>
@@ -8553,7 +8553,7 @@ namespace boost { namespace parser {
         typename Parser,
         typename GlobalState,
         typename ErrorHandler,
-        typename Enable = std::enable_if_t<detail::is_parsable_range_like_v<R>>>
+        typename Enable = std::enable_if_t<detail::is_parsable_range_v<R>>>
 #endif
     auto parse(
         R const & r,
@@ -8672,7 +8672,7 @@ namespace boost { namespace parser {
             input is non-`char`. */
 #if BOOST_PARSER_USE_CONCEPTS
     template<
-        parsable_range_like R,
+        parsable_range R,
         typename Parser,
         typename GlobalState,
         typename ErrorHandler,
@@ -8686,7 +8686,7 @@ namespace boost { namespace parser {
         typename ErrorHandler,
         typename SkipParser,
         typename Attr,
-        typename Enable = std::enable_if_t<detail::is_parsable_range_like_v<R>>>
+        typename Enable = std::enable_if_t<detail::is_parsable_range_v<R>>>
 #endif
     bool parse(
         R const & r,
@@ -8787,7 +8787,7 @@ namespace boost { namespace parser {
             input is non-`char`. */
 #if BOOST_PARSER_USE_CONCEPTS
     template<
-        parsable_range_like R,
+        parsable_range R,
         typename Parser,
         typename GlobalState,
         typename ErrorHandler,
@@ -8799,7 +8799,7 @@ namespace boost { namespace parser {
         typename GlobalState,
         typename ErrorHandler,
         typename SkipParser,
-        typename Enable = std::enable_if_t<detail::is_parsable_range_like_v<R>>>
+        typename Enable = std::enable_if_t<detail::is_parsable_range_v<R>>>
 #endif
     auto parse(
         R const & r,
@@ -8905,7 +8905,7 @@ namespace boost { namespace parser {
             input is non-`char`. */
 #if BOOST_PARSER_USE_CONCEPTS
     template<
-        parsable_range_like R,
+        parsable_range R,
         typename Parser,
         typename GlobalState,
         typename ErrorHandler,
@@ -8917,7 +8917,7 @@ namespace boost { namespace parser {
         typename GlobalState,
         typename ErrorHandler,
         typename Callbacks,
-        typename Enable = std::enable_if_t<detail::is_parsable_range_like_v<R>>>
+        typename Enable = std::enable_if_t<detail::is_parsable_range_v<R>>>
 #endif
     bool callback_parse(
         R const & r,

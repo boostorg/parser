@@ -63,10 +63,10 @@ int main()
     // attr out param, pointer-as-range
     {
         char out = 0;
-        BOOST_TEST(parse(str.c_str(), char_, out));
+        BOOST_TEST(parse(null_term(str.c_str()), char_, out));
         BOOST_TEST(out == 'a');
         out = 0;
-        BOOST_TEST(!parse(str.c_str(), char_('b'), out));
+        BOOST_TEST(!parse(null_term(str.c_str()), char_('b'), out));
         BOOST_TEST(out == 0);
     }
 
@@ -92,9 +92,9 @@ int main()
     }
     // returned attr, pointer-as-range
     {
-        BOOST_TEST(parse(str.c_str(), char_));
-        BOOST_TEST(*parse(str.c_str(), char_) == 'a');
-        BOOST_TEST(!parse(str.c_str(), char_('b')));
+        BOOST_TEST(parse(null_term(str.c_str()), char_));
+        BOOST_TEST(*parse(null_term(str.c_str()), char_) == 'a');
+        BOOST_TEST(!parse(null_term(str.c_str()), char_('b')));
     }
     // returned attr, UTF-16
     {
@@ -139,11 +139,11 @@ int main()
     // attr out param, using skipper, pointer-as-range
     {
         char out = 0;
-        BOOST_TEST(parse(str.c_str(), char_, ws, out));
+        BOOST_TEST(parse(null_term(str.c_str()), char_, ws, out));
         BOOST_TEST(out == 'a');
         out = 0;
         auto ws_copy = ws;
-        BOOST_TEST(!parse(str.c_str(), char_('b'), ws_copy, out));
+        BOOST_TEST(!parse(null_term(str.c_str()), char_('b'), ws_copy, out));
         BOOST_TEST(out == 0);
     }
 
@@ -173,10 +173,10 @@ int main()
     }
     // returned attr, using skipper, pointer-as-range
     {
-        BOOST_TEST(parse(str.c_str(), char_, ws));
-        BOOST_TEST(*parse(str.c_str(), char_, ws) == 'a');
+        BOOST_TEST(parse(null_term(str.c_str()), char_, ws));
+        BOOST_TEST(*parse(null_term(str.c_str()), char_, ws) == 'a');
         auto ws_copy = ws;
-        BOOST_TEST(!parse(str.c_str(), char_('b'), ws_copy));
+        BOOST_TEST(!parse(null_term(str.c_str()), char_('b'), ws_copy));
     }
 
     // callback, iter/sent
@@ -203,7 +203,7 @@ int main()
     {
         char out = 0;
         auto callbacks = [&out](auto tag, auto x) { out = x; };
-        BOOST_TEST(callback_parse(str.c_str(), callback_char_rule, callbacks));
+        BOOST_TEST(callback_parse(null_term(str.c_str()), callback_char_rule, callbacks));
         BOOST_TEST(out == 'a');
     }
 

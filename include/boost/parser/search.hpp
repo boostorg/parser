@@ -165,7 +165,7 @@ namespace boost::parser {
         in C++20 and later if `r` is a non-borrowable rvalue. */
     template<
 #if BOOST_PARSER_USE_CONCEPTS
-        parsable_range_like R,
+        parsable_range R,
 #else
         typename R,
 #endif
@@ -175,7 +175,7 @@ namespace boost::parser {
         typename SkipParser
 #if !BOOST_PARSER_USE_CONCEPTS
         ,
-        typename Enable = std::enable_if_t<detail::is_parsable_range_like_v<R>>
+        typename Enable = std::enable_if_t<detail::is_parsable_range_v<R>>
 #endif
         >
     auto search(
@@ -228,7 +228,7 @@ namespace boost::parser {
         later if `r` is a non-borrowable rvalue. */
     template<
 #if BOOST_PARSER_USE_CONCEPTS
-        parsable_range_like R,
+        parsable_range R,
 #else
         typename R,
 #endif
@@ -237,7 +237,7 @@ namespace boost::parser {
         typename ErrorHandler
 #if !BOOST_PARSER_USE_CONCEPTS
         ,
-        typename Enable = std::enable_if_t<detail::is_parsable_range_like_v<R>>
+        typename Enable = std::enable_if_t<detail::is_parsable_range_v<R>>
 #endif
         >
     auto search(
@@ -527,7 +527,7 @@ namespace boost::parser {
 #if BOOST_PARSER_USE_CONCEPTS
 
             template<
-                parsable_range_like R,
+                parsable_range R,
                 typename Parser,
                 typename GlobalState,
                 typename ErrorHandler,
@@ -555,7 +555,7 @@ namespace boost::parser {
             }
 
             template<
-                parsable_range_like R,
+                parsable_range R,
                 typename Parser,
                 typename GlobalState,
                 typename ErrorHandler>
@@ -593,7 +593,7 @@ namespace boost::parser {
                 typename SkipParser =
                     parser_interface<eps_parser<detail::phony>>,
                 typename Trace = trace,
-                typename Enable = std::enable_if_t<is_parsable_range_like_v<R>>>
+                typename Enable = std::enable_if_t<is_parsable_range_v<R>>>
             [[nodiscard]] constexpr auto operator()(
                 R && r,
                 parser_interface<Parser, GlobalState, ErrorHandler> const &

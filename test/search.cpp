@@ -76,7 +76,7 @@ int main()
     }
     {
         char const * str = "XXYZZ";
-        auto result = bp::search(str, bp::lit("XYZ"), bp::ws);
+        auto result = bp::search(bp::null_term(str), bp::lit("XYZ"), bp::ws);
         BOOST_TEST(result.begin() == str + 1);
         BOOST_TEST(result.end() == str + 4);
     }
@@ -134,43 +134,43 @@ int main()
     // pointer
     {
         char const * str = "";
-        auto result = bp::search(str, bp::lit("XYZ"), bp::ws);
+        auto result = bp::search(bp::null_term(str), bp::lit("XYZ"), bp::ws);
         BOOST_TEST(result.begin() == str);
         BOOST_TEST(result.end() == str);
     }
     {
         char const * str = "not here";
-        auto result = bp::search(str, bp::lit("XYZ"), bp::ws);
+        auto result = bp::search(bp::null_term(str), bp::lit("XYZ"), bp::ws);
         BOOST_TEST(result.begin() == bp::null_sentinel_t{});
         BOOST_TEST(result.end() == bp::null_sentinel_t{});
     }
     {
         char const * str = "aaXYZb";
-        auto result = bp::search(str, bp::lit("XYZ"), bp::ws);
+        auto result = bp::search(bp::null_term(str), bp::lit("XYZ"), bp::ws);
         BOOST_TEST(result.begin() == str + 2);
         BOOST_TEST(result.end() == str + 5);
     }
     {
         char const * str = "XYZab";
-        auto result = bp::search(str, bp::lit("XYZ"), bp::ws);
+        auto result = bp::search(bp::null_term(str), bp::lit("XYZ"), bp::ws);
         BOOST_TEST(result.begin() == str + 0);
         BOOST_TEST(result.end() == str + 3);
     }
     {
         char const * str = "gbXYZ";
-        auto result = bp::search(str, bp::lit("XYZ"), bp::ws);
+        auto result = bp::search(bp::null_term(str), bp::lit("XYZ"), bp::ws);
         BOOST_TEST(result.begin() == str + 2);
         BOOST_TEST(result.end() == str + 5);
     }
     {
         char const * str = "XYZ";
-        auto result = bp::search(str, bp::lit("XYZ"), bp::ws);
+        auto result = bp::search(bp::null_term(str), bp::lit("XYZ"), bp::ws);
         BOOST_TEST(result.begin() == str + 0);
         BOOST_TEST(result.end() == str + 3);
     }
     {
         char const * str = "XXYZZ";
-        auto result = bp::search(str, bp::lit("XYZ"), bp::ws);
+        auto result = bp::search(bp::null_term(str), bp::lit("XYZ"), bp::ws);
         BOOST_TEST(result.begin() == str + 1);
         BOOST_TEST(result.end() == str + 4);
     }
@@ -373,19 +373,19 @@ int main()
     // pointer
     {
         char const * str = "";
-        auto result = bp::search(str, bp::lit("XYZ"));
+        auto result = bp::search(bp::null_term(str), bp::lit("XYZ"));
         BOOST_TEST(result.begin() == str);
         BOOST_TEST(result.end() == str);
     }
     {
         char const * str = "not here";
-        auto result = bp::search(str, bp::lit("XYZ"));
+        auto result = bp::search(bp::null_term(str), bp::lit("XYZ"));
         BOOST_TEST(result.begin() == bp::null_sentinel_t{});
         BOOST_TEST(result.end() == bp::null_sentinel_t{});
     }
     {
         char const * str = "XXYZZ";
-        auto result = bp::search(str, bp::lit("XYZ"));
+        auto result = bp::search(bp::null_term(str), bp::lit("XYZ"));
         BOOST_TEST(result.begin() == str + 1);
         BOOST_TEST(result.end() == str + 4);
     }
@@ -603,7 +603,7 @@ int main()
     }
     {
         char const * str = "XYZXYZaaXYZbaabaXYZXYZ";
-        auto r = str | bp::search_all(bp::lit("XYZ"));
+        auto r = bp::null_term(str) | bp::search_all(bp::lit("XYZ"));
         int count = 0;
         int const offsets[] = {0, 3, 3, 6, 8, 11, 16, 19, 19, 22};
         for (auto subrange : r) {
@@ -615,7 +615,7 @@ int main()
     }
     {
         char const * str = "XYZXYZaaXYZbaabaXYZXYZ";
-        auto const r = str | bp::search_all(bp::lit("XYZ"));
+        auto const r = bp::null_term(str) | bp::search_all(bp::lit("XYZ"));
         int count = 0;
         int const offsets[] = {0, 3, 3, 6, 8, 11, 16, 19, 19, 22};
         for (auto subrange : r) {

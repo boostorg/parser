@@ -29,7 +29,9 @@ namespace boost::parser {
             typename R_,
             bool ToCommonRange = false,
             text::format OtherRangeFormat = no_format,
-            bool = text::detail::is_bounded_array_v<remove_cv_ref_t<R_>>>
+            bool = std::is_same_v<sentinel_t<remove_cv_ref_t<R_>>,
+                                  null_sentinel_t> ||
+                   text::detail::is_bounded_array_v<remove_cv_ref_t<R_>>>
         struct to_range
         {
             template<typename R>
@@ -37,7 +39,25 @@ namespace boost::parser {
             {
                 static_assert(std::is_same_v<R, R_>);
                 using T = remove_cv_ref_t<R>;
-                if constexpr (text::detail::is_bounded_array_v<T>) {
+                if constexpr (std::is_same_v<sentinel_t<T>, null_sentinel_t>) {
+                    auto const first = r.begin();
+                    if constexpr (OtherRangeFormat == no_format) {
+                        if constexpr (ToCommonRange) {
+                            return BOOST_PARSER_SUBRANGE(
+                                first, first + std::strlen(first));
+                        } else {
+                            return (R &&) r;
+                        }
+                    } else {
+                        if constexpr (ToCommonRange) {
+                            return BOOST_PARSER_SUBRANGE(
+                                       first, first + std::strlen(first)) |
+                                   as_utf<OtherRangeFormat>;
+                        } else {
+                            return (R &&) r | as_utf<OtherRangeFormat>;
+                        }
+                    }
+                } else if constexpr (text::detail::is_bounded_array_v<T>) {
                     auto const first = std::begin(r);
                     auto last = std::end(r);
                     constexpr auto n = std::extent_v<T>;

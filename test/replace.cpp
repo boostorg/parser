@@ -101,26 +101,6 @@ int main()
             BOOST_TEST(*it == *v_array_curr);
         }
     }
-    // TODO (moot){
-    // TODO (moot)    auto r1 = bp::detail::to_range<decltype("")>::call("");
-    // TODO (moot)    auto r2 = bp::detail::to_range<decltype("foo")>::call("foo");
-    // TODO (moot)
-    // TODO (moot)    bp::detail::either_iterator<decltype(r1), decltype(r2)> either_r1_begin(
-    // TODO (moot)        r1.begin());
-    // TODO (moot)    bp::detail::either_iterator<decltype(r1), decltype(r2)> either_r1_end(
-    // TODO (moot)        r1.end());
-    // TODO (moot)    bp::detail::either_iterator<decltype(r1), decltype(r2)> either_r2_begin(
-    // TODO (moot)        r2.begin());
-    // TODO (moot)    bp::detail::either_iterator<decltype(r1), decltype(r2)> either_r2_end(
-    // TODO (moot)        r2.end());
-    // TODO (moot)
-    // TODO (moot)    BOOST_TEST(either_r1_begin == either_r1_end);
-    // TODO (moot)    std::string copy;
-    // TODO (moot)    for (auto it = either_r2_begin; it != either_r2_end; ++it) {
-    // TODO (moot)        copy.push_back(*it);
-    // TODO (moot)    }
-    // TODO (moot)    BOOST_TEST(copy == "foo");
-    // TODO (moot)}
 }
 
 // replace
@@ -226,38 +206,36 @@ int main()
         }
         BOOST_TEST(count == 7);
     }
-    // TODO {
-    // TODO     char const * str = "XYZXYZaaXYZbaabaXYZXYZ";
-    // TODO     char const * replacement = "foo";
-    // TODO     auto r = bp::null_term(str) |
-    // TODO         bp::replace(bp::lit("XYZ"), replacement);
-    // TODO     int count = 0;
-    // TODO     std::string_view const strs[] = {
-    // TODO         "foo", "foo", "aa", "foo", "baaba", "foo", "foo"};
-    // TODO     for (auto subrange : r) {
-    // TODO         std::string str(subrange.begin(), subrange.end());
-    // TODO         BOOST_TEST(str == strs[count]);
-    // TODO         ++count;
-    // TODO     }
-    // TODO     BOOST_TEST(count == 7);
-    // TODO }
-    // TODO {
-    // TODO     char const * str = "XYZXYZaaXYZbaabaXYZXYZ";
-    // TODO     char const * replacement = "foo";
-    // TODO     auto const r = bp::null_term(str) |
-    // TODO         bp::replace(bp::lit("XYZ"), replacement);
-    // TODO     // TODO (works!) static_assert(
-    // TODO     // TODO (works!)     bp::detail::is_range_like<decltype(bp::null_term(replacement)) &&>);
-    // TODO     int count = 0;
-    // TODO     std::string_view const strs[] = {
-    // TODO         "foo", "foo", "aa", "foo", "baaba", "foo", "foo"};
-    // TODO     for (auto subrange : r) {
-    // TODO         std::string str(subrange.begin(), subrange.end());
-    // TODO         BOOST_TEST(str == strs[count]);
-    // TODO         ++count;
-    // TODO     }
-    // TODO     BOOST_TEST(count == 7);
-    // TODO }
+    {
+        char const * str = "XYZXYZaaXYZbaabaXYZXYZ";
+        char const * replacement = "foo";
+        auto r = bp::null_term(str) |
+            bp::replace(bp::lit("XYZ"), bp::null_term(replacement));
+        int count = 0;
+        std::string_view const strs[] = {
+            "foo", "foo", "aa", "foo", "baaba", "foo", "foo"};
+        for (auto subrange : r) {
+            std::string str(subrange.begin(), subrange.end());
+            BOOST_TEST(str == strs[count]);
+            ++count;
+        }
+        BOOST_TEST(count == 7);
+    }
+    {
+        char const * str = "XYZXYZaaXYZbaabaXYZXYZ";
+        char const * replacement = "foo";
+        auto const r = bp::null_term(str) |
+            bp::replace(bp::lit("XYZ"), bp::null_term(replacement));
+        int count = 0;
+        std::string_view const strs[] = {
+            "foo", "foo", "aa", "foo", "baaba", "foo", "foo"};
+        for (auto subrange : r) {
+            std::string str(subrange.begin(), subrange.end());
+            BOOST_TEST(str == strs[count]);
+            ++count;
+        }
+        BOOST_TEST(count == 7);
+    }
 }
 
 // replace_unicode

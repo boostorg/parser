@@ -49,11 +49,6 @@ template<typename T>
 using char_str_utf16_replacement =
     decltype(std::declval<T>() | bp::replace(bp::lit("XYZ"), std::declval<T>() | bp::as_utf16));
 static_assert(ill_formed<char_str_utf16_replacement, decltype(empty_str)>{});
-
-template<typename T>
-using utf8_str_char_replacement =
-    decltype(std::declval<T>() | bp::as_utf8 | bp::replace(bp::lit("XYZ"), std::declval<T>()));
-static_assert(ill_formed<utf8_str_char_replacement, decltype(empty_str)>{});
 #endif
 
 static_assert(

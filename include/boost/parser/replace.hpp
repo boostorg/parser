@@ -523,7 +523,7 @@ namespace boost::parser {
 
             template<
                 parsable_range R,
-                range ReplacementR,
+                std::ranges::range ReplacementR,
                 typename Parser,
                 typename GlobalState,
                 typename ErrorHandler,
@@ -570,7 +570,7 @@ namespace boost::parser {
 
             template<
                 parsable_range R,
-                range ReplacementR,
+                std::ranges::range ReplacementR,
                 typename Parser,
                 typename GlobalState,
                 typename ErrorHandler>

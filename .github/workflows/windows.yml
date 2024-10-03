@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         cxx_std: [17, 20, 23]
-        os: [windows-2019, windows-2022]
+        os: [windows-2022]
 
     runs-on: ${{ matrix.os }}
 

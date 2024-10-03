@@ -270,7 +270,7 @@ _Parser_ requires C++17 or later.  It is known to work with these compilers:
 
 * GCC 9 and later
 * Clang 11 and later (and XCode 10.3 and later)
-* Visual Studio 2019 and later
+* Visual Studio 2022 and later
 
 [heading C++20 Support]
 

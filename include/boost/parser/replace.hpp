@@ -530,10 +530,8 @@ namespace boost::parser {
                 typename SkipParser>
             requires
                 // clang-format off
-                (std::is_pointer_v<std::remove_cvref_t<R>> ||
-                 std::ranges::viewable_range<R>) &&
-                (std::is_pointer_v<std::remove_cvref_t<ReplacementR>> ||
-                 std::ranges::viewable_range<ReplacementR>) &&
+                std::ranges::viewable_range<R> &&
+                std::ranges::viewable_range<ReplacementR> &&
                 // clang-format on
                 can_replace_view<
                     to_range_t<R>,
@@ -576,10 +574,8 @@ namespace boost::parser {
                 typename ErrorHandler>
             requires
                 // clang-format off
-                (std::is_pointer_v<std::remove_cvref_t<R>> ||
-                 std::ranges::viewable_range<R>) &&
-                (std::is_pointer_v<std::remove_cvref_t<ReplacementR>> ||
-                 std::ranges::viewable_range<ReplacementR>) &&
+                std::ranges::viewable_range<R> &&
+                std::ranges::viewable_range<ReplacementR> &&
                 // clang-format on
                 can_replace_view<
                     to_range_t<R>,

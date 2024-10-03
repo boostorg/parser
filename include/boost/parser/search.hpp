@@ -536,7 +536,6 @@ namespace boost::parser {
                 typename ErrorHandler,
                 typename SkipParser>
             requires(
-                std::is_pointer_v<std::remove_cvref_t<R>> ||
                 std::ranges::viewable_range<R>) &&
                 can_search_all_view<
                     to_range_t<R>,
@@ -563,7 +562,6 @@ namespace boost::parser {
                 typename GlobalState,
                 typename ErrorHandler>
             requires(
-                std::is_pointer_v<std::remove_cvref_t<R>> ||
                 std::ranges::viewable_range<R>) &&
                 can_search_all_view<
                     to_range_t<R>,

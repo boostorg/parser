@@ -648,8 +648,7 @@ namespace boost::parser {
                 typename SkipParser>
             requires
                 // clang-format off
-                (std::is_pointer_v<std::remove_cvref_t<R>> ||
-                 std::ranges::viewable_range<R>) &&
+                std::ranges::viewable_range<R> &&
                 std::regular_invocable<
                     F &,
                     range_attr_t<to_range_t<R>, Parser>> &&
@@ -693,8 +692,7 @@ namespace boost::parser {
                 typename ErrorHandler>
             requires
                 // clang-format off
-                (std::is_pointer_v<std::remove_cvref_t<R>> ||
-                 std::ranges::viewable_range<R>) &&
+                std::ranges::viewable_range<R> &&
                 std::regular_invocable<
                     F &,
                     range_attr_t<to_range_t<R>, Parser>> &&

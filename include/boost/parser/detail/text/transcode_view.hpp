@@ -389,8 +389,7 @@ namespace boost::parser::detail { namespace text {
             template<class R>
             requires (std::ranges::viewable_range<R> &&
                       std::ranges::input_range<R> &&
-                      std::convertible_to<std::ranges::range_reference_t<R>, format_to_type_t<Format>>) ||
-                     utf_pointer<std::remove_cvref_t<R>>
+                      std::convertible_to<std::ranges::range_reference_t<R>, format_to_type_t<Format>>)
 #else
             template<class R>
 #endif
@@ -403,9 +402,6 @@ namespace boost::parser::detail { namespace text {
 #else
                     return 42; // Never gonna happen.
 #endif
-                } else if constexpr (std::is_pointer_v<T>) {
-                    return View(
-                        BOOST_PARSER_DETAIL_TEXT_SUBRANGE(r, null_sentinel));
                 } else {
                     return View(std::forward<R>(r));
                 }
@@ -725,8 +721,7 @@ namespace boost::parser::detail { namespace text {
             template<class R>
                 requires is_utf_view<std::remove_cvref_t<R>> ||
                          (std::ranges::viewable_range<R> &&
-                          can_utf_view<unpacked_range<R>, View>) ||
-                         utf_pointer<std::remove_cvref_t<R>>
+                          can_utf_view<unpacked_range<R>, View>)
 #else
             template<typename R>
 #endif
@@ -743,9 +738,6 @@ namespace boost::parser::detail { namespace text {
                     return View(std::forward<R>(r).base());
                 } else if constexpr (detail::is_charn_view<T>) {
                     return View(std::forward<R>(r));
-                } else if constexpr (std::is_pointer_v<T>) {
-                    return View(
-                        BOOST_PARSER_DETAIL_TEXT_SUBRANGE(r, null_sentinel));
                 } else {
                     return View(detail::unpack_range(std::forward<R>(r)));
                 }

@@ -719,7 +719,7 @@ namespace boost::parser::detail { namespace text { BOOST_PARSER_DETAIL_TEXT_NAME
     }
 
     template<typename R, std::output_iterator<uint32_t> O>
-        requires(utf16_range_like<R> || utf32_range_like<R>)
+        requires(utf16_range<R> || utf32_range<R>)
     transcode_result<dtl::uc_result_iterator<R>, O> transcode_to_utf8(
         R && r, O out)
     {
@@ -750,7 +750,7 @@ namespace boost::parser::detail { namespace text { BOOST_PARSER_DETAIL_TEXT_NAME
     }
 
     template<typename R, std::output_iterator<uint32_t> O>
-        requires(utf8_range_like<R> || utf32_range_like<R>)
+        requires(utf8_range<R> || utf32_range<R>)
     transcode_result<dtl::uc_result_iterator<R>, O> transcode_to_utf16(
         R && r, O out)
     {
@@ -781,7 +781,7 @@ namespace boost::parser::detail { namespace text { BOOST_PARSER_DETAIL_TEXT_NAME
     }
 
     template<typename R, std::output_iterator<uint32_t> O>
-        requires(utf8_range_like<R> || utf16_range_like<R>)
+        requires(utf8_range<R> || utf16_range<R>)
     transcode_result<dtl::uc_result_iterator<R>, O> transcode_to_utf32(
         R && r, O out)
     {

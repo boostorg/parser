@@ -248,7 +248,7 @@ int main()
     }
     {
         char const * str_ = "aaXYZb";
-        auto str = str_ | bp::as_utf16;
+        auto str = bp::null_term(str_) | bp::as_utf16;
         auto r = bp::replace(str, bp::lit("XYZ"), bp::ws, "foo" | bp::as_utf16);
         int count = 0;
         std::string_view const strs[] = {"aa", "foo", "b"};

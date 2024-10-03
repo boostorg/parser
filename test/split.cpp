@@ -165,7 +165,7 @@ int main()
     }
     {
         char const * str_ = "aaXYZb";
-        auto str = str_ | bp::as_utf16;
+        auto str = bp::null_term(str_) | bp::as_utf16;
         auto r = bp::split(str, bp::lit("XYZ"), bp::ws);
         int count = 0;
         int const offsets[] = {0, 2, 5, 6};

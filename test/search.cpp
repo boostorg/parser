@@ -178,49 +178,49 @@ int main()
     // pointer
     {
         char const * str_ = "";
-        auto str = str_ | bp::as_utf32;
+        auto str = bp::null_term(str_) | bp::as_utf32;
         auto result = bp::search(str, bp::lit("XYZ"), bp::ws);
         BOOST_TEST(result.begin() == str.begin());
         BOOST_TEST(result.end() == str.end());
     }
     {
         char const * str_ = "not here";
-        auto str = str_ | bp::as_utf16;
+        auto str = bp::null_term(str_) | bp::as_utf16;
         auto result = bp::search(str, bp::lit("XYZ"), bp::ws);
         BOOST_TEST(result.begin() == str.end());
         BOOST_TEST(result.end() == str.end());
     }
     {
         char const * str_ = "aaXYZb";
-        auto str = str_ | bp::as_utf8;
+        auto str = bp::null_term(str_) | bp::as_utf8;
         auto result = bp::search(str, bp::lit("XYZ"), bp::ws);
         BOOST_TEST(result.begin() == std::next(str.begin(), 2));
         BOOST_TEST(result.end() == std::next(str.begin(), 5));
     }
     {
         char const * str_ = "XYZab";
-        auto str = str_ | bp::as_utf32;
+        auto str = bp::null_term(str_) | bp::as_utf32;
         auto result = bp::search(str, bp::lit("XYZ"), bp::ws);
         BOOST_TEST(result.begin() == std::next(str.begin(), 0));
         BOOST_TEST(result.end() == std::next(str.begin(), 3));
     }
     {
         char const * str_ = "gbXYZ";
-        auto str = str_ | bp::as_utf16;
+        auto str = bp::null_term(str_) | bp::as_utf16;
         auto result = bp::search(str, bp::lit("XYZ"), bp::ws);
         BOOST_TEST(result.begin() == std::next(str.begin(), 2));
         BOOST_TEST(result.end() == std::next(str.begin(), 5));
     }
     {
         char const * str_ = "XYZ";
-        auto str = str_ | bp::as_utf8;
+        auto str = bp::null_term(str_) | bp::as_utf8;
         auto result = bp::search(str, bp::lit("XYZ"), bp::ws);
         BOOST_TEST(result.begin() == std::next(str.begin(), 0));
         BOOST_TEST(result.end() == std::next(str.begin(), 3));
     }
     {
         char const * str_ = "XXYZZ";
-        auto str = str_ | bp::as_utf32;
+        auto str = bp::null_term(str_) | bp::as_utf32;
         auto result = bp::search(str, bp::lit("XYZ"), bp::ws);
         BOOST_TEST(result.begin() == std::next(str.begin(), 1));
         BOOST_TEST(result.end() == std::next(str.begin(), 4));
@@ -304,7 +304,7 @@ int main()
     // pointer
     {
         char const * str_ = "XYZab";
-        auto str = str_ | bp::as_utf32;
+        auto str = bp::null_term(str_) | bp::as_utf32;
         auto result =
             bp::search(str.begin(), str.end(), bp::lit("XYZ"), bp::ws);
         BOOST_TEST(result.begin() == std::next(str.begin(), 0));
@@ -312,7 +312,7 @@ int main()
     }
     {
         char const * str_ = "gbXYZ";
-        auto str = str_ | bp::as_utf16;
+        auto str = bp::null_term(str_) | bp::as_utf16;
         auto result =
             bp::search(str.begin(), str.end(), bp::lit("XYZ"), bp::ws);
         BOOST_TEST(result.begin() == std::next(str.begin(), 2));
@@ -320,7 +320,7 @@ int main()
     }
     {
         char const * str_ = "XYZ";
-        auto str = str_ | bp::as_utf8;
+        auto str = bp::null_term(str_) | bp::as_utf8;
         auto result =
             bp::search(str.begin(), str.end(), bp::lit("XYZ"), bp::ws);
         BOOST_TEST(result.begin() == std::next(str.begin(), 0));
@@ -393,21 +393,21 @@ int main()
     // pointer
     {
         char const * str_ = "XYZab";
-        auto str = str_ | bp::as_utf32;
+        auto str = bp::null_term(str_) | bp::as_utf32;
         auto result = bp::search(str, bp::lit("XYZ"));
         BOOST_TEST(result.begin() == std::next(str.begin(), 0));
         BOOST_TEST(result.end() == std::next(str.begin(), 3));
     }
     {
         char const * str_ = "gbXYZ";
-        auto str = str_ | bp::as_utf16;
+        auto str = bp::null_term(str_) | bp::as_utf16;
         auto result = bp::search(str, bp::lit("XYZ"));
         BOOST_TEST(result.begin() == std::next(str.begin(), 2));
         BOOST_TEST(result.end() == std::next(str.begin(), 5));
     }
     {
         char const * str_ = "XYZ";
-        auto str = str_ | bp::as_utf8;
+        auto str = bp::null_term(str_) | bp::as_utf8;
         auto result = bp::search(str, bp::lit("XYZ"));
         BOOST_TEST(result.begin() == std::next(str.begin(), 0));
         BOOST_TEST(result.end() == std::next(str.begin(), 3));
@@ -485,21 +485,21 @@ int main()
     // pointer
     {
         char const * str_ = "XYZab";
-        auto str = str_ | bp::as_utf32;
+        auto str = bp::null_term(str_) | bp::as_utf32;
         auto result = bp::search(str.begin(), str.end(), bp::lit("XYZ"));
         BOOST_TEST(result.begin() == std::next(str.begin(), 0));
         BOOST_TEST(result.end() == std::next(str.begin(), 3));
     }
     {
         char const * str_ = "gbXYZ";
-        auto str = str_ | bp::as_utf16;
+        auto str = bp::null_term(str_) | bp::as_utf16;
         auto result = bp::search(str.begin(), str.end(), bp::lit("XYZ"));
         BOOST_TEST(result.begin() == std::next(str.begin(), 2));
         BOOST_TEST(result.end() == std::next(str.begin(), 5));
     }
     {
         char const * str_ = "XYZ";
-        auto str = str_ | bp::as_utf8;
+        auto str = bp::null_term(str_) | bp::as_utf8;
         auto result = bp::search(str.begin(), str.end(), bp::lit("XYZ"));
         BOOST_TEST(result.begin() == std::next(str.begin(), 0));
         BOOST_TEST(result.end() == std::next(str.begin(), 3));
@@ -642,7 +642,7 @@ int main()
     }
     {
         char const * str_ = "aaXYZb";
-        auto str = str_ | bp::as_utf16;
+        auto str = bp::null_term(str_) | bp::as_utf16;
         auto r = bp::search_all(str, bp::lit("XYZ"), bp::ws);
         int count = 0;
         int const offsets[] = {2, 5};

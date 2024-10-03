@@ -318,7 +318,7 @@ void compile_attribute_unicode_utf8()
             using attr_t = decltype(parse(null_term(r), parser));
             static_assert(std::is_same_v<attr_t, std::optional<char32_t>>);
             static_assert(std::is_same_v<
-                          attribute_t<decltype(r), decltype(parser)>,
+                          attribute_t<decltype(null_term(r)), decltype(parser)>,
                           char32_t>);
         }
         {
@@ -326,7 +326,7 @@ void compile_attribute_unicode_utf8()
             using attr_t = decltype(parse(null_term(r), parser));
             static_assert(std::is_same_v<attr_t, std::optional<std::string>>);
             static_assert(std::is_same_v<
-                          attribute_t<decltype(r), decltype(parser)>,
+                          attribute_t<decltype(null_term(r)), decltype(parser)>,
                           std::string>);
         }
         {
@@ -334,7 +334,7 @@ void compile_attribute_unicode_utf8()
             using attr_t = decltype(parse(null_term(r), parser));
             static_assert(std::is_same_v<attr_t, std::optional<std::string>>);
             static_assert(std::is_same_v<
-                          attribute_t<decltype(r), decltype(parser)>,
+                          attribute_t<decltype(null_term(r)), decltype(parser)>,
                           std::string>);
         }
         {
@@ -342,7 +342,7 @@ void compile_attribute_unicode_utf8()
             using attr_t = decltype(parse(null_term(r), parser));
             static_assert(std::is_same_v<attr_t, std::optional<std::string>>);
             static_assert(std::is_same_v<
-                          attribute_t<decltype(r), decltype(parser)>,
+                          attribute_t<decltype(null_term(r)), decltype(parser)>,
                           std::string>);
         }
         {
@@ -350,7 +350,7 @@ void compile_attribute_unicode_utf8()
             using attr_t = decltype(parse(null_term(r), parser));
             static_assert(std::is_same_v<attr_t, std::optional<std::string>>);
             static_assert(std::is_same_v<
-                          attribute_t<decltype(r), decltype(parser)>,
+                          attribute_t<decltype(null_term(r)), decltype(parser)>,
                           std::string>);
         }
     }

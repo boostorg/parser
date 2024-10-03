@@ -540,7 +540,7 @@ int main()
     }
     {
         char const * str = "true ";
-        auto r = boost::parser::as_utf32(str);
+        auto r = boost::parser::as_utf32(boost::parser::null_term(str));
         bool b = false;
         auto first = r.begin();
         auto const last = r.end();
@@ -549,7 +549,7 @@ int main()
     }
     {
         char const * str = "false";
-        auto r = boost::parser::as_utf32(str);
+        auto r = boost::parser::as_utf32(boost::parser::null_term(str));
         bool b = true;
         auto first = r.begin();
         auto const last = r.end();

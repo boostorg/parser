@@ -695,12 +695,8 @@ namespace boost::parser::detail { namespace text { BOOST_PARSER_DETAIL_TEXT_NAME
     transcode_result<dtl::uc_result_iterator<R>, O> transcode_to_utf8(
         R && r, O out)
     {
-        if constexpr (std::is_pointer_v<std::remove_reference_t<R>>) {
-            return text::transcode_to_utf8(r, null_sentinel, out);
-        } else {
-            return text::transcode_to_utf8(
-                std::ranges::begin(r), std::ranges::end(r), out);
-        }
+        return text::transcode_to_utf8(
+            std::ranges::begin(r), std::ranges::end(r), out);
     }
 
 
@@ -726,12 +722,8 @@ namespace boost::parser::detail { namespace text { BOOST_PARSER_DETAIL_TEXT_NAME
     transcode_result<dtl::uc_result_iterator<R>, O> transcode_to_utf16(
         R && r, O out)
     {
-        if constexpr (std::is_pointer_v<std::remove_reference_t<R>>) {
-            return text::transcode_to_utf16(r, null_sentinel, out);
-        } else {
-            return text::transcode_to_utf16(
-                std::ranges::begin(r), std::ranges::end(r), out);
-        }
+        return text::transcode_to_utf16(
+            std::ranges::begin(r), std::ranges::end(r), out);
     }
 
 
@@ -757,12 +749,8 @@ namespace boost::parser::detail { namespace text { BOOST_PARSER_DETAIL_TEXT_NAME
     transcode_result<dtl::uc_result_iterator<R>, O> transcode_to_utf32(
         R && r, O out)
     {
-        if constexpr (std::is_pointer_v<std::remove_reference_t<R>>) {
-            return text::transcode_to_utf32(r, null_sentinel, out);
-        } else {
-            return text::transcode_to_utf32(
-                std::ranges::begin(r), std::ranges::end(r), out);
-        }
+        return text::transcode_to_utf32(
+            std::ranges::begin(r), std::ranges::end(r), out);
     }
 
 }}}

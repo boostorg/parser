@@ -4,15 +4,15 @@
 <title>Struct vs_output_error_handler</title>
 <link rel="stylesheet" href="../../boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
-<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser (Proposed)">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
 <link rel="up" href="../../header/boost/parser/error_handling_hpp.html" title="Header &lt;boost/parser/error_handling.hpp&gt;">
 <link rel="prev" href="rethrow_error_handler.html" title="Struct rethrow_error_handler">
-<link rel="next" href="write_formatted_m_idm30125.html" title="Function template write_formatted_message">
+<link rel="next" href="write_formatted_messa_id34.html" title="Function template write_formatted_message">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <div class="spirit-nav">
-<a accesskey="p" href="rethrow_error_handler.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../../header/boost/parser/error_handling_hpp.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="write_formatted_m_idm30125.html"><img src="../../images/next.png" alt="Next"></a>
+<a accesskey="p" href="rethrow_error_handler.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../../header/boost/parser/error_handling_hpp.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="write_formatted_messa_id34.html"><img src="../../images/next.png" alt="Next"></a>
 </div>
 <div class="refentry">
 <a name="boost.parser.vs_output_error_handler"></a><div class="titlepage"></div>
@@ -26,22 +26,22 @@
 </span>
 <span class="keyword">struct</span> <a class="link" href="vs_output_error_handler.html" title="Struct vs_output_error_handler">vs_output_error_handler</a> <span class="special">:</span> <span class="keyword">public</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">parser</span><span class="special">::</span><span class="identifier">stream_error_handler</span> <span class="special">{</span>
   <span class="comment">// <a class="link" href="vs_output_error_handler.html#boost.parser.vs_output_error_handlerconstruct-copy-destruct">construct/copy/destruct</a></span>
-  <a class="link" href="vs_output_error_handler.html#idm30118-bb"><span class="identifier">vs_output_error_handler</span></a><span class="special">(</span><span class="special">)</span><span class="special">;</span>
-  <a class="link" href="vs_output_error_handler.html#idm30119-bb"><span class="identifier">vs_output_error_handler</span></a><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span><span class="special">)</span><span class="special">;</span>
-  <a class="link" href="vs_output_error_handler.html#idm30122-bb"><span class="identifier">vs_output_error_handler</span></a><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">wstring_view</span><span class="special">)</span><span class="special">;</span>
+  <a class="link" href="vs_output_error_handler.html#id48-bb"><span class="identifier">vs_output_error_handler</span></a><span class="special">(</span><span class="special">)</span><span class="special">;</span>
+  <a class="link" href="vs_output_error_handler.html#id49-bb"><span class="identifier">vs_output_error_handler</span></a><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span><span class="special">)</span><span class="special">;</span>
+  <a class="link" href="vs_output_error_handler.html#id50-bb"><span class="identifier">vs_output_error_handler</span></a><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">wstring_view</span><span class="special">)</span><span class="special">;</span>
 <span class="special">}</span><span class="special">;</span></pre></div>
 <div class="refsect1">
-<a name="idm28720"></a><h2>Description</h2>
+<a name="id29886"></a><h2>Description</h2>
 <p>An error handler that prints to the Visual Studio debugger via calls to <code class="computeroutput">OutputDebugString()</code>. </p>
 <div class="refsect2">
-<a name="idm28724"></a><h3>
+<a name="id29890"></a><h3>
 <a name="boost.parser.vs_output_error_handlerconstruct-copy-destruct"></a><code class="computeroutput">vs_output_error_handler</code> 
         public
        construct/copy/destruct</h3>
 <div class="orderedlist"><ol class="orderedlist" type="1">
-<li class="listitem"><pre class="literallayout"><a name="idm30118-bb"></a><span class="identifier">vs_output_error_handler</span><span class="special">(</span><span class="special">)</span><span class="special">;</span></pre></li>
-<li class="listitem"><pre class="literallayout"><a name="idm30119-bb"></a><span class="identifier">vs_output_error_handler</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span> filename<span class="special">)</span><span class="special">;</span></pre></li>
-<li class="listitem"><pre class="literallayout"><a name="idm30122-bb"></a><span class="identifier">vs_output_error_handler</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">wstring_view</span> filename<span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><a name="id48-bb"></a><span class="identifier">vs_output_error_handler</span><span class="special">(</span><span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><a name="id49-bb"></a><span class="identifier">vs_output_error_handler</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span> filename<span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><a name="id50-bb"></a><span class="identifier">vs_output_error_handler</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">wstring_view</span> filename<span class="special">)</span><span class="special">;</span></pre></li>
 </ol></div>
 </div>
 </div>
@@ -53,7 +53,7 @@
 </div>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="rethrow_error_handler.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../../header/boost/parser/error_handling_hpp.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="write_formatted_m_idm30125.html"><img src="../../images/next.png" alt="Next"></a>
+<a accesskey="p" href="rethrow_error_handler.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../../header/boost/parser/error_handling_hpp.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="write_formatted_messa_id34.html"><img src="../../images/next.png" alt="Next"></a>
 </div>
 </body>
 </html>

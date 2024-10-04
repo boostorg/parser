@@ -4,7 +4,7 @@
 <title>Struct template or_parser</title>
 <link rel="stylesheet" href="../../boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
-<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser (Proposed)">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
 <link rel="up" href="../../header/boost/parser/parser_hpp.html" title="Header &lt;boost/parser/parser.hpp&gt;">
 <link rel="prev" href="opt_parser.html" title="Struct template opt_parser">
 <link rel="next" href="parser_interface.html" title="Struct template parser_interface">
@@ -26,44 +26,44 @@
 </span><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> ParserTuple<span class="special">&gt;</span> 
 <span class="keyword">struct</span> <a class="link" href="or_parser.html" title="Struct template or_parser">or_parser</a> <span class="special">{</span>
   <span class="comment">// <a class="link" href="or_parser.html#boost.parser.or_parserconstruct-copy-destruct">construct/copy/destruct</a></span>
-  <a class="link" href="or_parser.html#idm30961-bb"><span class="identifier">or_parser</span></a><span class="special">(</span><span class="identifier">ParserTuple</span><span class="special">)</span><span class="special">;</span>
+  <a class="link" href="or_parser.html#id156-bb"><span class="identifier">or_parser</span></a><span class="special">(</span>ParserTuple<span class="special">)</span><span class="special">;</span>
 
-  <span class="comment">// <a class="link" href="or_parser.html#idm30917-bb">public member functions</a></span>
+  <span class="comment">// <a class="link" href="or_parser.html#id157-bb">public member functions</a></span>
   <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iter<span class="special">,</span> <span class="keyword">typename</span> Sentinel<span class="special">,</span> <span class="keyword">typename</span> Context<span class="special">,</span> 
            <span class="keyword">typename</span> SkipParser<span class="special">&gt;</span> 
-    <span class="keyword">auto</span> <a class="link" href="or_parser.html#idm30918-bb"><span class="identifier">call</span></a><span class="special">(</span><span class="identifier">Iter</span> <span class="special">&amp;</span><span class="special">,</span> <span class="identifier">Sentinel</span><span class="special">,</span> <span class="identifier">Context</span> <span class="keyword">const</span> <span class="special">&amp;</span><span class="special">,</span> <span class="identifier">SkipParser</span> <span class="keyword">const</span> <span class="special">&amp;</span><span class="special">,</span> 
-              <span class="emphasis"><em><span class="identifier">unspecified</span></em></span><span class="special">,</span> <span class="keyword">bool</span> <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+    auto <a class="link" href="or_parser.html#id158-bb"><span class="identifier">call</span></a><span class="special">(</span>Iter <span class="special">&amp;</span><span class="special">,</span> Sentinel<span class="special">,</span> Context const <span class="special">&amp;</span><span class="special">,</span> SkipParser const <span class="special">&amp;</span><span class="special">,</span> 
+              <span class="emphasis"><em><span class="identifier">unspecified</span></em></span><span class="special">,</span> bool <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
   <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iter<span class="special">,</span> <span class="keyword">typename</span> Sentinel<span class="special">,</span> <span class="keyword">typename</span> Context<span class="special">,</span> 
            <span class="keyword">typename</span> SkipParser<span class="special">,</span> <span class="keyword">typename</span> Attribute<span class="special">&gt;</span> 
-    <span class="keyword">void</span> <a class="link" href="or_parser.html#idm30938-bb"><span class="identifier">call</span></a><span class="special">(</span><span class="identifier">Iter</span> <span class="special">&amp;</span><span class="special">,</span> <span class="identifier">Sentinel</span><span class="special">,</span> <span class="identifier">Context</span> <span class="keyword">const</span> <span class="special">&amp;</span><span class="special">,</span> <span class="identifier">SkipParser</span> <span class="keyword">const</span> <span class="special">&amp;</span><span class="special">,</span> 
-              <span class="emphasis"><em><span class="identifier">unspecified</span></em></span><span class="special">,</span> <span class="keyword">bool</span> <span class="special">&amp;</span><span class="special">,</span> <span class="identifier">Attribute</span> <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+    void <a class="link" href="or_parser.html#id159-bb"><span class="identifier">call</span></a><span class="special">(</span>Iter <span class="special">&amp;</span><span class="special">,</span> Sentinel<span class="special">,</span> Context const <span class="special">&amp;</span><span class="special">,</span> SkipParser const <span class="special">&amp;</span><span class="special">,</span> 
+              <span class="emphasis"><em><span class="identifier">unspecified</span></em></span><span class="special">,</span> bool <span class="special">&amp;</span><span class="special">,</span> Attribute <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
 
   <span class="comment">// public data members</span>
-  <span class="identifier">ParserTuple</span> <span class="identifier">parsers_</span><span class="special">;</span>
+  ParserTuple <span class="identifier">parsers_</span><span class="special">;</span>
 <span class="special">}</span><span class="special">;</span></pre></div>
 <div class="refsect1">
-<a name="idm34057"></a><h2>Description</h2>
+<a name="id34530"></a><h2>Description</h2>
 <p>Applies each parser in <code class="computeroutput">ParserTuple</code>, in order, stopping after the application of the first one that succeeds. The parse succeeds iff one of the sub-parsers succeeds. The attribute produced is a <code class="computeroutput">std::variant</code> over the types of attribute produced by the parsers in <code class="computeroutput">ParserTuple</code>. </p>
 <div class="refsect2">
-<a name="idm34063"></a><h3>
+<a name="id34536"></a><h3>
 <a name="boost.parser.or_parserconstruct-copy-destruct"></a><code class="computeroutput">or_parser</code> 
         public
        construct/copy/destruct</h3>
-<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><pre class="literallayout"><a name="idm30961-bb"></a><span class="identifier">or_parser</span><span class="special">(</span><span class="identifier">ParserTuple</span> parsers<span class="special">)</span><span class="special">;</span></pre></li></ol></div>
+<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><pre class="literallayout"><a name="id156-bb"></a><span class="identifier">or_parser</span><span class="special">(</span>ParserTuple parsers<span class="special">)</span><span class="special">;</span></pre></li></ol></div>
 </div>
 <div class="refsect2">
-<a name="idm34077"></a><h3>
-<a name="idm30917-bb"></a><code class="computeroutput">or_parser</code> public member functions</h3>
+<a name="id34549"></a><h3>
+<a name="id157-bb"></a><code class="computeroutput">or_parser</code> public member functions</h3>
 <div class="orderedlist"><ol class="orderedlist" type="1">
 <li class="listitem"><pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iter<span class="special">,</span> <span class="keyword">typename</span> Sentinel<span class="special">,</span> <span class="keyword">typename</span> Context<span class="special">,</span> 
          <span class="keyword">typename</span> SkipParser<span class="special">&gt;</span> 
-  <span class="keyword">auto</span> <a name="idm30918-bb"></a><span class="identifier">call</span><span class="special">(</span><span class="identifier">Iter</span> <span class="special">&amp;</span> first<span class="special">,</span> <span class="identifier">Sentinel</span> last<span class="special">,</span> <span class="identifier">Context</span> <span class="keyword">const</span> <span class="special">&amp;</span> context<span class="special">,</span> 
-            <span class="identifier">SkipParser</span> <span class="keyword">const</span> <span class="special">&amp;</span> skip<span class="special">,</span> <span class="emphasis"><em><span class="identifier">unspecified</span></em></span> flags<span class="special">,</span> <span class="keyword">bool</span> <span class="special">&amp;</span> success<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
+  auto <a name="id158-bb"></a><span class="identifier">call</span><span class="special">(</span>Iter <span class="special">&amp;</span> first<span class="special">,</span> Sentinel last<span class="special">,</span> Context const <span class="special">&amp;</span> context<span class="special">,</span> 
+            SkipParser const <span class="special">&amp;</span> skip<span class="special">,</span> <span class="emphasis"><em><span class="identifier">unspecified</span></em></span> flags<span class="special">,</span> bool <span class="special">&amp;</span> success<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
 <li class="listitem"><pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iter<span class="special">,</span> <span class="keyword">typename</span> Sentinel<span class="special">,</span> <span class="keyword">typename</span> Context<span class="special">,</span> 
          <span class="keyword">typename</span> SkipParser<span class="special">,</span> <span class="keyword">typename</span> Attribute<span class="special">&gt;</span> 
-  <span class="keyword">void</span> <a name="idm30938-bb"></a><span class="identifier">call</span><span class="special">(</span><span class="identifier">Iter</span> <span class="special">&amp;</span> first<span class="special">,</span> <span class="identifier">Sentinel</span> last<span class="special">,</span> <span class="identifier">Context</span> <span class="keyword">const</span> <span class="special">&amp;</span> context<span class="special">,</span> 
-            <span class="identifier">SkipParser</span> <span class="keyword">const</span> <span class="special">&amp;</span> skip<span class="special">,</span> <span class="emphasis"><em><span class="identifier">unspecified</span></em></span> flags<span class="special">,</span> <span class="keyword">bool</span> <span class="special">&amp;</span> success<span class="special">,</span> 
-            <span class="identifier">Attribute</span> <span class="special">&amp;</span> retval<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
+  void <a name="id159-bb"></a><span class="identifier">call</span><span class="special">(</span>Iter <span class="special">&amp;</span> first<span class="special">,</span> Sentinel last<span class="special">,</span> Context const <span class="special">&amp;</span> context<span class="special">,</span> 
+            SkipParser const <span class="special">&amp;</span> skip<span class="special">,</span> <span class="emphasis"><em><span class="identifier">unspecified</span></em></span> flags<span class="special">,</span> bool <span class="special">&amp;</span> success<span class="special">,</span> 
+            Attribute <span class="special">&amp;</span> retval<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
 </ol></div>
 </div>
 </div>

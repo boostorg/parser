@@ -1,0 +1,78 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Memory Allocation</title>
+<link rel="stylesheet" href="../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
+<link rel="up" href="../tutorial.html" title="Tutorial">
+<link rel="prev" href="error_handling_and_debugging.html" title="Error Handling and Debugging">
+<link rel="next" href="best_practices.html" title="Best Practices">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="error_handling_and_debugging.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="best_practices.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_parser.tutorial.memory_allocation"></a><a class="link" href="memory_allocation.html" title="Memory Allocation">Memory Allocation</a>
+</h3></div></div></div>
+<p>
+        Boost.Parser seldom allocates memory. The exceptions to this are:
+      </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+            <code class="computeroutput"><a class="link" href="../../boost/parser/symbols.html" title="Struct template symbols">symbols</a></code>
+            allocates memory for the symbol/attribute pairs it contains. If symbols
+            are added during the parse, allocations must also occur then. The data
+            structure used by <code class="computeroutput"><a class="link" href="../../boost/parser/symbols.html" title="Struct template symbols">symbols</a></code> is also a trie,
+            which is a node-based tree. So, lots of allocations are likely if you
+            use <code class="computeroutput"><a class="link" href="../../boost/parser/symbols.html" title="Struct template symbols">symbols</a></code>.
+          </li>
+<li class="listitem">
+            The error handlers that can take a file name allocate memory for the
+            file name, if one is provided.
+          </li>
+<li class="listitem">
+            If trace is turned on by passing <code class="computeroutput"><a class="link" href="../../boost/parser/trace.html" title="Type trace">boost::parser::trace</a>::on</code> to a top-level
+            parsing function, the names of parsers are allocated.
+          </li>
+<li class="listitem">
+            When a failed expectation is encountered (using <code class="computeroutput">operator&gt;</code>),
+            the name of the failed parser is placed into a <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span></code>,
+            which will usually cause an allocation.
+          </li>
+<li class="listitem">
+            <code class="computeroutput"><a class="link" href="../../boost/parser/string.html" title="Function template string">string()</a></code>'s attribute is a <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span></code>, the use of which implies allocation.
+            You can avoid this allocation by explicitly using a different string
+            type for the attribute that does not allocate.
+          </li>
+<li class="listitem">
+            The attribute for <code class="computeroutput"><a class="link" href="../../boost/parser/repeat_id13.html" title="Function template repeat">repeat</a>(p)</code> in
+            all its forms, including <code class="computeroutput">operator*</code>, <code class="computeroutput">operator+</code>,
+            and <code class="computeroutput">operator%</code>, is <code class="computeroutput">std::vector&lt;<span class="emphasis"><em><code class="literal">ATTR</code></em></span>(p)&gt;</code>,
+            the use of which implies allocation. You can avoid this allocation by
+            explicitly using a different sequence container for the attribute that
+            does not allocate. <code class="computeroutput">boost::container::static_vector</code> or C++26's
+            <code class="computeroutput">std::inplace_vector</code> may be useful as such replacements.
+          </li>
+</ul></div>
+<p>
+        With the exception of allocating the name of the parser that was expected
+        in a failed expectation situation, Boost.Parser does not does not allocate
+        unless you tell it to, by using <code class="computeroutput"><a class="link" href="../../boost/parser/symbols.html" title="Struct template symbols">symbols</a></code>, using a particular
+        error_handler, turning on trace, or parsing into attributes that allocate.
+      </p>
+</div>
+<div class="copyright-footer">Copyright © 2020 T. Zachary Laine<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+      </p>
+</div>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="error_handling_and_debugging.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="best_practices.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

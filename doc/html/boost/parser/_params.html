@@ -4,7 +4,7 @@
 <title>Function template _params</title>
 <link rel="stylesheet" href="../../boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
-<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser (Proposed)">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
 <link rel="up" href="../../header/boost/parser/parser_fwd_hpp.html" title="Header &lt;boost/parser/parser_fwd.hpp&gt;">
 <link rel="prev" href="_locals.html" title="Function template _locals">
 <link rel="next" href="_globals.html" title="Function template _globals">
@@ -24,9 +24,9 @@
 <div class="refsynopsisdiv"><pre class="synopsis"><span class="comment">// In header: &lt;<a class="link" href="../../header/boost/parser/parser_fwd_hpp.html" title="Header &lt;boost/parser/parser_fwd.hpp&gt;">boost/parser/parser_fwd.hpp</a>&gt;
 
 </span>
-<span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Context<span class="special">&gt;</span> <span class="keyword">decltype</span><span class="special">(</span><span class="keyword">auto</span><span class="special">)</span> <span class="identifier">_params</span><span class="special">(</span><span class="identifier">Context</span> <span class="keyword">const</span> <span class="special">&amp;</span> context<span class="special">)</span><span class="special">;</span></pre></div>
+<span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Context<span class="special">&gt;</span> decltype<span class="special">(</span>auto<span class="special">)</span> <span class="identifier">_params</span><span class="special">(</span>Context const <span class="special">&amp;</span> context<span class="special">)</span><span class="special">;</span></pre></div>
 <div class="refsect1">
-<a name="idm41458"></a><h2>Description</h2>
+<a name="id41200"></a><h2>Description</h2>
 <p>Returns a reference to one or more parameters passed to the bottommost rule <code class="computeroutput">r</code>, by using <code class="computeroutput">r</code> as <code class="computeroutput">r.with(param0, param1, ... paramN)</code>; multiple values will be stored within a <code class="computeroutput">parser::tuple</code>. Returns <code class="computeroutput">none</code> if there is no bottommost rule, or if that rule was not given any parameters. </p>
 </div>
 </div>

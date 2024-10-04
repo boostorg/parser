@@ -4,7 +4,7 @@
 <title>Class template utf16_view</title>
 <link rel="stylesheet" href="../../boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
-<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser (Proposed)">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
 <link rel="up" href="../../header/boost/parser/transcode_view_hpp.html" title="Header &lt;boost/parser/transcode_view.hpp&gt;">
 <link rel="prev" href="../../header/boost/parser/transcode_view_hpp.html" title="Header &lt;boost/parser/transcode_view.hpp&gt;">
 <link rel="next" href="utf32_view.html" title="Class template utf32_view">
@@ -27,29 +27,29 @@
 <span class="keyword">class</span> <a class="link" href="utf16_view.html" title="Class template utf16_view">utf16_view</a> <span class="special">{</span>
 <span class="keyword">public</span><span class="special">:</span>
   <span class="comment">// <a class="link" href="utf16_view.html#boost.parser.utf16_viewconstruct-copy-destruct">construct/copy/destruct</a></span>
-  <a class="link" href="utf16_view.html#idm34223-bb"><span class="identifier">utf16_view</span></a><span class="special">(</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span>
-  <a class="link" href="utf16_view.html#idm34224-bb"><span class="identifier">utf16_view</span></a><span class="special">(</span><span class="identifier">V</span><span class="special">)</span><span class="special">;</span>
+  <a class="link" href="utf16_view.html#id295-bb"><span class="identifier">utf16_view</span></a><span class="special">(</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span>
+  <a class="link" href="utf16_view.html#id296-bb"><span class="identifier">utf16_view</span></a><span class="special">(</span><span class="identifier">V</span><span class="special">)</span><span class="special">;</span>
 <span class="special">}</span><span class="special">;</span></pre></div>
 <div class="refsect1">
-<a name="idm44870"></a><h2>Description</h2>
+<a name="id44302"></a><h2>Description</h2>
 <p>A view that produces UTF-16 from an given sequence of UTF.</p>
 <p>
 </p>
 <div class="refsect2">
-<a name="idm44874"></a><h3>Template Parameters</h3>
+<a name="id44306"></a><h3>Template Parameters</h3>
 <div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem">
 <pre class="literallayout"><span class="identifier">unspecified</span> V</pre>
 <p>Constrained by <code class="computeroutput">std::ranges::view&lt;V&gt;</code>. Additionally, the value type of <code class="computeroutput">V</code> must be <code class="computeroutput">char</code>, <code class="computeroutput">wchar_t</code>, <code class="computeroutput">char8_t</code>, <code class="computeroutput">char16_t</code>, or <code class="computeroutput">char32_t</code>. </p>
 </li></ol></div>
 </div>
 <div class="refsect2">
-<a name="idm44890"></a><h3>
+<a name="id44322"></a><h3>
 <a name="boost.parser.utf16_viewconstruct-copy-destruct"></a><code class="computeroutput">utf16_view</code> 
         public
        construct/copy/destruct</h3>
 <div class="orderedlist"><ol class="orderedlist" type="1">
-<li class="listitem"><pre class="literallayout"><a name="idm34223-bb"></a><span class="identifier">utf16_view</span><span class="special">(</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span></pre></li>
-<li class="listitem"><pre class="literallayout"><a name="idm34224-bb"></a><span class="identifier">utf16_view</span><span class="special">(</span><span class="identifier">V</span> base<span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><a name="id295-bb"></a><span class="identifier">utf16_view</span><span class="special">(</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><a name="id296-bb"></a><span class="identifier">utf16_view</span><span class="special">(</span><span class="identifier">V</span> base<span class="special">)</span><span class="special">;</span></pre></li>
 </ol></div>
 </div>
 </div>

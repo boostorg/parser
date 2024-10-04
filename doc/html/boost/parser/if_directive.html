@@ -4,7 +4,7 @@
 <title>Struct template if_directive</title>
 <link rel="stylesheet" href="../../boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
-<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser (Proposed)">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
 <link rel="up" href="../../header/boost/parser/parser_hpp.html" title="Header &lt;boost/parser/parser.hpp&gt;">
 <link rel="prev" href="directive.html" title="Struct template directive">
 <link rel="next" href="merge_directive.html" title="Struct merge_directive">
@@ -26,21 +26,21 @@
 </span><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Predicate<span class="special">&gt;</span> 
 <span class="keyword">struct</span> <a class="link" href="if_directive.html" title="Struct template if_directive">if_directive</a> <span class="special">{</span>
 
-  <span class="comment">// <a class="link" href="if_directive.html#idm30534-bb">public member functions</a></span>
+  <span class="comment">// <a class="link" href="if_directive.html#id100-bb">public member functions</a></span>
   <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Parser2<span class="special">&gt;</span> 
-    <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="link" href="if_directive.html#idm30535-bb"><span class="keyword">operator</span><span class="special">[</span><span class="special">]</span></a><span class="special">(</span><a class="link" href="parser_interface.html" title="Struct template parser_interface">parser_interface</a><span class="special">&lt;</span> <span class="identifier">Parser2</span> <span class="special">&gt;</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
+    constexpr auto <a class="link" href="if_directive.html#id101-bb"><span class="keyword">operator</span><span class="special">[</span><span class="special">]</span></a><span class="special">(</span><a class="link" href="parser_interface.html" title="Struct template parser_interface">parser_interface</a><span class="special">&lt;</span> Parser2 <span class="special">&gt;</span><span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span>
 
   <span class="comment">// public data members</span>
-  <span class="identifier">Predicate</span> <span class="identifier">pred_</span><span class="special">;</span>
+  Predicate <span class="identifier">pred_</span><span class="special">;</span>
 <span class="special">}</span><span class="special">;</span></pre></div>
 <div class="refsect1">
-<a name="idm32191"></a><h2>Description</h2>
+<a name="id32880"></a><h2>Description</h2>
 <p>Represents a sequence parser, the first parser of which is an <code class="computeroutput">epsilon_parser</code> with predicate, as a directive (e.g. <code class="computeroutput">if_(pred)[p]</code>). </p>
 <div class="refsect2">
-<a name="idm32196"></a><h3>
-<a name="idm30534-bb"></a><code class="computeroutput">if_directive</code> public member functions</h3>
+<a name="id32885"></a><h3>
+<a name="id100-bb"></a><code class="computeroutput">if_directive</code> public member functions</h3>
 <div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Parser2<span class="special">&gt;</span> 
-  <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a name="idm30535-bb"></a><span class="keyword">operator</span><span class="special">[</span><span class="special">]</span><span class="special">(</span><a class="link" href="parser_interface.html" title="Struct template parser_interface">parser_interface</a><span class="special">&lt;</span> <span class="identifier">Parser2</span> <span class="special">&gt;</span> rhs<span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span></pre></li></ol></div>
+  constexpr auto <a name="id101-bb"></a><span class="keyword">operator</span><span class="special">[</span><span class="special">]</span><span class="special">(</span><a class="link" href="parser_interface.html" title="Struct template parser_interface">parser_interface</a><span class="special">&lt;</span> Parser2 <span class="special">&gt;</span> rhs<span class="special">)</span> <span class="keyword">const</span> <span class="keyword">noexcept</span><span class="special">;</span></pre></li></ol></div>
 </div>
 </div>
 </div>

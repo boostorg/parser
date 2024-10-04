@@ -4,7 +4,7 @@
 <title>Global cu</title>
 <link rel="stylesheet" href="../../boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
-<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser (Proposed)">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
 <link rel="up" href="../../header/boost/parser/parser_hpp.html" title="Header &lt;boost/parser/parser.hpp&gt;">
 <link rel="prev" href="cp.html" title="Global cp">
 <link rel="next" href="quoted_string.html" title="Global quoted_string">
@@ -25,7 +25,7 @@
 
 </span><span class="emphasis"><em><span class="identifier">unspecified</span></em></span> cu<span class="special">;</span></pre></div>
 <div class="refsect1">
-<a name="idm37176"></a><h2>Description</h2>
+<a name="id37336"></a><h2>Description</h2>
 <p>The code unit parser. It produces a <code class="computeroutput">char</code> attribute. Used as-is, <code class="computeroutput">cu</code> matches any code point. <code class="computeroutput">cu</code> can also can be used to create code point parsers that match one or more specific code point values, by calling it with: a single value comparable to a code point; a closed range of code point values <code class="computeroutput">[lo, hi]</code>, or a set of code point values passed as a range. When calling with a range, only the iterators that bound the range are stored. Make sure the range you pass outlives the use of the resulting parser. Note that a string literal is a range, and that it outlives any parser it is used to construct. </p>
 </div>
 </div>

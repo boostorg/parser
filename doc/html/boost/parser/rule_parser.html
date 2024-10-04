@@ -4,7 +4,7 @@
 <title>Struct template rule_parser</title>
 <link rel="stylesheet" href="../../boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
-<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser (Proposed)">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
 <link rel="up" href="../../header/boost/parser/parser_fwd_hpp.html" title="Header &lt;boost/parser/parser_fwd.hpp&gt;">
 <link rel="prev" href="rule.html" title="Struct template rule">
 <link rel="next" href="seq_parser.html" title="Struct template seq_parser">
@@ -28,7 +28,7 @@
 <span class="keyword">struct</span> <a class="link" href="rule_parser.html" title="Struct template rule_parser">rule_parser</a> <span class="special">{</span>
 <span class="special">}</span><span class="special">;</span></pre></div>
 <div class="refsect1">
-<a name="idm40802"></a><h2>Description</h2>
+<a name="id40583"></a><h2>Description</h2>
 <p>Applies another parser <code class="computeroutput">p</code>, associated with this parser via <code class="computeroutput">TagType</code>. The attribute produced is <code class="computeroutput">Attribute</code>. Both a default-constructed object of type <code class="computeroutput">LocalState</code>, and a default-constructed object of type <code class="computeroutput">ParamsTuple</code>, are added to the parse context before the associated parser is applied. The parse succeeds iff <code class="computeroutput">p</code> succeeds. If <code class="computeroutput">CanUseCallbacks</code> is <code class="computeroutput">true</code>, and if this parser is used within a call to <code class="computeroutput">callback_parse()</code>, the attribute is produced via callback; otherwise, the attribute is produced as normal (as a return value, or as an out-param). The rule may be constructed with user-friendly diagnostic text that will appear if the top-level parse is executed with <code class="computeroutput">trace_mode == boost::parser::trace::on</code>. </p>
 </div>
 </div>

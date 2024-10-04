@@ -1,0 +1,151 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Terminology</title>
+<link rel="stylesheet" href="../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
+<link rel="up" href="../tutorial.html" title="Tutorial">
+<link rel="prev" href="../tutorial.html" title="Tutorial">
+<link rel="next" href="hello__whomever.html" title="Hello, Whomever">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="../tutorial.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="hello__whomever.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_parser.tutorial.terminology"></a><a class="link" href="terminology.html" title="Terminology">Terminology</a>
+</h3></div></div></div>
+<p>
+        First, let's cover some terminology that we'll be using throughout the docs:
+      </p>
+<p>
+        A <span class="emphasis"><em>semantic action</em></span> is an arbitrary bit of logic associated
+        with a parser, that is only executed when the parser matches.
+      </p>
+<p>
+        Simpler parsers can be combined to form more complex parsers. Given some
+        combining operation <code class="computeroutput"><span class="identifier">C</span></code>, and
+        parsers <code class="computeroutput"><span class="identifier">P0</span></code>, <code class="computeroutput"><span class="identifier">P1</span></code>, ... <code class="computeroutput"><span class="identifier">PN</span></code>,
+        <code class="computeroutput"><span class="identifier">C</span><span class="special">(</span><span class="identifier">P0</span><span class="special">,</span> <span class="identifier">P1</span><span class="special">,</span> <span class="special">...</span> <span class="identifier">PN</span><span class="special">)</span></code> creates a new parser <code class="computeroutput"><span class="identifier">Q</span></code>.
+        This creates a <span class="emphasis"><em>parse tree</em></span>. <code class="computeroutput"><span class="identifier">Q</span></code>
+        is the parent of <code class="computeroutput"><span class="identifier">P1</span></code>, <code class="computeroutput"><span class="identifier">P2</span></code> is the child of <code class="computeroutput"><span class="identifier">Q</span></code>,
+        etc. The parsers are applied in the top-down fashion implied by this topology.
+        When you use <code class="computeroutput"><span class="identifier">Q</span></code> to parse a
+        string, it will use <code class="computeroutput"><span class="identifier">P0</span></code>,
+        <code class="computeroutput"><span class="identifier">P1</span></code>, etc. to do the actual
+        work. If <code class="computeroutput"><span class="identifier">P3</span></code> is being used
+        to parse the input, that means that <code class="computeroutput"><span class="identifier">Q</span></code>
+        is as well, since the way <code class="computeroutput"><span class="identifier">Q</span></code>
+        parses is by dispatching to its children to do some or all of the work. At
+        any point in the parse, there will be exactly one parser without children
+        that is being used to parse the input; all other parsers being used are its
+        ancestors in the parse tree.
+      </p>
+<p>
+        A <span class="emphasis"><em>subparser</em></span> is a parser that is the child of another
+        parser.
+      </p>
+<p>
+        The <span class="emphasis"><em>top-level parser</em></span> is the root of the tree of parsers.
+      </p>
+<p>
+        The <span class="emphasis"><em>current parser</em></span> or <span class="emphasis"><em>bottommost parser</em></span>
+        is the parser with no children that is currently being used to parse the
+        input.
+      </p>
+<p>
+        A <span class="emphasis"><em>rule</em></span> is a kind of parser that makes building large,
+        complex parsers easier. A <span class="emphasis"><em>subrule</em></span> is a rule that is
+        the child of some other rule. The <span class="emphasis"><em>current rule</em></span> or <span class="emphasis"><em>bottommost
+        rule</em></span> is the one rule currently being used to parse the input that
+        has no subrules. Note that while there is always exactly one current parser,
+        there may or may not be a current rule — rules are one kind of parser,
+        and you may or may not be using one at a given point in the parse.
+      </p>
+<p>
+        The <span class="emphasis"><em>top-level parse</em></span> is the parse operation being performed
+        by the top-level parser. This term is necessary because, though most parse
+        failures are local to a particular parser, some parse failures cause the
+        call to <code class="computeroutput"><a class="link" href="../../boost/parser/parse_id2.html" title="Function template parse">parse()</a></code> to indicate failure of the
+        entire parse. For these cases, we say that such a local failure "causes
+        the top-level parse to fail".
+      </p>
+<p>
+        Throughout the Boost.Parser documentation, I will refer to "the call
+        to <code class="computeroutput"><a class="link" href="../../boost/parser/parse_id2.html" title="Function template parse">parse()</a></code>". Read this as "the
+        call to any one of the functions described in <a class="link" href="the__parse____api.html" title="The parse() API">The
+        <code class="computeroutput"><span class="identifier">parse</span><span class="special">()</span></code>
+        API</a>". That includes <code class="computeroutput"><a class="link" href="../../boost/parser/prefix_parse_id15.html" title="Function template prefix_parse">prefix_parse()</a></code>,
+        <code class="computeroutput"><a class="link" href="../../boost/parser/callback_parse_id6.html" title="Function template callback_parse">callback_parse()</a></code>, and <code class="computeroutput"><a class="link" href="../../boost/parser/callback_prefix_parse_id19.html" title="Function template callback_prefix_parse">callback_prefix_parse()</a></code>.
+      </p>
+<p>
+        There are some special kinds of parsers that come up often in this documentation.
+      </p>
+<p>
+        One is a <span class="emphasis"><em>sequence parser</em></span>; you will see it created using
+        <code class="computeroutput"><span class="keyword">operator</span><span class="special">&gt;&gt;</span></code>,
+        as in <code class="computeroutput"><span class="identifier">p1</span> <span class="special">&gt;&gt;</span>
+        <span class="identifier">p2</span> <span class="special">&gt;&gt;</span>
+        <span class="identifier">p3</span></code>. A sequence parser tries to
+        match all of its subparsers to the input, one at a time, in order. It matches
+        the input iff all its subparsers do.
+      </p>
+<p>
+        Another is an <span class="emphasis"><em>alternative parser</em></span>; you will see it created
+        using <code class="computeroutput"><span class="keyword">operator</span><span class="special">|</span></code>,
+        as in <code class="computeroutput"><span class="identifier">p1</span> <span class="special">|</span>
+        <span class="identifier">p2</span> <span class="special">|</span>
+        <span class="identifier">p3</span></code>. An alternative parser tries
+        to match all of its subparsers to the input, one at a time, in order; it
+        stops after matching at most one subparser. It matches the input iff one
+        of its subparsers does.
+      </p>
+<p>
+        Finally, there is a <span class="emphasis"><em>permutation parser</em></span>; it is created
+        using <code class="computeroutput"><span class="keyword">operator</span><span class="special">||</span></code>,
+        as in <code class="computeroutput"><span class="identifier">p1</span> <span class="special">||</span>
+        <span class="identifier">p2</span> <span class="special">||</span>
+        <span class="identifier">p3</span></code>. A permutation parser tries
+        to match all of its subparsers to the input, in any order. So the parser
+        <code class="computeroutput"><span class="identifier">p1</span> <span class="special">||</span>
+        <span class="identifier">p2</span> <span class="special">||</span>
+        <span class="identifier">p3</span></code> is equivalent to <code class="computeroutput"><span class="special">(</span><span class="identifier">p1</span> <span class="special">&gt;&gt;</span>
+        <span class="identifier">p2</span> <span class="special">&gt;&gt;</span>
+        <span class="identifier">p3</span><span class="special">)</span> <span class="special">|</span> <span class="special">(</span><span class="identifier">p1</span>
+        <span class="special">&gt;&gt;</span> <span class="identifier">p3</span>
+        <span class="special">&gt;&gt;</span> <span class="identifier">p2</span><span class="special">)</span> <span class="special">|</span> <span class="special">(</span><span class="identifier">p2</span> <span class="special">&gt;&gt;</span> <span class="identifier">p1</span> <span class="special">&gt;&gt;</span> <span class="identifier">p3</span><span class="special">)</span> <span class="special">|</span>
+        <span class="special">(</span><span class="identifier">p2</span> <span class="special">&gt;&gt;</span> <span class="identifier">p3</span> <span class="special">&gt;&gt;</span> <span class="identifier">p1</span><span class="special">)</span> <span class="special">|</span> <span class="special">(</span><span class="identifier">p3</span> <span class="special">&gt;&gt;</span> <span class="identifier">p1</span> <span class="special">&gt;&gt;</span> <span class="identifier">p2</span><span class="special">)</span> <span class="special">|</span>
+        <span class="special">(</span><span class="identifier">p3</span> <span class="special">&gt;&gt;</span> <span class="identifier">p2</span> <span class="special">&gt;&gt;</span> <span class="identifier">p1</span><span class="special">)</span></code>. Hopefully its terseness is self-explanatory.
+        It matches the input iff all of its subparsers do, regardless of the order
+        they match in.
+      </p>
+<p>
+        Boost.Parser parsers each have an <span class="emphasis"><em>attribute</em></span> associated
+        with them, or explicitly have no attribute. An attribute is a value that
+        the parser generates when it matches the input. For instance, the parser
+        <code class="computeroutput"><a class="link" href="../../boost/parser/double_.html" title="Global double_">double_</a></code>
+        generates a <code class="computeroutput"><span class="keyword">double</span></code> when it matches
+        the input. <span class="emphasis"><em><code class="literal">ATTR</code></em></span><code class="computeroutput"><span class="special">()</span></code>
+        is a notional macro that expands to the attribute type of the parser passed
+        to it; <code class="computeroutput"><span class="emphasis"><em><code class="literal">ATTR</code></em></span><span class="special">(</span><a class="link" href="../../boost/parser/double_.html" title="Global double_">double_</a><span class="special">)</span></code> is <code class="computeroutput"><span class="keyword">double</span></code>.
+        This is similar to the <code class="computeroutput"><a class="link" href="../../boost/parser/attribute.html" title="Struct template attribute">attribute</a></code> type trait.
+      </p>
+<p>
+        Next, we'll look at some simple programs that parse using Boost.Parser. We'll
+        start small and build up from there.
+      </p>
+</div>
+<div class="copyright-footer">Copyright © 2020 T. Zachary Laine<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+      </p>
+</div>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="../tutorial.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="hello__whomever.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

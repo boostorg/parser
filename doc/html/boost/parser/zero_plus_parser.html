@@ -4,7 +4,7 @@
 <title>Struct template zero_plus_parser</title>
 <link rel="stylesheet" href="../../boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
-<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser (Proposed)">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
 <link rel="up" href="../../header/boost/parser/parser_hpp.html" title="Header &lt;boost/parser/parser.hpp&gt;">
 <link rel="prev" href="transform_directive.html" title="Struct template transform_directive">
 <link rel="next" href="trace.html" title="Type trace">
@@ -26,17 +26,17 @@
 </span><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Parser<span class="special">&gt;</span> 
 <span class="keyword">struct</span> <a class="link" href="zero_plus_parser.html" title="Struct template zero_plus_parser">zero_plus_parser</a> <span class="special">:</span> <span class="keyword">public</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">parser</span><span class="special">::</span><span class="identifier">repeat_parser</span><span class="special">&lt;</span> <span class="identifier">Parser</span> <span class="special">&gt;</span> <span class="special">{</span>
   <span class="comment">// <a class="link" href="zero_plus_parser.html#boost.parser.zero_plus_parserconstruct-copy-destruct">construct/copy/destruct</a></span>
-  <a class="link" href="zero_plus_parser.html#idm31721-bb"><span class="identifier">zero_plus_parser</span></a><span class="special">(</span><span class="identifier">Parser</span><span class="special">)</span><span class="special">;</span>
+  <a class="link" href="zero_plus_parser.html#id225-bb"><span class="identifier">zero_plus_parser</span></a><span class="special">(</span>Parser<span class="special">)</span><span class="special">;</span>
 <span class="special">}</span><span class="special">;</span></pre></div>
 <div class="refsect1">
-<a name="idm36783"></a><h2>Description</h2>
+<a name="id36972"></a><h2>Description</h2>
 <p>Repeats the application of another parser <code class="computeroutput">p</code> of type <code class="computeroutput">Parser</code>, <code class="computeroutput">[0, Inf)</code> times. The parse always succeeds. The attribute produced is a sequence of the type of attribute produced by <code class="computeroutput">Parser</code>. </p>
 <div class="refsect2">
-<a name="idm36790"></a><h3>
+<a name="id36979"></a><h3>
 <a name="boost.parser.zero_plus_parserconstruct-copy-destruct"></a><code class="computeroutput">zero_plus_parser</code> 
         public
        construct/copy/destruct</h3>
-<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><pre class="literallayout"><a name="idm31721-bb"></a><span class="identifier">zero_plus_parser</span><span class="special">(</span><span class="identifier">Parser</span> parser<span class="special">)</span><span class="special">;</span></pre></li></ol></div>
+<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><pre class="literallayout"><a name="id225-bb"></a><span class="identifier">zero_plus_parser</span><span class="special">(</span>Parser parser<span class="special">)</span><span class="special">;</span></pre></li></ol></div>
 </div>
 </div>
 </div>

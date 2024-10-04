@@ -4,7 +4,7 @@
 <title>Struct rethrow_error_handler</title>
 <link rel="stylesheet" href="../../boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
-<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser (Proposed)">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
 <link rel="up" href="../../header/boost/parser/error_handling_hpp.html" title="Header &lt;boost/parser/error_handling.hpp&gt;">
 <link rel="prev" href="callback_error_handler.html" title="Struct callback_error_handler">
 <link rel="next" href="vs_output_error_handler.html" title="Struct vs_output_error_handler">
@@ -26,31 +26,31 @@
 </span>
 <span class="keyword">struct</span> <a class="link" href="rethrow_error_handler.html" title="Struct rethrow_error_handler">rethrow_error_handler</a> <span class="special">{</span>
 
-  <span class="comment">// <a class="link" href="rethrow_error_handler.html#idm30076-bb">public member functions</a></span>
+  <span class="comment">// <a class="link" href="rethrow_error_handler.html#id44-bb">public member functions</a></span>
   <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iter<span class="special">,</span> <span class="keyword">typename</span> Sentinel<span class="special">&gt;</span> 
     <span class="identifier">error_handler_result</span> 
-    <a class="link" href="rethrow_error_handler.html#idm30077-bb"><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span></a><span class="special">(</span><span class="identifier">Iter</span><span class="special">,</span> <span class="identifier">Sentinel</span><span class="special">,</span> <a class="link" href="parse_error.html" title="Struct template parse_error">parse_error</a><span class="special">&lt;</span> <span class="identifier">Iter</span> <span class="special">&gt;</span> <span class="keyword">const</span> <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+    <a class="link" href="rethrow_error_handler.html#id45-bb"><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span></a><span class="special">(</span>Iter<span class="special">,</span> Sentinel<span class="special">,</span> <a class="link" href="parse_error.html" title="Struct template parse_error">parse_error</a><span class="special">&lt;</span> Iter <span class="special">&gt;</span> const <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
   <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Context<span class="special">,</span> <span class="keyword">typename</span> Iter<span class="special">&gt;</span> 
-    <span class="keyword">void</span> <a class="link" href="rethrow_error_handler.html#idm30089-bb"><span class="identifier">diagnose</span></a><span class="special">(</span><span class="identifier">diagnostic_kind</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span><span class="special">,</span> <span class="identifier">Context</span> <span class="keyword">const</span> <span class="special">&amp;</span><span class="special">,</span> <span class="identifier">Iter</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+    void <a class="link" href="rethrow_error_handler.html#id46-bb"><span class="identifier">diagnose</span></a><span class="special">(</span><span class="identifier">diagnostic_kind</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span><span class="special">,</span> Context const <span class="special">&amp;</span><span class="special">,</span> Iter<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
   <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Context<span class="special">&gt;</span> 
-    <span class="keyword">void</span> <a class="link" href="rethrow_error_handler.html#idm30102-bb"><span class="identifier">diagnose</span></a><span class="special">(</span><span class="identifier">diagnostic_kind</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span><span class="special">,</span> <span class="identifier">Context</span> <span class="keyword">const</span> <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+    void <a class="link" href="rethrow_error_handler.html#id47-bb"><span class="identifier">diagnose</span></a><span class="special">(</span><span class="identifier">diagnostic_kind</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span><span class="special">,</span> Context const <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
 <span class="special">}</span><span class="special">;</span></pre></div>
 <div class="refsect1">
-<a name="idm28588"></a><h2>Description</h2>
+<a name="id29766"></a><h2>Description</h2>
 <p>An error handler that just re-throws any exception generated by the parse. </p>
 <div class="refsect2">
-<a name="idm28591"></a><h3>
-<a name="idm30076-bb"></a><code class="computeroutput">rethrow_error_handler</code> public member functions</h3>
+<a name="id29769"></a><h3>
+<a name="id44-bb"></a><code class="computeroutput">rethrow_error_handler</code> public member functions</h3>
 <div class="orderedlist"><ol class="orderedlist" type="1">
 <li class="listitem"><pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iter<span class="special">,</span> <span class="keyword">typename</span> Sentinel<span class="special">&gt;</span> 
   <span class="identifier">error_handler_result</span> 
-  <a name="idm30077-bb"></a><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span><span class="special">(</span><span class="identifier">Iter</span> first<span class="special">,</span> <span class="identifier">Sentinel</span> last<span class="special">,</span> <a class="link" href="parse_error.html" title="Struct template parse_error">parse_error</a><span class="special">&lt;</span> <span class="identifier">Iter</span> <span class="special">&gt;</span> <span class="keyword">const</span> <span class="special">&amp;</span> e<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
+  <a name="id45-bb"></a><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span><span class="special">(</span>Iter first<span class="special">,</span> Sentinel last<span class="special">,</span> <a class="link" href="parse_error.html" title="Struct template parse_error">parse_error</a><span class="special">&lt;</span> Iter <span class="special">&gt;</span> const <span class="special">&amp;</span> e<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
 <li class="listitem"><pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Context<span class="special">,</span> <span class="keyword">typename</span> Iter<span class="special">&gt;</span> 
-  <span class="keyword">void</span> <a name="idm30089-bb"></a><span class="identifier">diagnose</span><span class="special">(</span><span class="identifier">diagnostic_kind</span> kind<span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span> message<span class="special">,</span> 
-                <span class="identifier">Context</span> <span class="keyword">const</span> <span class="special">&amp;</span> context<span class="special">,</span> <span class="identifier">Iter</span> it<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
+  void <a name="id46-bb"></a><span class="identifier">diagnose</span><span class="special">(</span><span class="identifier">diagnostic_kind</span> kind<span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span> message<span class="special">,</span> 
+                Context const <span class="special">&amp;</span> context<span class="special">,</span> Iter it<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
 <li class="listitem"><pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Context<span class="special">&gt;</span> 
-  <span class="keyword">void</span> <a name="idm30102-bb"></a><span class="identifier">diagnose</span><span class="special">(</span><span class="identifier">diagnostic_kind</span> kind<span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span> message<span class="special">,</span> 
-                <span class="identifier">Context</span> <span class="keyword">const</span> <span class="special">&amp;</span> context<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
+  void <a name="id47-bb"></a><span class="identifier">diagnose</span><span class="special">(</span><span class="identifier">diagnostic_kind</span> kind<span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span> message<span class="special">,</span> 
+                Context const <span class="special">&amp;</span> context<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
 </ol></div>
 </div>
 </div>

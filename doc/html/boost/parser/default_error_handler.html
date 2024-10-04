@@ -4,7 +4,7 @@
 <title>Struct default_error_handler</title>
 <link rel="stylesheet" href="../../boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
-<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser (Proposed)">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
 <link rel="up" href="../../header/boost/parser/error_handling_fwd_hpp.html" title="Header &lt;boost/parser/error_handling_fwd.hpp&gt;">
 <link rel="prev" href="../../header/boost/parser/error_handling_fwd_hpp.html" title="Header &lt;boost/parser/error_handling_fwd.hpp&gt;">
 <link rel="next" href="line_position.html" title="Struct template line_position">
@@ -26,47 +26,47 @@
 </span>
 <span class="keyword">struct</span> <a class="link" href="default_error_handler.html" title="Struct default_error_handler">default_error_handler</a> <span class="special">{</span>
   <span class="comment">// <a class="link" href="default_error_handler.html#boost.parser.default_error_handlerconstruct-copy-destruct">construct/copy/destruct</a></span>
-  <a class="link" href="default_error_handler.html#idm30264-bb"><span class="identifier">default_error_handler</span></a><span class="special">(</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span>
+  <a class="link" href="default_error_handler.html#id53-bb"><span class="identifier">default_error_handler</span></a><span class="special">(</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span>
 
-  <span class="comment">// <a class="link" href="default_error_handler.html#idm30211-bb">public member functions</a></span>
+  <span class="comment">// <a class="link" href="default_error_handler.html#id54-bb">public member functions</a></span>
   <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iter<span class="special">,</span> <span class="keyword">typename</span> Sentinel<span class="special">&gt;</span> 
     <span class="identifier">error_handler_result</span> 
-    <a class="link" href="default_error_handler.html#idm30212-bb"><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span></a><span class="special">(</span><span class="identifier">Iter</span><span class="special">,</span> <span class="identifier">Sentinel</span><span class="special">,</span> <a class="link" href="parse_error.html" title="Struct template parse_error">parse_error</a><span class="special">&lt;</span> <span class="identifier">Iter</span> <span class="special">&gt;</span> <span class="keyword">const</span> <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+    <a class="link" href="default_error_handler.html#id55-bb"><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span></a><span class="special">(</span>Iter<span class="special">,</span> Sentinel<span class="special">,</span> <a class="link" href="parse_error.html" title="Struct template parse_error">parse_error</a><span class="special">&lt;</span> Iter <span class="special">&gt;</span> const <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
   <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Context<span class="special">,</span> <span class="keyword">typename</span> Iter<span class="special">&gt;</span> 
-    <span class="keyword">void</span> <a class="link" href="default_error_handler.html#idm30230-bb"><span class="identifier">diagnose</span></a><span class="special">(</span><span class="identifier">diagnostic_kind</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span><span class="special">,</span> <span class="identifier">Context</span> <span class="keyword">const</span> <span class="special">&amp;</span><span class="special">,</span> <span class="identifier">Iter</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+    void <a class="link" href="default_error_handler.html#id56-bb"><span class="identifier">diagnose</span></a><span class="special">(</span><span class="identifier">diagnostic_kind</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span><span class="special">,</span> Context const <span class="special">&amp;</span><span class="special">,</span> Iter<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
   <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Context<span class="special">&gt;</span> 
-    <span class="keyword">void</span> <a class="link" href="default_error_handler.html#idm30249-bb"><span class="identifier">diagnose</span></a><span class="special">(</span><span class="identifier">diagnostic_kind</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span><span class="special">,</span> <span class="identifier">Context</span> <span class="keyword">const</span> <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+    void <a class="link" href="default_error_handler.html#id57-bb"><span class="identifier">diagnose</span></a><span class="special">(</span><span class="identifier">diagnostic_kind</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span><span class="special">,</span> Context const <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
 <span class="special">}</span><span class="special">;</span></pre></div>
 <div class="refsect1">
-<a name="idm29151"></a><h2>Description</h2>
+<a name="id30272"></a><h2>Description</h2>
 <p>The error handler used when the user does not specify a custom one. This error handler prints warnings and errors to <code class="computeroutput">std::cerr</code>, and does not have an associcated filename. </p>
 <div class="refsect2">
-<a name="idm29155"></a><h3>
+<a name="id30276"></a><h3>
 <a name="boost.parser.default_error_handlerconstruct-copy-destruct"></a><code class="computeroutput">default_error_handler</code> 
         public
        construct/copy/destruct</h3>
-<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><pre class="literallayout"><a name="idm30264-bb"></a><span class="identifier">default_error_handler</span><span class="special">(</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span></pre></li></ol></div>
+<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><pre class="literallayout"><a name="id53-bb"></a><span class="identifier">default_error_handler</span><span class="special">(</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span></pre></li></ol></div>
 </div>
 <div class="refsect2">
-<a name="idm29170"></a><h3>
-<a name="idm30211-bb"></a><code class="computeroutput">default_error_handler</code> public member functions</h3>
+<a name="id30291"></a><h3>
+<a name="id54-bb"></a><code class="computeroutput">default_error_handler</code> public member functions</h3>
 <div class="orderedlist"><ol class="orderedlist" type="1">
 <li class="listitem">
 <pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iter<span class="special">,</span> <span class="keyword">typename</span> Sentinel<span class="special">&gt;</span> 
   <span class="identifier">error_handler_result</span> 
-  <a name="idm30212-bb"></a><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span><span class="special">(</span><span class="identifier">Iter</span> first<span class="special">,</span> <span class="identifier">Sentinel</span> last<span class="special">,</span> <a class="link" href="parse_error.html" title="Struct template parse_error">parse_error</a><span class="special">&lt;</span> <span class="identifier">Iter</span> <span class="special">&gt;</span> <span class="keyword">const</span> <span class="special">&amp;</span> e<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre>
+  <a name="id55-bb"></a><span class="keyword">operator</span><span class="special">(</span><span class="special">)</span><span class="special">(</span>Iter first<span class="special">,</span> Sentinel last<span class="special">,</span> <a class="link" href="parse_error.html" title="Struct template parse_error">parse_error</a><span class="special">&lt;</span> Iter <span class="special">&gt;</span> const <span class="special">&amp;</span> e<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre>
 <p>Handles a <code class="computeroutput"><code class="computeroutput"><a class="link" href="parse_error.html" title="Struct template parse_error">parse_error</a></code></code> exception thrown during parsing. A formatted parse-expectation failure is printed to <code class="computeroutput">std::cerr</code>. Always returns <code class="computeroutput">error_handler_result::fail</code>. </p>
 </li>
 <li class="listitem">
 <pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Context<span class="special">,</span> <span class="keyword">typename</span> Iter<span class="special">&gt;</span> 
-  <span class="keyword">void</span> <a name="idm30230-bb"></a><span class="identifier">diagnose</span><span class="special">(</span><span class="identifier">diagnostic_kind</span> kind<span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span> message<span class="special">,</span> 
-                <span class="identifier">Context</span> <span class="keyword">const</span> <span class="special">&amp;</span> context<span class="special">,</span> <span class="identifier">Iter</span> it<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre>
+  void <a name="id56-bb"></a><span class="identifier">diagnose</span><span class="special">(</span><span class="identifier">diagnostic_kind</span> kind<span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span> message<span class="special">,</span> 
+                Context const <span class="special">&amp;</span> context<span class="special">,</span> Iter it<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre>
 <p>Prints <code class="computeroutput">message</code> to <code class="computeroutput">std::cerr</code>. The diagnostic is printed with the given <code class="computeroutput">kind</code>, indicating the location as being at <code class="computeroutput">it</code>. This must be called within a parser semantic action, providing the parse context. </p>
 </li>
 <li class="listitem">
 <pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Context<span class="special">&gt;</span> 
-  <span class="keyword">void</span> <a name="idm30249-bb"></a><span class="identifier">diagnose</span><span class="special">(</span><span class="identifier">diagnostic_kind</span> kind<span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span> message<span class="special">,</span> 
-                <span class="identifier">Context</span> <span class="keyword">const</span> <span class="special">&amp;</span> context<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre>
+  void <a name="id57-bb"></a><span class="identifier">diagnose</span><span class="special">(</span><span class="identifier">diagnostic_kind</span> kind<span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span> message<span class="special">,</span> 
+                Context const <span class="special">&amp;</span> context<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre>
 <p>Prints <code class="computeroutput">message</code> to <code class="computeroutput">std::cerr</code>. The diagnostic is printed with the given <code class="computeroutput">kind</code>, at no particular location. This must be called within a parser semantic action, providing the parse context. </p>
 </li>
 </ol></div>

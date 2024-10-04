@@ -4,7 +4,7 @@
 <title>Struct template seq_parser</title>
 <link rel="stylesheet" href="../../boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
-<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser (Proposed)">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
 <link rel="up" href="../../header/boost/parser/parser_fwd_hpp.html" title="Header &lt;boost/parser/parser_fwd.hpp&gt;">
 <link rel="prev" href="rule_parser.html" title="Struct template rule_parser">
 <link rel="next" href="skip_parser.html" title="Struct template skip_parser">
@@ -28,7 +28,7 @@
 <span class="keyword">struct</span> <a class="link" href="seq_parser.html" title="Struct template seq_parser">seq_parser</a> <span class="special">{</span>
 <span class="special">}</span><span class="special">;</span></pre></div>
 <div class="refsect1">
-<a name="idm40839"></a><h2>Description</h2>
+<a name="id40619"></a><h2>Description</h2>
 <p>Applies each parser in <code class="computeroutput">ParserTuple</code>, in order. The parse succeeds iff all of the sub-parsers succeed. The attribute produced is a <code class="computeroutput">std::tuple</code> over the types of attribute produced by the parsers in <code class="computeroutput">ParserTuple</code>. The BacktrackingTuple template parameter is a <code class="computeroutput">parser::tuple</code> of <code class="computeroutput">std::bool_constant</code> values. The <code class="computeroutput">i</code>th such value indicates whether backtracking is allowed if the <code class="computeroutput">i</code>th parser fails. </p>
 </div>
 </div>

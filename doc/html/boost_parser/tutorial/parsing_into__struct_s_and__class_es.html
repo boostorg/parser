@@ -1,0 +1,330 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Parsing into structs and classes</title>
+<link rel="stylesheet" href="../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
+<link rel="up" href="../tutorial.html" title="Tutorial">
+<link rel="prev" href="rule_parsers.html" title="Rule Parsers">
+<link rel="next" href="alternative_parsers.html" title="Alternative Parsers">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="rule_parsers.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="alternative_parsers.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_parser.tutorial.parsing_into__struct_s_and__class_es"></a><a class="link" href="parsing_into__struct_s_and__class_es.html" title="Parsing into structs and classes">Parsing
+      into <code class="computeroutput"><span class="keyword">struct</span></code>s and <code class="computeroutput"><span class="keyword">class</span></code>es</a>
+</h3></div></div></div>
+<p>
+        So far, we've seen only simple parsers that parse the same value repeatedly
+        (with or without commas and spaces). It's also very common to parse a few
+        values in a specific sequence. Let's say you want to parse an employee record.
+        Here's a parser you might write:
+      </p>
+<pre class="programlisting"><span class="keyword">namespace</span> <span class="identifier">bp</span> <span class="special">=</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">parser</span><span class="special">;</span>
+<span class="keyword">auto</span> <span class="identifier">employee_parser</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">lit</span><span class="special">(</span><span class="string">"employee"</span><span class="special">)</span>
+    <span class="special">&gt;&gt;</span> <span class="char">'{'</span>
+    <span class="special">&gt;&gt;</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">int_</span> <span class="special">&gt;&gt;</span> <span class="char">','</span>
+    <span class="special">&gt;&gt;</span> <span class="identifier">quoted_string</span> <span class="special">&gt;&gt;</span> <span class="char">','</span>
+    <span class="special">&gt;&gt;</span> <span class="identifier">quoted_string</span> <span class="special">&gt;&gt;</span> <span class="char">','</span>
+    <span class="special">&gt;&gt;</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">double_</span>
+    <span class="special">&gt;&gt;</span> <span class="char">'}'</span><span class="special">;</span>
+</pre>
+<p>
+        The attribute type for <code class="computeroutput"><span class="identifier">employee_parser</span></code>
+        is <code class="computeroutput"><a class="link" href="../../boost/parser/tuple.html" title="Type definition tuple">boost::parser::tuple</a><span class="special">&lt;</span><span class="keyword">int</span><span class="special">,</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span><span class="special">,</span> <span class="keyword">double</span><span class="special">&gt;</span></code>.
+        That's great, in that you got all the parsed data for the record without
+        having to write any semantic actions. It's not so great that you now have
+        to get all the individual elements out by their indices, using <code class="computeroutput"><span class="identifier">get</span><span class="special">()</span></code>.
+        It would be much nicer to parse into the final data structure that your program
+        is going to use. This is often some <code class="computeroutput"><span class="keyword">struct</span></code>
+        or <code class="computeroutput"><span class="keyword">class</span></code>. Boost.Parser supports
+        parsing into arbitrary aggregate <code class="computeroutput"><span class="keyword">struct</span></code>s,
+        and non-aggregates that are constructible from the tuple at hand.
+      </p>
+<h5>
+<a name="boost_parser.tutorial.parsing_into__struct_s_and__class_es.h0"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.parsing_into__struct_s_and__class_es.aggregate_types_as_attributes"></a></span><a class="link" href="parsing_into__struct_s_and__class_es.html#boost_parser.tutorial.parsing_into__struct_s_and__class_es.aggregate_types_as_attributes">Aggregate
+        types as attributes</a>
+      </h5>
+<p>
+        If we have a <code class="computeroutput"><span class="keyword">struct</span></code> that has
+        data members of the same types listed in the <code class="computeroutput"><a class="link" href="../../boost/parser/tuple.html" title="Type definition tuple">boost::parser::tuple</a></code> attribute type for <code class="computeroutput"><span class="identifier">employee_parser</span></code>, it would be nice to parse
+        directly into it, instead of parsing into a tuple and then constructing our
+        <code class="computeroutput"><span class="keyword">struct</span></code> later. Fortunately, this
+        just works in Boost.Parser. Here is an example of parsing straight into a
+        compatible aggregate type.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">parser</span><span class="special">/</span><span class="identifier">parser</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
+
+<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">iostream</span><span class="special">&gt;</span>
+<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">string</span><span class="special">&gt;</span>
+
+
+<span class="keyword">struct</span> <span class="identifier">employee</span>
+<span class="special">{</span>
+    <span class="keyword">int</span> <span class="identifier">age</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="identifier">surname</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="identifier">forename</span><span class="special">;</span>
+    <span class="keyword">double</span> <span class="identifier">salary</span><span class="special">;</span>
+<span class="special">};</span>
+
+<span class="keyword">namespace</span> <span class="identifier">bp</span> <span class="special">=</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">parser</span><span class="special">;</span>
+
+<span class="keyword">int</span> <span class="identifier">main</span><span class="special">()</span>
+<span class="special">{</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"Enter employee record. "</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="identifier">input</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">getline</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">cin</span><span class="special">,</span> <span class="identifier">input</span><span class="special">);</span>
+
+    <span class="keyword">auto</span> <span class="identifier">quoted_string</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">lexeme</span><span class="special">[</span><span class="char">'"'</span> <span class="special">&gt;&gt;</span> <span class="special">+(</span><span class="identifier">bp</span><span class="special">::</span><span class="identifier">char_</span> <span class="special">-</span> <span class="char">'"'</span><span class="special">)</span> <span class="special">&gt;&gt;</span> <span class="char">'"'</span><span class="special">];</span>
+    <span class="keyword">auto</span> <span class="identifier">employee_p</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">lit</span><span class="special">(</span><span class="string">"employee"</span><span class="special">)</span>
+        <span class="special">&gt;&gt;</span> <span class="char">'{'</span>
+        <span class="special">&gt;&gt;</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">int_</span> <span class="special">&gt;&gt;</span> <span class="char">','</span>
+        <span class="special">&gt;&gt;</span> <span class="identifier">quoted_string</span> <span class="special">&gt;&gt;</span> <span class="char">','</span>
+        <span class="special">&gt;&gt;</span> <span class="identifier">quoted_string</span> <span class="special">&gt;&gt;</span> <span class="char">','</span>
+        <span class="special">&gt;&gt;</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">double_</span>
+        <span class="special">&gt;&gt;</span> <span class="char">'}'</span><span class="special">;</span>
+
+    <span class="identifier">employee</span> <span class="identifier">record</span><span class="special">;</span>
+    <span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">result</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">parse</span><span class="special">(</span><span class="identifier">input</span><span class="special">,</span> <span class="identifier">employee_p</span><span class="special">,</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">ws</span><span class="special">,</span> <span class="identifier">record</span><span class="special">);</span>
+
+    <span class="keyword">if</span> <span class="special">(</span><span class="identifier">result</span><span class="special">)</span> <span class="special">{</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"You entered:\nage:      "</span> <span class="special">&lt;&lt;</span> <span class="identifier">record</span><span class="special">.</span><span class="identifier">age</span>
+                  <span class="special">&lt;&lt;</span> <span class="string">"\nsurname:  "</span> <span class="special">&lt;&lt;</span> <span class="identifier">record</span><span class="special">.</span><span class="identifier">surname</span>
+                  <span class="special">&lt;&lt;</span> <span class="string">"\nforename: "</span> <span class="special">&lt;&lt;</span> <span class="identifier">record</span><span class="special">.</span><span class="identifier">forename</span>
+                  <span class="special">&lt;&lt;</span> <span class="string">"\nsalary  : "</span> <span class="special">&lt;&lt;</span> <span class="identifier">record</span><span class="special">.</span><span class="identifier">salary</span> <span class="special">&lt;&lt;</span> <span class="string">"\n"</span><span class="special">;</span>
+    <span class="special">}</span> <span class="keyword">else</span> <span class="special">{</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"Parse failure.\n"</span><span class="special">;</span>
+    <span class="special">}</span>
+<span class="special">}</span>
+</pre>
+<p>
+      </p>
+<p>
+        Unfortunately, this is taking advantage of the loose attribute assignment
+        logic; the <code class="computeroutput"><span class="identifier">employee_parser</span></code>
+        parser still has a <code class="computeroutput"><a class="link" href="../../boost/parser/tuple.html" title="Type definition tuple">boost::parser::tuple</a></code>
+        attribute. See <a class="link" href="the__parse____api.html" title="The parse() API">The
+        <code class="computeroutput"><span class="identifier">parse</span><span class="special">()</span></code>
+        API</a> for a description of attribute out-param compatibility.
+      </p>
+<p>
+        For this reason, it's even more common to want to make a rule that returns
+        a specific type like <code class="computeroutput"><span class="identifier">employee</span></code>.
+        Just by giving the rule a <code class="computeroutput"><span class="keyword">struct</span></code>
+        type, we make sure that this parser always generates an <code class="computeroutput"><span class="identifier">employee</span></code>
+        struct as its attribute, no matter where it is in the parse. If we made a
+        simple parser <code class="computeroutput"><span class="identifier">P</span></code> that uses
+        the <code class="computeroutput"><span class="identifier">employee_p</span></code> rule, like
+        <code class="computeroutput"><span class="identifier">bp</span><span class="special">::</span><span class="keyword">int</span> <span class="special">&gt;&gt;</span> <span class="identifier">employee_p</span></code>, <code class="computeroutput"><span class="identifier">P</span></code>'s
+        attribute type would be <code class="computeroutput"><a class="link" href="../../boost/parser/tuple.html" title="Type definition tuple">boost::parser::tuple</a><span class="special">&lt;</span><span class="keyword">int</span><span class="special">,</span> <span class="identifier">employee</span><span class="special">&gt;</span></code>.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">parser</span><span class="special">/</span><span class="identifier">parser</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
+
+<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">iostream</span><span class="special">&gt;</span>
+<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">string</span><span class="special">&gt;</span>
+
+
+<span class="keyword">struct</span> <span class="identifier">employee</span>
+<span class="special">{</span>
+    <span class="keyword">int</span> <span class="identifier">age</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="identifier">surname</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="identifier">forename</span><span class="special">;</span>
+    <span class="keyword">double</span> <span class="identifier">salary</span><span class="special">;</span>
+<span class="special">};</span>
+
+<span class="keyword">namespace</span> <span class="identifier">bp</span> <span class="special">=</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">parser</span><span class="special">;</span>
+
+<span class="identifier">bp</span><span class="special">::</span><span class="identifier">rule</span><span class="special">&lt;</span><span class="keyword">struct</span> <span class="identifier">quoted_string</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span><span class="special">&gt;</span> <span class="identifier">quoted_string</span> <span class="special">=</span> <span class="string">"quoted name"</span><span class="special">;</span>
+<span class="identifier">bp</span><span class="special">::</span><span class="identifier">rule</span><span class="special">&lt;</span><span class="keyword">struct</span> <span class="identifier">employee_p</span><span class="special">,</span> <span class="identifier">employee</span><span class="special">&gt;</span> <span class="identifier">employee_p</span> <span class="special">=</span> <span class="string">"employee"</span><span class="special">;</span>
+
+<span class="keyword">auto</span> <span class="identifier">quoted_string_def</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">lexeme</span><span class="special">[</span><span class="char">'"'</span> <span class="special">&gt;&gt;</span> <span class="special">+(</span><span class="identifier">bp</span><span class="special">::</span><span class="identifier">char_</span> <span class="special">-</span> <span class="char">'"'</span><span class="special">)</span> <span class="special">&gt;&gt;</span> <span class="char">'"'</span><span class="special">];</span>
+<span class="keyword">auto</span> <span class="identifier">employee_p_def</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">lit</span><span class="special">(</span><span class="string">"employee"</span><span class="special">)</span>
+    <span class="special">&gt;&gt;</span> <span class="char">'{'</span>
+    <span class="special">&gt;&gt;</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">int_</span> <span class="special">&gt;&gt;</span> <span class="char">','</span>
+    <span class="special">&gt;&gt;</span> <span class="identifier">quoted_string</span> <span class="special">&gt;&gt;</span> <span class="char">','</span>
+    <span class="special">&gt;&gt;</span> <span class="identifier">quoted_string</span> <span class="special">&gt;&gt;</span> <span class="char">','</span>
+    <span class="special">&gt;&gt;</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">double_</span>
+    <span class="special">&gt;&gt;</span> <span class="char">'}'</span><span class="special">;</span>
+
+<span class="identifier">BOOST_PARSER_DEFINE_RULES</span><span class="special">(</span><span class="identifier">quoted_string</span><span class="special">,</span> <span class="identifier">employee_p</span><span class="special">);</span>
+
+<span class="keyword">int</span> <span class="identifier">main</span><span class="special">()</span>
+<span class="special">{</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"Enter employee record. "</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="identifier">input</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">getline</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">cin</span><span class="special">,</span> <span class="identifier">input</span><span class="special">);</span>
+
+    <span class="keyword">static_assert</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">is_aggregate_v</span><span class="special">&lt;</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">decay_t</span><span class="special">&lt;</span><span class="identifier">employee</span> <span class="special">&amp;&gt;&gt;);</span>
+
+    <span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">result</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">parse</span><span class="special">(</span><span class="identifier">input</span><span class="special">,</span> <span class="identifier">employee_p</span><span class="special">,</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">ws</span><span class="special">);</span>
+
+    <span class="keyword">if</span> <span class="special">(</span><span class="identifier">result</span><span class="special">)</span> <span class="special">{</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"You entered:\nage:      "</span> <span class="special">&lt;&lt;</span> <span class="identifier">result</span><span class="special">-&gt;</span><span class="identifier">age</span>
+                  <span class="special">&lt;&lt;</span> <span class="string">"\nsurname:  "</span> <span class="special">&lt;&lt;</span> <span class="identifier">result</span><span class="special">-&gt;</span><span class="identifier">surname</span>
+                  <span class="special">&lt;&lt;</span> <span class="string">"\nforename: "</span> <span class="special">&lt;&lt;</span> <span class="identifier">result</span><span class="special">-&gt;</span><span class="identifier">forename</span>
+                  <span class="special">&lt;&lt;</span> <span class="string">"\nsalary  : "</span> <span class="special">&lt;&lt;</span> <span class="identifier">result</span><span class="special">-&gt;</span><span class="identifier">salary</span> <span class="special">&lt;&lt;</span> <span class="string">"\n"</span><span class="special">;</span>
+    <span class="special">}</span> <span class="keyword">else</span> <span class="special">{</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"Parse failure.\n"</span><span class="special">;</span>
+    <span class="special">}</span>
+<span class="special">}</span>
+</pre>
+<p>
+      </p>
+<p>
+        Just as you can pass a <code class="computeroutput"><span class="keyword">struct</span></code>
+        as an out-param to <code class="computeroutput"><span class="identifier">parse</span><span class="special">()</span></code> when the parser's attribute type is a tuple,
+        you can also pass a tuple as an out-param to <code class="computeroutput"><span class="identifier">parse</span><span class="special">()</span></code> when the parser's attribute type is a struct:
+      </p>
+<pre class="programlisting"><span class="comment">// Using the employee_p rule from above, with attribute type employee...</span>
+<code class="computeroutput"><a class="link" href="../../boost/parser/tuple.html" title="Type definition tuple">boost::parser::tuple</a></code><span class="special">&lt;</span><span class="keyword">int</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span><span class="special">,</span> <span class="keyword">double</span><span class="special">&gt;</span> <span class="identifier">tup</span><span class="special">;</span>
+<span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">result</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">parse</span><span class="special">(</span><span class="identifier">input</span><span class="special">,</span> <span class="identifier">employee_p</span><span class="special">,</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">ws</span><span class="special">,</span> <span class="identifier">tup</span><span class="special">);</span> <span class="comment">// Ok!</span>
+</pre>
+<div class="important"><table border="0" summary="Important">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Important]" src="../../images/important.png"></td>
+<th align="left">Important</th>
+</tr>
+<tr><td align="left" valign="top"><p>
+          This automatic use of <code class="computeroutput"><span class="keyword">struct</span></code>s
+          as if they were tuples depends on a bit of metaprogramming. Due to compiler
+          limits, the metaprogram that detects the number of data members of a <code class="computeroutput"><span class="keyword">struct</span></code> is limited to a maximum number of
+          members. Fortunately, that limit is configurable; see <code class="computeroutput"><a class="link" href="../../BOOST_PARSER_MAX_AGGRE_id8.html" title="Macro BOOST_PARSER_MAX_AGGREGATE_SIZE">BOOST_PARSER_MAX_AGGREGATE_SIZE</a></code>.
+        </p></td></tr>
+</table></div>
+<h5>
+<a name="boost_parser.tutorial.parsing_into__struct_s_and__class_es.h1"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.parsing_into__struct_s_and__class_es.general__code__phrase_role__keyword__class__phrase___code__types_as_attributes"></a></span><a class="link" href="parsing_into__struct_s_and__class_es.html#boost_parser.tutorial.parsing_into__struct_s_and__class_es.general__code__phrase_role__keyword__class__phrase___code__types_as_attributes">General
+        <code class="computeroutput"><span class="keyword">class</span></code> types as attributes</a>
+      </h5>
+<p>
+        Many times you don't have an aggregate struct that you want to produce from
+        your parse. It would be even nicer than the aggregate code above if Boost.Parser
+        could detect that the members of a tuple that is produced as an attribute
+        are usable as the arguments to some type's constructor. So, Boost.Parser
+        does that.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">parser</span><span class="special">/</span><span class="identifier">parser</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
+
+<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">iostream</span><span class="special">&gt;</span>
+<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">string</span><span class="special">&gt;</span>
+
+
+<span class="keyword">namespace</span> <span class="identifier">bp</span> <span class="special">=</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">parser</span><span class="special">;</span>
+
+<span class="keyword">int</span> <span class="identifier">main</span><span class="special">()</span>
+<span class="special">{</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"Enter a string followed by two unsigned integers. "</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="identifier">input</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">getline</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">cin</span><span class="special">,</span> <span class="identifier">input</span><span class="special">);</span>
+
+    <span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="identifier">string_uint_uint</span> <span class="special">=</span>
+        <span class="identifier">bp</span><span class="special">::</span><span class="identifier">lexeme</span><span class="special">[+(</span><span class="identifier">bp</span><span class="special">::</span><span class="identifier">char_</span> <span class="special">-</span> <span class="char">' '</span><span class="special">)]</span> <span class="special">&gt;&gt;</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">uint_</span> <span class="special">&gt;&gt;</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">uint_</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="identifier">string_from_parse</span><span class="special">;</span>
+    <span class="keyword">if</span> <span class="special">(</span><span class="identifier">parse</span><span class="special">(</span><span class="identifier">input</span><span class="special">,</span> <span class="identifier">string_uint_uint</span><span class="special">,</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">ws</span><span class="special">,</span> <span class="identifier">string_from_parse</span><span class="special">))</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"That yields this string: "</span> <span class="special">&lt;&lt;</span> <span class="identifier">string_from_parse</span> <span class="special">&lt;&lt;</span> <span class="string">"\n"</span><span class="special">;</span>
+    <span class="keyword">else</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"Parse failure.\n"</span><span class="special">;</span>
+
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"Enter an unsigned integer followed by a string. "</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">getline</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">cin</span><span class="special">,</span> <span class="identifier">input</span><span class="special">);</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="identifier">input</span> <span class="special">&lt;&lt;</span> <span class="string">"\n"</span><span class="special">;</span>
+
+    <span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="identifier">uint_string</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">uint_</span> <span class="special">&gt;&gt;</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">char_</span> <span class="special">&gt;&gt;</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">char_</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span><span class="special">&lt;</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span><span class="special">&gt;</span> <span class="identifier">vector_from_parse</span><span class="special">;</span>
+    <span class="keyword">if</span> <span class="special">(</span><span class="identifier">parse</span><span class="special">(</span><span class="identifier">input</span><span class="special">,</span> <span class="identifier">uint_string</span><span class="special">,</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">ws</span><span class="special">,</span> <span class="identifier">vector_from_parse</span><span class="special">))</span> <span class="special">{</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"That yields this vector of strings:\n"</span><span class="special">;</span>
+        <span class="keyword">for</span> <span class="special">(</span><span class="keyword">auto</span> <span class="special">&amp;&amp;</span> <span class="identifier">str</span> <span class="special">:</span> <span class="identifier">vector_from_parse</span><span class="special">)</span> <span class="special">{</span>
+            <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"  '"</span> <span class="special">&lt;&lt;</span> <span class="identifier">str</span> <span class="special">&lt;&lt;</span> <span class="string">"'\n"</span><span class="special">;</span>
+        <span class="special">}</span>
+    <span class="special">}</span> <span class="keyword">else</span> <span class="special">{</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"Parse failure.\n"</span><span class="special">;</span>
+    <span class="special">}</span>
+<span class="special">}</span>
+</pre>
+<p>
+      </p>
+<p>
+        Let's look at the first parse.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="identifier">string_uint_uint</span> <span class="special">=</span>
+    <span class="identifier">bp</span><span class="special">::</span><span class="identifier">lexeme</span><span class="special">[+(</span><span class="identifier">bp</span><span class="special">::</span><span class="identifier">char_</span> <span class="special">-</span> <span class="char">' '</span><span class="special">)]</span> <span class="special">&gt;&gt;</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">uint_</span> <span class="special">&gt;&gt;</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">uint_</span><span class="special">;</span>
+<span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="identifier">string_from_parse</span><span class="special">;</span>
+<span class="keyword">if</span> <span class="special">(</span><span class="identifier">parse</span><span class="special">(</span><span class="identifier">input</span><span class="special">,</span> <span class="identifier">string_uint_uint</span><span class="special">,</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">ws</span><span class="special">,</span> <span class="identifier">string_from_parse</span><span class="special">))</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"That yields this string: "</span> <span class="special">&lt;&lt;</span> <span class="identifier">string_from_parse</span> <span class="special">&lt;&lt;</span> <span class="string">"\n"</span><span class="special">;</span>
+<span class="keyword">else</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"Parse failure.\n"</span><span class="special">;</span>
+</pre>
+<p>
+      </p>
+<p>
+        Here, we use the parser <code class="computeroutput"><span class="identifier">string_uint_uint</span></code>,
+        which produces a <code class="computeroutput"><a class="link" href="../../boost/parser/tuple.html" title="Type definition tuple">boost::parser::tuple</a><span class="special">&lt;</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span><span class="special">,</span> <span class="keyword">unsigned</span> <span class="keyword">int</span><span class="special">,</span> <span class="keyword">unsigned</span>
+        <span class="keyword">int</span><span class="special">&gt;</span></code>
+        attribute. When we try to parse that into an out-param <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span></code>
+        attribute, it just works. This is because <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span></code>
+        has a constructor that takes a <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span></code>,
+        an offset, and a length. Here's the other parse:
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="identifier">uint_string</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">uint_</span> <span class="special">&gt;&gt;</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">char_</span> <span class="special">&gt;&gt;</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">char_</span><span class="special">;</span>
+<span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span><span class="special">&lt;</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span><span class="special">&gt;</span> <span class="identifier">vector_from_parse</span><span class="special">;</span>
+<span class="keyword">if</span> <span class="special">(</span><span class="identifier">parse</span><span class="special">(</span><span class="identifier">input</span><span class="special">,</span> <span class="identifier">uint_string</span><span class="special">,</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">ws</span><span class="special">,</span> <span class="identifier">vector_from_parse</span><span class="special">))</span> <span class="special">{</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"That yields this vector of strings:\n"</span><span class="special">;</span>
+    <span class="keyword">for</span> <span class="special">(</span><span class="keyword">auto</span> <span class="special">&amp;&amp;</span> <span class="identifier">str</span> <span class="special">:</span> <span class="identifier">vector_from_parse</span><span class="special">)</span> <span class="special">{</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"  '"</span> <span class="special">&lt;&lt;</span> <span class="identifier">str</span> <span class="special">&lt;&lt;</span> <span class="string">"'\n"</span><span class="special">;</span>
+    <span class="special">}</span>
+<span class="special">}</span> <span class="keyword">else</span> <span class="special">{</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"Parse failure.\n"</span><span class="special">;</span>
+<span class="special">}</span>
+</pre>
+<p>
+      </p>
+<p>
+        Now we have the parser <code class="computeroutput"><span class="identifier">uint_string</span></code>,
+        which produces <code class="computeroutput"><a class="link" href="../../boost/parser/tuple.html" title="Type definition tuple">boost::parser::tuple</a><span class="special">&lt;</span><span class="keyword">unsigned</span> <span class="keyword">int</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span><span class="special">&gt;</span></code>
+        attribute — the two <code class="computeroutput"><span class="keyword">char</span></code>s
+        at the end combine into a <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span></code>.
+        Those two values can be used to construct a <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span><span class="special">&lt;</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span><span class="special">&gt;</span></code>, via the count, <code class="computeroutput"><span class="identifier">T</span></code>
+        constructor.
+      </p>
+<p>
+        Just like with using aggregates in place of tuples, non-aggregate <code class="computeroutput"><span class="keyword">class</span></code> types can be substituted for tuples
+        in most places. That includes using a non-aggregate <code class="computeroutput"><span class="keyword">class</span></code>
+        type as the attribute type of a <code class="computeroutput"><a class="link" href="../../boost/parser/rule.html" title="Struct template rule">rule</a></code>.
+      </p>
+<p>
+        However, while compatible tuples can be substituted for aggregates, you
+        <span class="bold"><strong>can't</strong></span> substitute a tuple for some <code class="computeroutput"><span class="keyword">class</span></code> type <code class="computeroutput"><span class="identifier">T</span></code>
+        just because the tuple could have been used to construct <code class="computeroutput"><span class="identifier">T</span></code>.
+        Think of trying to invert the substitution in the second parse above. Converting
+        a <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span><span class="special">&lt;</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span><span class="special">&gt;</span></code> into a <code class="computeroutput"><a class="link" href="../../boost/parser/tuple.html" title="Type definition tuple">boost::parser::tuple</a><span class="special">&lt;</span><span class="keyword">unsigned</span> <span class="keyword">int</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span><span class="special">&gt;</span></code>
+        makes no sense.
+      </p>
+</div>
+<div class="copyright-footer">Copyright © 2020 T. Zachary Laine<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+      </p>
+</div>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="rule_parsers.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="alternative_parsers.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

@@ -4,7 +4,7 @@
 <title>Struct template string_view_parser</title>
 <link rel="stylesheet" href="../../boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
-<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser (Proposed)">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
 <link rel="up" href="../../header/boost/parser/parser_fwd_hpp.html" title="Header &lt;boost/parser/parser_fwd.hpp&gt;">
 <link rel="prev" href="string_parser.html" title="Struct template string_parser">
 <link rel="next" href="switch_parser.html" title="Struct template switch_parser">
@@ -27,7 +27,7 @@
 <span class="keyword">struct</span> <a class="link" href="string_view_parser.html" title="Struct template string_view_parser">string_view_parser</a> <span class="special">{</span>
 <span class="special">}</span><span class="special">;</span></pre></div>
 <div class="refsect1">
-<a name="idm40945"></a><h2>Description</h2>
+<a name="id40721"></a><h2>Description</h2>
 <p>Applies the given parser <code class="computeroutput">p</code> of type <code class="computeroutput">Parser</code>. Regardless of the attribute produced by <code class="computeroutput">Parser</code>, this parser's attribute is equivalent to <code class="computeroutput">std::basic_string_view&lt;char_type&gt;</code> within a semantic action on <code class="computeroutput">p</code>, where <code class="computeroutput">char_type</code> is the type of character in the sequence being parsed. If the parsed range is transcoded, <code class="computeroutput">char_type</code> will be the type being transcoded from. If the underlying range of <code class="computeroutput">char_type</code> is non-contiguous, code using <code class="computeroutput"><a class="link" href="string_view_parser.html" title="Struct template string_view_parser">string_view_parser</a></code> is ill-formed. The parse succeeds iff <code class="computeroutput">p</code> succeeds. This parser is only available in C++20 and later. </p>
 </div>
 </div>

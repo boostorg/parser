@@ -4,7 +4,7 @@
 <title>Function template with_globals</title>
 <link rel="stylesheet" href="../../boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
-<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser (Proposed)">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
 <link rel="up" href="../../header/boost/parser/parser_hpp.html" title="Header &lt;boost/parser/parser.hpp&gt;">
 <link rel="prev" href="double_.html" title="Global double_">
 <link rel="next" href="with_error_handler.html" title="Function template with_error_handler">
@@ -25,9 +25,9 @@
 
 </span>
 <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Parser<span class="special">,</span> <span class="keyword">typename</span> GlobalState<span class="special">,</span> <span class="keyword">typename</span> ErrorHandler<span class="special">&gt;</span> 
-  <span class="keyword">auto</span> <span class="identifier">with_globals</span><span class="special">(</span><span class="emphasis"><em><span class="identifier">unspecified</span></em></span> parser<span class="special">,</span> <span class="identifier">GlobalState</span> <span class="special">&amp;</span> globals<span class="special">)</span><span class="special">;</span></pre></div>
+  auto <span class="identifier">with_globals</span><span class="special">(</span><span class="emphasis"><em><span class="identifier">unspecified</span></em></span> parser<span class="special">,</span> GlobalState <span class="special">&amp;</span> globals<span class="special">)</span><span class="special">;</span></pre></div>
 <div class="refsect1">
-<a name="idm37802"></a><h2>Description</h2>
+<a name="id37886"></a><h2>Description</h2>
 <p>Returns a <code class="computeroutput"><code class="computeroutput"><a class="link" href="parser_interface.html" title="Struct template parser_interface">parser_interface</a></code></code> with the same parser and error handler, with <code class="computeroutput">globals</code> added. The resut of passing any non-top-level parser for the <code class="computeroutput">parser</code> argument is undefined. </p>
 </div>
 </div>

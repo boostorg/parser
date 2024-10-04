@@ -4,15 +4,15 @@
 <title>Header &lt;boost/parser/tuple.hpp&gt;</title>
 <link rel="stylesheet" href="../../../boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
-<link rel="home" href="../../../index.html" title="Chapter 1. Boost.Parser (Proposed)">
+<link rel="home" href="../../../index.html" title="Chapter 1. Boost.Parser">
 <link rel="up" href="../../../reference.html" title="Reference">
 <link rel="prev" href="../../../boost/parser/transform_replace.html" title="Global transform_replace">
-<link rel="next" href="../../../boost/parser/literals/operator_c_idm34489.html" title='Function template operator""_c'>
+<link rel="next" href="../../../boost/parser/literals/operator_c_id324.html" title='Function template operator""_c'>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <div class="spirit-nav">
-<a accesskey="p" href="../../../boost/parser/transform_replace.html"><img src="../../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../../../reference.html"><img src="../../../images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../images/home.png" alt="Home"></a><a accesskey="n" href="../../../boost/parser/literals/operator_c_idm34489.html"><img src="../../../images/next.png" alt="Next"></a>
+<a accesskey="p" href="../../../boost/parser/transform_replace.html"><img src="../../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../../../reference.html"><img src="../../../images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../images/home.png" alt="Home"></a><a accesskey="n" href="../../../boost/parser/literals/operator_c_id324.html"><img src="../../../images/next.png" alt="Next"></a>
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
@@ -20,12 +20,12 @@
 <pre class="synopsis"><span class="keyword">namespace</span> <span class="identifier">boost</span> <span class="special">{</span>
   <span class="keyword">namespace</span> <span class="identifier">parser</span> <span class="special">{</span>
     <span class="keyword">typedef</span> <span class="identifier">hana</span><span class="special">::</span><span class="identifier">tuple</span><span class="special">&lt;</span> <span class="identifier">Args</span><span class="special">...</span> <span class="special">&gt;</span> <a class="link" href="../../../boost/parser/tuple.html" title="Type definition tuple"><span class="identifier">tuple</span></a><span class="special">;</span>
-    <span class="keyword">typedef</span> <span class="identifier">hana</span><span class="special">::</span><span class="identifier">integral_constant</span><span class="special">&lt;</span> <span class="identifier">T</span><span class="special">,</span> <span class="identifier">I</span> <span class="special">&gt;</span> <a class="link" href="../../../boost/parser/integral_constant.html" title="Type definition integral_constant"><span class="identifier">integral_constant</span></a><span class="special">;</span>
-    <span class="keyword">typedef</span> <span class="identifier">integral_constant</span><span class="special">&lt;</span> <span class="keyword">long</span> <span class="keyword">long</span><span class="special">,</span> <span class="identifier">I</span> <span class="special">&gt;</span> <a class="link" href="../../../boost/parser/llong.html" title="Type definition llong"><span class="identifier">llong</span></a><span class="special">;</span>
+    <span class="keyword">typedef</span> <span class="identifier">hana</span><span class="special">::</span><span class="identifier">integral_constant</span><span class="special">&lt;</span> T<span class="special">,</span> <span class="identifier">I</span> <span class="special">&gt;</span> <a class="link" href="../../../boost/parser/integral_constant.html" title="Type definition integral_constant"><span class="identifier">integral_constant</span></a><span class="special">;</span>
+    <span class="keyword">typedef</span> <span class="identifier">integral_constant</span><span class="special">&lt;</span> long long<span class="special">,</span> <span class="identifier">I</span> <span class="special">&gt;</span> <a class="link" href="../../../boost/parser/llong.html" title="Type definition llong"><span class="identifier">llong</span></a><span class="special">;</span>
     <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> T<span class="special">,</span> <span class="keyword">typename</span> U<span class="special">,</span> <span class="identifier">U</span> I<span class="special">&gt;</span> 
-      <span class="keyword">constexpr</span> <span class="keyword">decltype</span><span class="special">(</span><span class="keyword">auto</span><span class="special">)</span> <a class="link" href="../../../boost/parser/get.html" title="Function template get"><span class="identifier">get</span></a><span class="special">(</span><span class="identifier">T</span> <span class="special">&amp;&amp;</span><span class="special">,</span> <span class="identifier">integral_constant</span><span class="special">&lt;</span> <span class="identifier">U</span><span class="special">,</span> <span class="identifier">I</span> <span class="special">&gt;</span><span class="special">)</span><span class="special">;</span>
+      constexpr decltype<span class="special">(</span>auto<span class="special">)</span> <a class="link" href="../../../boost/parser/get.html" title="Function template get"><span class="identifier">get</span></a><span class="special">(</span>T <span class="special">&amp;&amp;</span><span class="special">,</span> <span class="identifier">integral_constant</span><span class="special">&lt;</span> U<span class="special">,</span> <span class="identifier">I</span> <span class="special">&gt;</span><span class="special">)</span><span class="special">;</span>
     <span class="keyword">namespace</span> <span class="identifier">literals</span> <span class="special">{</span>
-      <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">char</span><span class="special">...</span> chars<span class="special">&gt;</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="link" href="../../../boost/parser/literals/operator_c_idm34489.html" title='Function template operator""_c'><span class="keyword">operator</span><span class="string">""</span><span class="identifier">_c</span></a><span class="special">(</span><span class="special">)</span><span class="special">;</span>
+      <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">char</span><span class="special">...</span> chars<span class="special">&gt;</span> constexpr auto <a class="link" href="../../../boost/parser/literals/operator_c_id324.html" title='Function template operator""_c'><span class="keyword">operator</span><span class="string">""</span><span class="identifier">_c</span></a><span class="special">(</span><span class="special">)</span><span class="special">;</span>
     <span class="special">}</span>
   <span class="special">}</span>
 <span class="special">}</span></pre>
@@ -37,7 +37,7 @@
 </div>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="../../../boost/parser/transform_replace.html"><img src="../../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../../../reference.html"><img src="../../../images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../images/home.png" alt="Home"></a><a accesskey="n" href="../../../boost/parser/literals/operator_c_idm34489.html"><img src="../../../images/next.png" alt="Next"></a>
+<a accesskey="p" href="../../../boost/parser/transform_replace.html"><img src="../../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../../../reference.html"><img src="../../../images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../images/home.png" alt="Home"></a><a accesskey="n" href="../../../boost/parser/literals/operator_c_id324.html"><img src="../../../images/next.png" alt="Next"></a>
 </div>
 </body>
 </html>

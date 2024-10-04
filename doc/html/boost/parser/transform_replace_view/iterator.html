@@ -4,15 +4,15 @@
 <title>Struct template iterator</title>
 <link rel="stylesheet" href="../../../boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
-<link rel="home" href="../../../index.html" title="Chapter 1. Boost.Parser (Proposed)">
-<link rel="up" href="../transform_replace_view.html#idm45561" title="Description">
+<link rel="home" href="../../../index.html" title="Chapter 1. Boost.Parser">
+<link rel="up" href="../transform_replace_view.html#id44942" title="Description">
 <link rel="prev" href="../transform_replace_view.html" title="Struct template transform_replace_view">
 <link rel="next" href="sentinel.html" title="Struct template sentinel">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <div class="spirit-nav">
-<a accesskey="p" href="../transform_replace_view.html"><img src="../../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../transform_replace_view.html#idm45561"><img src="../../../images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../images/home.png" alt="Home"></a><a accesskey="n" href="sentinel.html"><img src="../../../images/next.png" alt="Next"></a>
+<a accesskey="p" href="../transform_replace_view.html"><img src="../../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../transform_replace_view.html#id44942"><img src="../../../images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../images/home.png" alt="Home"></a><a accesskey="n" href="sentinel.html"><img src="../../../images/next.png" alt="Next"></a>
 </div>
 <div class="refentry">
 <a name="boost.parser.transform_replace_view.iterator"></a><div class="titlepage"></div>
@@ -34,31 +34,31 @@
   <span class="keyword">typedef</span> <span class="emphasis"><em><span class="identifier">unspecified</span></em></span>                         <a name="boost.parser.transform_replace_view.iterator.base_type"></a><span class="identifier">base_type</span><span class="special">;</span>     
 
   <span class="comment">// <a class="link" href="iterator.html#boost.parser.transform_replace_view.iteratorconstruct-copy-destruct">construct/copy/destruct</a></span>
-  <a class="link" href="iterator.html#idm34346-bb"><span class="identifier">iterator</span></a><span class="special">(</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span>
-  <a class="link" href="iterator.html#idm34347-bb"><span class="identifier">iterator</span></a><span class="special">(</span><span class="emphasis"><em><span class="identifier">unspecified</span></em></span><span class="special">)</span><span class="special">;</span>
+  <a class="link" href="iterator.html#id308-bb"><span class="identifier">iterator</span></a><span class="special">(</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span>
+  <a class="link" href="iterator.html#id309-bb"><span class="identifier">iterator</span></a><span class="special">(</span><span class="emphasis"><em><span class="identifier">unspecified</span></em></span><span class="special">)</span><span class="special">;</span>
 
-  <span class="comment">// <a class="link" href="iterator.html#idm34340-bb">public member functions</a></span>
-  <span class="keyword">constexpr</span> <a class="link" href="iterator.html" title="Struct template iterator">iterator</a> <span class="special">&amp;</span> <a class="link" href="iterator.html#idm34341-bb"><span class="keyword">operator</span><span class="special">++</span></a><span class="special">(</span><span class="special">)</span><span class="special">;</span>
-  <span class="keyword">constexpr</span> <span class="identifier">reference_type</span> <a class="link" href="iterator.html#idm34344-bb"><span class="keyword">operator</span><span class="special">*</span></a><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+  <span class="comment">// <a class="link" href="iterator.html#id310-bb">public member functions</a></span>
+  constexpr <a class="link" href="iterator.html" title="Struct template iterator">iterator</a> <span class="special">&amp;</span> <a class="link" href="iterator.html#id311-bb"><span class="keyword">operator</span><span class="special">++</span></a><span class="special">(</span><span class="special">)</span><span class="special">;</span>
+  constexpr <span class="identifier">reference_type</span> <a class="link" href="iterator.html#id312-bb"><span class="keyword">operator</span><span class="special">*</span></a><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
 <span class="special">}</span><span class="special">;</span></pre></div>
 <div class="refsect1">
-<a name="idm45827"></a><h2>Description</h2>
+<a name="id45183"></a><h2>Description</h2>
 <div class="refsect2">
-<a name="idm45829"></a><h3>
+<a name="id45185"></a><h3>
 <a name="boost.parser.transform_replace_view.iteratorconstruct-copy-destruct"></a><code class="computeroutput">iterator</code> 
         public
        construct/copy/destruct</h3>
 <div class="orderedlist"><ol class="orderedlist" type="1">
-<li class="listitem"><pre class="literallayout"><a name="idm34346-bb"></a><span class="identifier">iterator</span><span class="special">(</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span></pre></li>
-<li class="listitem"><pre class="literallayout"><a name="idm34347-bb"></a><span class="identifier">iterator</span><span class="special">(</span><span class="emphasis"><em><span class="identifier">unspecified</span></em></span> parent<span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><a name="id308-bb"></a><span class="identifier">iterator</span><span class="special">(</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><a name="id309-bb"></a><span class="identifier">iterator</span><span class="special">(</span><span class="emphasis"><em><span class="identifier">unspecified</span></em></span> parent<span class="special">)</span><span class="special">;</span></pre></li>
 </ol></div>
 </div>
 <div class="refsect2">
-<a name="idm45854"></a><h3>
-<a name="idm34340-bb"></a><code class="computeroutput">iterator</code> public member functions</h3>
+<a name="id45210"></a><h3>
+<a name="id310-bb"></a><code class="computeroutput">iterator</code> public member functions</h3>
 <div class="orderedlist"><ol class="orderedlist" type="1">
-<li class="listitem"><pre class="literallayout"><span class="keyword">constexpr</span> <a class="link" href="iterator.html" title="Struct template iterator">iterator</a> <span class="special">&amp;</span> <a name="idm34341-bb"></a><span class="keyword">operator</span><span class="special">++</span><span class="special">(</span><span class="special">)</span><span class="special">;</span></pre></li>
-<li class="listitem"><pre class="literallayout"><span class="keyword">constexpr</span> <span class="identifier">reference_type</span> <a name="idm34344-bb"></a><span class="keyword">operator</span><span class="special">*</span><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout">constexpr <a class="link" href="iterator.html" title="Struct template iterator">iterator</a> <span class="special">&amp;</span> <a name="id311-bb"></a><span class="keyword">operator</span><span class="special">++</span><span class="special">(</span><span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout">constexpr <span class="identifier">reference_type</span> <a name="id312-bb"></a><span class="keyword">operator</span><span class="special">*</span><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
 </ol></div>
 </div>
 </div>
@@ -70,7 +70,7 @@
 </div>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="../transform_replace_view.html"><img src="../../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../transform_replace_view.html#idm45561"><img src="../../../images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../images/home.png" alt="Home"></a><a accesskey="n" href="sentinel.html"><img src="../../../images/next.png" alt="Next"></a>
+<a accesskey="p" href="../transform_replace_view.html"><img src="../../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../transform_replace_view.html#id44942"><img src="../../../images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../images/home.png" alt="Home"></a><a accesskey="n" href="sentinel.html"><img src="../../../images/next.png" alt="Next"></a>
 </div>
 </body>
 </html>

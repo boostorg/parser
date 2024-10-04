@@ -4,7 +4,7 @@
 <title>Header &lt;boost/parser/error_handling_fwd.hpp&gt;</title>
 <link rel="stylesheet" href="../../../boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
-<link rel="home" href="../../../index.html" title="Chapter 1. Boost.Parser (Proposed)">
+<link rel="home" href="../../../index.html" title="Chapter 1. Boost.Parser">
 <link rel="up" href="../../../reference.html" title="Reference">
 <link rel="prev" href="../../../boost/parser/find_line_end.html" title="Function template find_line_end">
 <link rel="next" href="../../../boost/parser/default_error_handler.html" title="Struct default_error_handler">
@@ -28,17 +28,17 @@
     <span class="keyword">enum</span> <a class="link" href="../../../boost/parser/diagnostic_kind.html" title="Type diagnostic_kind">diagnostic_kind</a><span class="special">;</span>
     <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iter<span class="special">,</span> <span class="keyword">typename</span> Sentinel<span class="special">&gt;</span> 
       <span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span> <span class="special">&amp;</span> 
-      <a class="link" href="../../../boost/parser/write_formatted_m_idm30410.html" title="Function template write_formatted_message"><span class="identifier">write_formatted_message</span></a><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span> <span class="special">&amp;</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">wstring_view</span><span class="special">,</span> <span class="identifier">Iter</span><span class="special">,</span> <span class="identifier">Iter</span><span class="special">,</span> 
-                              <span class="identifier">Sentinel</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span><span class="special">,</span> <span class="identifier">int64_t</span> <span class="special">=</span> <span class="number">80</span><span class="special">,</span> 
-                              <span class="identifier">int64_t</span> <span class="special">=</span> <span class="number">40</span><span class="special">)</span><span class="special">;</span>
+      <a class="link" href="../../../boost/parser/write_formatted_messa_id51.html" title="Function template write_formatted_message"><span class="identifier">write_formatted_message</span></a><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span> <span class="special">&amp;</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">wstring_view</span><span class="special">,</span> Iter<span class="special">,</span> Iter<span class="special">,</span> 
+                              Sentinel<span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span><span class="special">,</span> int64_t <span class="special">=</span> <span class="number">80</span><span class="special">,</span> 
+                              int64_t <span class="special">=</span> <span class="number">40</span><span class="special">)</span><span class="special">;</span>
     <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iter<span class="special">,</span> <span class="keyword">typename</span> Sentinel<span class="special">&gt;</span> 
       <span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span> <span class="special">&amp;</span> 
-      <a class="link" href="../../../boost/parser/write_formatted_e_idm30436.html" title="Function template write_formatted_expectation_failure_error_message"><span class="identifier">write_formatted_expectation_failure_error_message</span></a><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span> <span class="special">&amp;</span><span class="special">,</span> 
+      <a class="link" href="../../../boost/parser/write_formatted_expec_id52.html" title="Function template write_formatted_expectation_failure_error_message"><span class="identifier">write_formatted_expectation_failure_error_message</span></a><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span> <span class="special">&amp;</span><span class="special">,</span> 
                                                         <span class="identifier">std</span><span class="special">::</span><span class="identifier">wstring_view</span><span class="special">,</span> 
-                                                        <span class="identifier">Iter</span><span class="special">,</span> <span class="identifier">Sentinel</span><span class="special">,</span> 
-                                                        <a class="link" href="../../../boost/parser/parse_error.html" title="Struct template parse_error">parse_error</a><span class="special">&lt;</span> <span class="identifier">Iter</span> <span class="special">&gt;</span> <span class="keyword">const</span> <span class="special">&amp;</span><span class="special">,</span> 
-                                                        <span class="identifier">int64_t</span> <span class="special">=</span> <span class="number">80</span><span class="special">,</span> 
-                                                        <span class="identifier">int64_t</span> <span class="special">=</span> <span class="number">40</span><span class="special">)</span><span class="special">;</span>
+                                                        Iter<span class="special">,</span> Sentinel<span class="special">,</span> 
+                                                        <a class="link" href="../../../boost/parser/parse_error.html" title="Struct template parse_error">parse_error</a><span class="special">&lt;</span> Iter <span class="special">&gt;</span> const <span class="special">&amp;</span><span class="special">,</span> 
+                                                        int64_t <span class="special">=</span> <span class="number">80</span><span class="special">,</span> 
+                                                        int64_t <span class="special">=</span> <span class="number">40</span><span class="special">)</span><span class="special">;</span>
   <span class="special">}</span>
 <span class="special">}</span></pre>
 </div>

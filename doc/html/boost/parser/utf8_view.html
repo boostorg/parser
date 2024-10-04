@@ -4,7 +4,7 @@
 <title>Class template utf8_view</title>
 <link rel="stylesheet" href="../../boostbook.css" type="text/css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
-<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser (Proposed)">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
 <link rel="up" href="../../header/boost/parser/transcode_view_hpp.html" title="Header &lt;boost/parser/transcode_view.hpp&gt;">
 <link rel="prev" href="utf32_view.html" title="Class template utf32_view">
 <link rel="next" href="as_utf8.html" title="Global as_utf8">
@@ -27,29 +27,29 @@
 <span class="keyword">class</span> <a class="link" href="utf8_view.html" title="Class template utf8_view">utf8_view</a> <span class="special">{</span>
 <span class="keyword">public</span><span class="special">:</span>
   <span class="comment">// <a class="link" href="utf8_view.html#boost.parser.utf8_viewconstruct-copy-destruct">construct/copy/destruct</a></span>
-  <a class="link" href="utf8_view.html#idm34267-bb"><span class="identifier">utf8_view</span></a><span class="special">(</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span>
-  <a class="link" href="utf8_view.html#idm34268-bb"><span class="identifier">utf8_view</span></a><span class="special">(</span><span class="identifier">V</span><span class="special">)</span><span class="special">;</span>
+  <a class="link" href="utf8_view.html#id301-bb"><span class="identifier">utf8_view</span></a><span class="special">(</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span>
+  <a class="link" href="utf8_view.html#id302-bb"><span class="identifier">utf8_view</span></a><span class="special">(</span><span class="identifier">V</span><span class="special">)</span><span class="special">;</span>
 <span class="special">}</span><span class="special">;</span></pre></div>
 <div class="refsect1">
-<a name="idm45032"></a><h2>Description</h2>
+<a name="id44462"></a><h2>Description</h2>
 <p>A view that produces UTF-8 from an given sequence of UTF.</p>
 <p>
 </p>
 <div class="refsect2">
-<a name="idm45036"></a><h3>Template Parameters</h3>
+<a name="id44466"></a><h3>Template Parameters</h3>
 <div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem">
 <pre class="literallayout"><span class="identifier">unspecified</span> V</pre>
 <p>Constrained by <code class="computeroutput">std::ranges::view&lt;V&gt;</code>. Additionally, the value type of <code class="computeroutput">V</code> must be <code class="computeroutput">char</code>, <code class="computeroutput">wchar_t</code>, <code class="computeroutput">char8_t</code>, <code class="computeroutput">char16_t</code>, or <code class="computeroutput">char32_t</code>. </p>
 </li></ol></div>
 </div>
 <div class="refsect2">
-<a name="idm45052"></a><h3>
+<a name="id44482"></a><h3>
 <a name="boost.parser.utf8_viewconstruct-copy-destruct"></a><code class="computeroutput">utf8_view</code> 
         public
        construct/copy/destruct</h3>
 <div class="orderedlist"><ol class="orderedlist" type="1">
-<li class="listitem"><pre class="literallayout"><a name="idm34267-bb"></a><span class="identifier">utf8_view</span><span class="special">(</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span></pre></li>
-<li class="listitem"><pre class="literallayout"><a name="idm34268-bb"></a><span class="identifier">utf8_view</span><span class="special">(</span><span class="identifier">V</span> base<span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><a name="id301-bb"></a><span class="identifier">utf8_view</span><span class="special">(</span><span class="special">)</span> <span class="special">=</span> <span class="keyword">default</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><a name="id302-bb"></a><span class="identifier">utf8_view</span><span class="special">(</span><span class="identifier">V</span> base<span class="special">)</span><span class="special">;</span></pre></li>
 </ol></div>
 </div>
 </div>

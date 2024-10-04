@@ -2842,10 +2842,10 @@ int main()
             };
 
             namespace bp = boost::parser;
-            std::variant<key_value, double> kv_or_d;
             key_value kv;
             bp::parse("42 13.0", bp::int_ >> bp::double_, kv); // Ok.
 #if 0
+            std::variant<key_value, double> kv_or_d;
             bp::parse("42 13.0", bp::int_ >> bp::double_, kv_or_d); // Error: ill-formed!
 #endif
         }

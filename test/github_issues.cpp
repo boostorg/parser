@@ -182,7 +182,7 @@ void github_issue_78()
 
 namespace issue_90 { namespace parser {
     const auto string =
-        '"' >> boost::parser::lexeme[*(boost::parser::char_ - '"')] > '"';
+        ('"' >> boost::parser::lexeme[*(boost::parser::char_ - '"')]) > '"';
     const auto specifier = string > ':' > string;
 }}
 

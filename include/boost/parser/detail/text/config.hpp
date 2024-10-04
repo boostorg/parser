@@ -18,15 +18,6 @@
 #    define BOOST_PARSER_DETAIL_TEXT_USE_CONCEPTS 1
 #endif
 
-// GCC 12 claims to support 201907L <= __cpp_deduction_guides, but does not.
-#if BOOST_PARSER_DETAIL_TEXT_USE_CONCEPTS && defined(__cpp_deduction_guides) &&    \
-    201907L <= __cpp_deduction_guides && (!defined(__GNUC__) || 13 <= __GNUC__) && \
-    !defined(_MSC_VER)
-#define BOOST_PARSER_DETAIL_TEXT_USE_ALIAS_CTAD 1
-#else
-#define BOOST_PARSER_DETAIL_TEXT_USE_ALIAS_CTAD 0
-#endif
-
 #if BOOST_PARSER_USE_CONCEPTS
 namespace boost::parser::detail { namespace text { namespace detail {
     inline constexpr auto begin = std::ranges::begin;

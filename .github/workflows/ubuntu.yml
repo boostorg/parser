@@ -1,4 +1,4 @@
-name: windows-2022 - Visual Studio 2022
+name: Ubuntu
 
 on:
   push:
@@ -10,27 +10,34 @@ env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Debug
 
-# See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
+        compiler_version: [g++-10, g++-11]
         cxx_std: [17, 20]
+        os: [ubuntu-22.04]
+        include:
+          - compiler_version: g++-9
+            cxx_std: 17
+            os: ubuntu-20.04
 
-    runs-on: windows-2022
+    runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v2
-  
+      - uses: actions/checkout@v4
+
       - name: Configure CMake
         # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
         # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCXX_STD=${{matrix.cxx_std}}
-  
+        run: |
+          mkdir build
+          cd build
+          cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler_version }} -DCXX_STD=${{ matrix.cxx_std }}
+
       - name: Build
-        working-directory: ${{github.workspace}}/build
-        run: cmake --build .
-  
+        run: cd build ; make -j4
+
       - name: Test
-        working-directory: ${{github.workspace}}/build/test
-        run: ctest -j4 -C ${{env.BUILD_TYPE}} --output-on-failure
+        run: cd build ; make check

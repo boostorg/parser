@@ -640,7 +640,7 @@ namespace boost::parser {
 #if BOOST_PARSER_USE_CONCEPTS
 
             template<
-                parsable_range_like R,
+                parsable_range R,
                 std::move_constructible F,
                 typename Parser,
                 typename GlobalState,
@@ -648,8 +648,7 @@ namespace boost::parser {
                 typename SkipParser>
             requires
                 // clang-format off
-                (std::is_pointer_v<std::remove_cvref_t<R>> ||
-                 std::ranges::viewable_range<R>) &&
+                std::ranges::viewable_range<R> &&
                 std::regular_invocable<
                     F &,
                     range_attr_t<to_range_t<R>, Parser>> &&
@@ -686,15 +685,14 @@ namespace boost::parser {
             }
 
             template<
-                parsable_range_like R,
+                parsable_range R,
                 std::move_constructible F,
                 typename Parser,
                 typename GlobalState,
                 typename ErrorHandler>
             requires
                 // clang-format off
-                (std::is_pointer_v<std::remove_cvref_t<R>> ||
-                 std::ranges::viewable_range<R>) &&
+                std::ranges::viewable_range<R> &&
                 std::regular_invocable<
                     F &,
                     range_attr_t<to_range_t<R>, Parser>> &&
@@ -736,7 +734,7 @@ namespace boost::parser {
                 typename SkipParser,
                 typename F = trace,
                 typename Trace = trace,
-                typename Enable = std::enable_if_t<is_parsable_range_like_v<R>>>
+                typename Enable = std::enable_if_t<is_parsable_range_v<R>>>
             [[nodiscard]] constexpr auto operator()(
                 R && r,
                 parser_interface<Parser, GlobalState, ErrorHandler> const &

@@ -29,7 +29,8 @@ namespace boost::parser {
             typename R_,
             bool ToCommonRange = false,
             text::format OtherRangeFormat = no_format,
-            bool = std::is_pointer_v<remove_cv_ref_t<R_>> ||
+            bool = std::is_same_v<sentinel_t<remove_cv_ref_t<R_>>,
+                                  null_sentinel_t> ||
                    text::detail::is_bounded_array_v<remove_cv_ref_t<R_>>>
         struct to_range
         {
@@ -38,20 +39,28 @@ namespace boost::parser {
             {
                 static_assert(std::is_same_v<R, R_>);
                 using T = remove_cv_ref_t<R>;
-                if constexpr (std::is_pointer_v<T>) {
+                if constexpr (std::is_same_v<sentinel_t<T>, null_sentinel_t>) {
+                    auto plus_strlen = [](auto * ptr) {
+                        while (*ptr) {
+                            ++ptr;
+                        }
+                        return ptr;
+                    };
+                    auto const first = r.begin();
                     if constexpr (OtherRangeFormat == no_format) {
-                        if constexpr (ToCommonRange)
-                            return BOOST_PARSER_SUBRANGE(r, r + std::strlen(r));
-                        else
-                            return BOOST_PARSER_SUBRANGE(r, null_sentinel_t{});
+                        if constexpr (ToCommonRange) {
+                            return BOOST_PARSER_SUBRANGE(
+                                first, plus_strlen(first));
+                        } else {
+                            return (R &&) r;
+                        }
                     } else {
                         if constexpr (ToCommonRange) {
                             return BOOST_PARSER_SUBRANGE(
-                                       r, r + std::strlen(r)) |
+                                first, plus_strlen(first)) |
                                    as_utf<OtherRangeFormat>;
                         } else {
-                            return BOOST_PARSER_SUBRANGE(r, null_sentinel_t{}) |
-                                   as_utf<OtherRangeFormat>;
+                            return (R &&) r | as_utf<OtherRangeFormat>;
                         }
                     }
                 } else if constexpr (text::detail::is_bounded_array_v<T>) {
@@ -165,7 +174,7 @@ namespace boost::parser {
         in C++20 and later if `r` is a non-borrowable rvalue. */
     template<
 #if BOOST_PARSER_USE_CONCEPTS
-        parsable_range_like R,
+        parsable_range R,
 #else
         typename R,
 #endif
@@ -175,7 +184,7 @@ namespace boost::parser {
         typename SkipParser
 #if !BOOST_PARSER_USE_CONCEPTS
         ,
-        typename Enable = std::enable_if_t<detail::is_parsable_range_like_v<R>>
+        typename Enable = std::enable_if_t<detail::is_parsable_range_v<R>>
 #endif
         >
     auto search(
@@ -228,7 +237,7 @@ namespace boost::parser {
         later if `r` is a non-borrowable rvalue. */
     template<
 #if BOOST_PARSER_USE_CONCEPTS
-        parsable_range_like R,
+        parsable_range R,
 #else
         typename R,
 #endif
@@ -237,7 +246,7 @@ namespace boost::parser {
         typename ErrorHandler
 #if !BOOST_PARSER_USE_CONCEPTS
         ,
-        typename Enable = std::enable_if_t<detail::is_parsable_range_like_v<R>>
+        typename Enable = std::enable_if_t<detail::is_parsable_range_v<R>>
 #endif
         >
     auto search(
@@ -527,13 +536,12 @@ namespace boost::parser {
 #if BOOST_PARSER_USE_CONCEPTS
 
             template<
-                parsable_range_like R,
+                parsable_range R,
                 typename Parser,
                 typename GlobalState,
                 typename ErrorHandler,
                 typename SkipParser>
             requires(
-                std::is_pointer_v<std::remove_cvref_t<R>> ||
                 std::ranges::viewable_range<R>) &&
                 can_search_all_view<
                     to_range_t<R>,
@@ -555,12 +563,11 @@ namespace boost::parser {
             }
 
             template<
-                parsable_range_like R,
+                parsable_range R,
                 typename Parser,
                 typename GlobalState,
                 typename ErrorHandler>
             requires(
-                std::is_pointer_v<std::remove_cvref_t<R>> ||
                 std::ranges::viewable_range<R>) &&
                 can_search_all_view<
                     to_range_t<R>,
@@ -593,7 +600,7 @@ namespace boost::parser {
                 typename SkipParser =
                     parser_interface<eps_parser<detail::phony>>,
                 typename Trace = trace,
-                typename Enable = std::enable_if_t<is_parsable_range_like_v<R>>>
+                typename Enable = std::enable_if_t<is_parsable_range_v<R>>>
             [[nodiscard]] constexpr auto operator()(
                 R && r,
                 parser_interface<Parser, GlobalState, ErrorHandler> const &

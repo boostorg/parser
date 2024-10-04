@@ -1609,17 +1609,66 @@ namespace boost { namespace parser {
             V base_;
         };
 
+        enum class symbol_table_op { insert, erase, clear };
+
+        template<typename T>
+        struct symbol_table_operation
+        {
+            std::string key_;
+            std::optional<T> value_;
+            symbol_table_op kind_;
+        };
+
+        template<typename T>
+        void apply_symbol_table_operations(
+            std::vector<std::pair<std::string, T>> & initial_elements,
+            std::vector<symbol_table_operation<T>> & pending_operations)
+        {
+            auto lower_bound = [&initial_elements](std::string const & str) {
+                return std::lower_bound(
+                    initial_elements.begin(),
+                    initial_elements.end(),
+                    str,
+                    [&str](auto const & a, auto b) {
+                        return a.first < b;
+                    });
+            };
+
+            for (auto & op : pending_operations) {
+                if (op.kind_ == symbol_table_op::insert) {
+                    auto it = lower_bound(op.key_);
+                    if (it == initial_elements.end() ||
+                        it->first != op.key_) {
+                        initial_elements.insert(
+                            it,
+                            std::pair<std::string, T>(
+                                std::move(op.key_), std::move(*op.value_)));
+                    } else {
+                        it->second = std::move(*op.value_);
+                    }
+                } else if (op.kind_ == symbol_table_op::erase) {
+                    auto it = lower_bound(op.key_);
+                    if (it != initial_elements.end() && it->first == op.key_)
+                        initial_elements.erase(it);
+                } else {
+                    initial_elements.clear();
+                }
+            }
+
+            pending_operations.clear();
+        }
+
         template<typename Context, typename T>
         auto get_trie(
-            Context const & context, symbol_parser<T> const & symbol_parser)
+            Context const & context, symbol_parser<T> const & sym_parser)
         {
             using trie_t = text::trie_map<std::vector<char32_t>, T>;
             using result_type = std::pair<trie_t &, bool>;
             symbol_table_tries_t & symbol_table_tries =
                 *context.symbol_table_tries_;
 
-            auto & [any, has_case_folded] =
-                symbol_table_tries[(void *)&symbol_parser];
+            auto & [any, has_case_folded, pending_ops] =
+                symbol_table_tries[(void *)&sym_parser.ref()];
 
             bool const needs_case_folded = context.no_case_depth_;
 
@@ -1627,7 +1676,13 @@ namespace boost { namespace parser {
                 any = trie_t{};
                 has_case_folded = false;
                 trie_t & trie = *std::any_cast<trie_t>(&any);
-                for (auto const & e : symbol_parser.initial_elements()) {
+                if (pending_ops) {
+                    detail::apply_symbol_table_operations(
+                        sym_parser.initial_elements(),
+                        sym_parser.pending_operations());
+                    pending_ops = false;
+                }
+                for (auto const & e : sym_parser.initial_elements()) {
                     trie.insert(e.first | text::as_utf32, e.second);
                     if (needs_case_folded) {
                         trie.insert(
@@ -2153,6 +2208,67 @@ namespace boost { namespace parser {
             Iter & it_;
         };
 
+        template<typename Parser>
+        using has_parser_data_member_expr =
+            decltype(std::declval<Parser>().parser_);
+        template<typename Parser>
+        constexpr bool has_parser_data_member_v =
+            is_detected_v<has_parser_data_member_expr, Parser>;
+
+        template<typename Parser>
+        using has_parsers_data_member_expr =
+            decltype(std::declval<Parser>().parsers_);
+        template<typename Parser>
+        constexpr bool has_parsers_data_member_v =
+            is_detected_v<has_parsers_data_member_expr, Parser>;
+
+        template<typename Context, typename Parser>
+        void visit_symbol_table_parsers_impl(
+            Context & context, Parser const & p);
+
+        template<typename Context, typename Parser>
+        void visit_symbol_table_parser(Context & context, Parser const & p)
+        {
+            if constexpr (has_parser_data_member_v<Parser>) {
+                detail::visit_symbol_table_parsers_impl(context, p.parser_);
+            }
+        }
+        template<typename Context, typename T>
+        void visit_symbol_table_parser(
+            Context & context, symbol_parser<T> const & p)
+        {
+            auto & [_, has_case_folded, pending_ops] =
+                (*context.symbol_table_tries_)[(void *)&p.ref()];
+            has_case_folded = false;
+            pending_ops = !p.pending_operations().empty();
+        }
+
+        template<typename Context, typename Parser>
+        void visit_symbol_table_parsers_impl(
+            Context & context, Parser const & p)
+        {
+            if constexpr (has_parsers_data_member_v<Parser>) {
+                auto visit = [&context](auto & parser) {
+                    detail::visit_symbol_table_parsers_impl(context, parser);
+                };
+                detail::hl::for_each(p.parsers_, visit);
+            } else {
+                detail::visit_symbol_table_parser(context, p);
+            }
+        }
+
+        template<
+            typename Context,
+            typename Parser,
+            typename GlobalState,
+            typename ErrorHandler>
+        void visit_symbol_table_parsers(
+            Context & context,
+            parser_interface<Parser, GlobalState, ErrorHandler> const & p)
+        {
+            detail::visit_symbol_table_parsers_impl(context, p.parser_);
+        }
+
         template<
             bool Debug,
             typename Iter,
@@ -2179,6 +2295,7 @@ namespace boost { namespace parser {
                 error_handler,
                 parser.globals_,
                 symbol_table_tries);
+            detail::visit_symbol_table_parsers(context, parser);
             auto const flags =
                 Debug ? detail::enable_trace(detail::flags::gen_attrs)
                       : detail::flags::gen_attrs;
@@ -2227,6 +2344,7 @@ namespace boost { namespace parser {
                 error_handler,
                 parser.globals_,
                 symbol_table_tries);
+            detail::visit_symbol_table_parsers(context, parser);
             auto const flags =
                 Debug ? detail::enable_trace(detail::flags::gen_attrs)
                       : detail::flags::gen_attrs;
@@ -2281,6 +2399,7 @@ namespace boost { namespace parser {
                 callbacks,
                 parser.globals_,
                 symbol_table_tries);
+            detail::visit_symbol_table_parsers(context, parser);
             auto const flags =
                 Debug ? detail::enable_trace(detail::flags::gen_attrs)
                       : detail::flags::gen_attrs;
@@ -2332,6 +2451,7 @@ namespace boost { namespace parser {
                 error_handler,
                 parser.globals_,
                 symbol_table_tries);
+            detail::visit_symbol_table_parsers(context, parser);
             auto const flags =
                 Debug ? detail::enable_trace(detail::default_flags())
                       : detail::default_flags();
@@ -2377,6 +2497,7 @@ namespace boost { namespace parser {
                 error_handler,
                 parser.globals_,
                 symbol_table_tries);
+            detail::visit_symbol_table_parsers(context, parser);
             auto const flags =
                 Debug ? detail::enable_trace(detail::default_flags())
                       : detail::default_flags();
@@ -2430,6 +2551,7 @@ namespace boost { namespace parser {
                 callbacks,
                 parser.globals_,
                 symbol_table_tries);
+            detail::visit_symbol_table_parsers(context, parser);
             auto const flags =
                 Debug ? detail::enable_trace(detail::default_flags())
                       : detail::default_flags();
@@ -4976,6 +5098,15 @@ namespace boost { namespace parser {
             }
         }
 
+        /** Erases the entry whose UTF-8 match string is `str` from the copy
+            of the symbol table inside the parse context `context`. */
+        template<typename Context>
+        void clear(Context const & context) const
+        {
+            auto [trie, _] = detail::get_trie(context, ref());
+            trie.clear();
+        }
+
         template<
             typename Iter,
             typename Sentinel,
@@ -5025,7 +5156,9 @@ namespace boost { namespace parser {
             }
         }
 
-        std::vector<std::pair<std::string_view, T>> initial_elements_;
+        mutable std::vector<std::pair<std::string, T>> initial_elements_;
+        mutable std::vector<detail::symbol_table_operation<T>>
+        pending_operations_;
         symbol_parser const * copied_from_;
 
         symbol_parser const & ref() const noexcept
@@ -5034,10 +5167,15 @@ namespace boost { namespace parser {
                 return *copied_from_;
             return *this;
         }
-        std::vector<std::pair<std::string_view, T>> const &
+        std::vector<std::pair<std::string, T>> &
         initial_elements() const noexcept
         {
             return ref().initial_elements_;
+        }
+        std::vector<detail::symbol_table_operation<T>> &
+        pending_operations() const noexcept
+        {
+            return ref().pending_operations_;
         }
 
         std::string_view diagnostic_text_;
@@ -5598,7 +5736,9 @@ namespace boost { namespace parser {
         {}
         symbols(std::initializer_list<std::pair<std::string_view, T>> il)
         {
-            this->parser_.initial_elements_ = il;
+            this->parser_.initial_elements_.resize(il.size());
+            std::copy(il.begin(), il.end(),
+                      this->parser_.initial_elements_.begin());
         }
         symbols(
             char const * diagnostic_text,
@@ -5606,20 +5746,47 @@ namespace boost { namespace parser {
             parser_interface<symbol_parser<T>>(
                 symbol_parser<T>(diagnostic_text))
         {
-            this->parser_.initial_elements_ = il;
+            this->parser_.initial_elements_.resize(il.size());
+            std::copy(il.begin(), il.end(),
+                      this->parser_.initial_elements_.begin());
         }
 
         using parser_interface<symbol_parser<T>>::operator();
 
-        /** Adds an entry consisting of a UTF-8 string `str` to match, and an
-            associated attribute `x`, to `*this`.  The entry is added for use
-            in all subsequent top-level parses.  Subsequent lookups during the
-            current top-level parse will not match `str`. */
+        /** Inserts an entry consisting of a UTF-8 string `str` to match, and
+            an associated attribute `x`, to `*this`.  The entry is added for
+            use in all subsequent top-level parses.  Subsequent lookups during
+            the current top-level parse will not necessarily match `str`. */
         symbols & insert_for_next_parse(std::string_view str, T x)
         {
-            this->parser_.initial_elements_.push_back(
-                std::pair<std::string_view, T>(str, std::move(x)));
+            this->parser_.pending_operations().push_back(
+                detail::symbol_table_operation<T>{
+                    std::string(str),
+                    std::move(x),
+                    detail::symbol_table_op::insert});
             return *this;
+        }
+
+        /** Erases the entry whose UTF-8 match string is `str`, from `*this`.
+            The entry will no longer be available for use in all subsequent
+            top-level parses.  `str` will not be removed from the symbols
+            matched in the current top-level parse. */
+        void erase_for_next_parse(std::string_view str)
+        {
+            this->parser_.pending_operations().push_back(
+                detail::symbol_table_operation<T>{
+                    std::string(str),
+                    std::nullopt,
+                    detail::symbol_table_op::erase});
+        }
+
+        /** Erases all the entries from the copy of the symbol table inside
+            the parse context `context`. */
+        void clear_for_next_parse()
+        {
+            this->parser_.pending_operations().push_back(
+                detail::symbol_table_operation<T>{
+                    {}, std::nullopt, detail::symbol_table_op::clear});
         }
 
         /** Equivalent to `insert_for_next_parse(str, std::move(x))`. */
@@ -5655,7 +5822,15 @@ namespace boost { namespace parser {
         {
             this->parser_.erase(context, str);
         }
-    };
+
+        /** Erases all the entries from the copy of the symbol table inside
+            the parse context `context`. */
+        template<typename Context>
+        void clear(Context const & context) const
+        {
+            this->parser_.clear(context);
+        }
+   };
 
 #ifndef BOOST_PARSER_DOXYGEN
 
@@ -8430,7 +8605,7 @@ namespace boost { namespace parser {
         `!detail::derived_from_parser_interface_v<std::remove_cvref_t<Attr>`. */
 #if BOOST_PARSER_USE_CONCEPTS
     template<
-        parsable_range_like R,
+        parsable_range R,
         typename Parser,
         typename GlobalState,
         typename ErrorHandler,
@@ -8443,7 +8618,7 @@ namespace boost { namespace parser {
         typename ErrorHandler,
         typename Attr,
         typename Enable = std::enable_if_t<
-            detail::is_parsable_range_like_v<R> &&
+            detail::is_parsable_range_v<R> &&
             !detail::derived_from_parser_interface_v<
                 detail::remove_cv_ref_t<Attr>>>>
 #endif
@@ -8543,7 +8718,7 @@ namespace boost { namespace parser {
         `!detail::derived_from_parser_interface_v<std::remove_cvref_t<Attr>`. */
 #if BOOST_PARSER_USE_CONCEPTS
     template<
-        parsable_range_like R,
+        parsable_range R,
         typename Parser,
         typename GlobalState,
         typename ErrorHandler>
@@ -8553,7 +8728,7 @@ namespace boost { namespace parser {
         typename Parser,
         typename GlobalState,
         typename ErrorHandler,
-        typename Enable = std::enable_if_t<detail::is_parsable_range_like_v<R>>>
+        typename Enable = std::enable_if_t<detail::is_parsable_range_v<R>>>
 #endif
     auto parse(
         R const & r,
@@ -8672,7 +8847,7 @@ namespace boost { namespace parser {
             input is non-`char`. */
 #if BOOST_PARSER_USE_CONCEPTS
     template<
-        parsable_range_like R,
+        parsable_range R,
         typename Parser,
         typename GlobalState,
         typename ErrorHandler,
@@ -8686,7 +8861,7 @@ namespace boost { namespace parser {
         typename ErrorHandler,
         typename SkipParser,
         typename Attr,
-        typename Enable = std::enable_if_t<detail::is_parsable_range_like_v<R>>>
+        typename Enable = std::enable_if_t<detail::is_parsable_range_v<R>>>
 #endif
     bool parse(
         R const & r,
@@ -8787,7 +8962,7 @@ namespace boost { namespace parser {
             input is non-`char`. */
 #if BOOST_PARSER_USE_CONCEPTS
     template<
-        parsable_range_like R,
+        parsable_range R,
         typename Parser,
         typename GlobalState,
         typename ErrorHandler,
@@ -8799,7 +8974,7 @@ namespace boost { namespace parser {
         typename GlobalState,
         typename ErrorHandler,
         typename SkipParser,
-        typename Enable = std::enable_if_t<detail::is_parsable_range_like_v<R>>>
+        typename Enable = std::enable_if_t<detail::is_parsable_range_v<R>>>
 #endif
     auto parse(
         R const & r,
@@ -8905,7 +9080,7 @@ namespace boost { namespace parser {
             input is non-`char`. */
 #if BOOST_PARSER_USE_CONCEPTS
     template<
-        parsable_range_like R,
+        parsable_range R,
         typename Parser,
         typename GlobalState,
         typename ErrorHandler,
@@ -8917,7 +9092,7 @@ namespace boost { namespace parser {
         typename GlobalState,
         typename ErrorHandler,
         typename Callbacks,
-        typename Enable = std::enable_if_t<detail::is_parsable_range_like_v<R>>>
+        typename Enable = std::enable_if_t<detail::is_parsable_range_v<R>>>
 #endif
     bool callback_parse(
         R const & r,
@@ -9038,7 +9213,7 @@ namespace boost { namespace parser {
             input is non-`char`. */
 #if BOOST_PARSER_USE_CONCEPTS
     template<
-        parsable_range_like R,
+        parsable_range R,
         typename Parser,
         typename GlobalState,
         typename ErrorHandler,
@@ -9052,7 +9227,7 @@ namespace boost { namespace parser {
         typename ErrorHandler,
         typename SkipParser,
         typename Callbacks,
-        typename Enable = std::enable_if_t<detail::is_parsable_range_like_v<R>>>
+        typename Enable = std::enable_if_t<detail::is_parsable_range_v<R>>>
 #endif
     bool callback_parse(
         R const & r,

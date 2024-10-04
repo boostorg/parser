@@ -62,7 +62,7 @@ void compile_attribute_non_unicode()
 
         {
             constexpr auto parser = char_;
-            using attr_t = decltype(parse(r, parser));
+            using attr_t = decltype(parse(null_term(r), parser));
             static_assert(std::is_same_v<attr_t, std::optional<char>>);
             static_assert(std::is_same_v<
                           attribute_t<decltype(r), decltype(parser)>,
@@ -70,7 +70,7 @@ void compile_attribute_non_unicode()
         }
         {
             constexpr auto parser = *char_;
-            using attr_t = decltype(parse(r, parser));
+            using attr_t = decltype(parse(null_term(r), parser));
             static_assert(std::is_same_v<attr_t, std::optional<std::string>>);
             static_assert(std::is_same_v<
                           attribute_t<decltype(r), decltype(parser)>,
@@ -78,7 +78,7 @@ void compile_attribute_non_unicode()
         }
         {
             constexpr auto parser = string("foo");
-            using attr_t = decltype(parse(r, parser));
+            using attr_t = decltype(parse(null_term(r), parser));
             static_assert(std::is_same_v<attr_t, std::optional<std::string>>);
             static_assert(std::is_same_v<
                           attribute_t<decltype(r), decltype(parser)>,
@@ -86,7 +86,7 @@ void compile_attribute_non_unicode()
         }
         {
             constexpr auto parser = char_ >> string("foo");
-            using attr_t = decltype(parse(r, parser));
+            using attr_t = decltype(parse(null_term(r), parser));
             static_assert(std::is_same_v<attr_t, std::optional<std::string>>);
             static_assert(std::is_same_v<
                           attribute_t<decltype(r), decltype(parser)>,
@@ -94,7 +94,7 @@ void compile_attribute_non_unicode()
         }
         {
             constexpr auto parser = string("foo") >> char_;
-            using attr_t = decltype(parse(r, parser));
+            using attr_t = decltype(parse(null_term(r), parser));
             static_assert(std::is_same_v<attr_t, std::optional<std::string>>);
             static_assert(std::is_same_v<
                           attribute_t<decltype(r), decltype(parser)>,
@@ -315,42 +315,42 @@ void compile_attribute_unicode_utf8()
 
         {
             constexpr auto parser = char_;
-            using attr_t = decltype(parse(r, parser));
+            using attr_t = decltype(parse(null_term(r), parser));
             static_assert(std::is_same_v<attr_t, std::optional<char32_t>>);
             static_assert(std::is_same_v<
-                          attribute_t<decltype(r), decltype(parser)>,
+                          attribute_t<decltype(null_term(r)), decltype(parser)>,
                           char32_t>);
         }
         {
             constexpr auto parser = *char_;
-            using attr_t = decltype(parse(r, parser));
+            using attr_t = decltype(parse(null_term(r), parser));
             static_assert(std::is_same_v<attr_t, std::optional<std::string>>);
             static_assert(std::is_same_v<
-                          attribute_t<decltype(r), decltype(parser)>,
+                          attribute_t<decltype(null_term(r)), decltype(parser)>,
                           std::string>);
         }
         {
             constexpr auto parser = string("foo");
-            using attr_t = decltype(parse(r, parser));
+            using attr_t = decltype(parse(null_term(r), parser));
             static_assert(std::is_same_v<attr_t, std::optional<std::string>>);
             static_assert(std::is_same_v<
-                          attribute_t<decltype(r), decltype(parser)>,
+                          attribute_t<decltype(null_term(r)), decltype(parser)>,
                           std::string>);
         }
         {
             constexpr auto parser = char_ >> string("foo");
-            using attr_t = decltype(parse(r, parser));
+            using attr_t = decltype(parse(null_term(r), parser));
             static_assert(std::is_same_v<attr_t, std::optional<std::string>>);
             static_assert(std::is_same_v<
-                          attribute_t<decltype(r), decltype(parser)>,
+                          attribute_t<decltype(null_term(r)), decltype(parser)>,
                           std::string>);
         }
         {
             constexpr auto parser = string("foo") >> char_;
-            using attr_t = decltype(parse(r, parser));
+            using attr_t = decltype(parse(null_term(r), parser));
             static_assert(std::is_same_v<attr_t, std::optional<std::string>>);
             static_assert(std::is_same_v<
-                          attribute_t<decltype(r), decltype(parser)>,
+                          attribute_t<decltype(null_term(r)), decltype(parser)>,
                           std::string>);
         }
     }

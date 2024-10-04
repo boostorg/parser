@@ -19,34 +19,6 @@
 
 namespace boost::parser::detail { namespace text {
 
-    template<typename Range>
-    struct utf_range_like_iterator
-    {
-        using type = decltype(std::declval<Range>().begin());
-    };
-
-    template<typename T>
-    struct utf_range_like_iterator<T *>
-    {
-        using type = T *;
-    };
-
-    template<std::size_t N, typename T>
-    struct utf_range_like_iterator<T[N]>
-    {
-        using type = T *;
-    };
-
-    template<std::size_t N, typename T>
-    struct utf_range_like_iterator<T (&)[N]>
-    {
-        using type = T *;
-    };
-
-    template<typename Range>
-    using utf_range_like_iterator_t =
-        typename utf_range_like_iterator<Range>::type;
-
     /** An alias for `in_out_result` returned by algorithms that perform a
         transcoding copy. */
     template<typename Iter, typename OutIter>
@@ -652,7 +624,7 @@ namespace boost::parser::detail { namespace text { BOOST_PARSER_DETAIL_TEXT_NAME
     }
 
     template<typename Range, typename OutIter>
-    transcode_result<utf_range_like_iterator_t<Range>, OutIter>
+    transcode_result<detail::iterator_t<Range>, OutIter>
     transcode_to_utf8(Range && r, OutIter out)
     {
         return dtl::transcode_to_8_dispatch<false, Range, OutIter>::call(
@@ -670,7 +642,7 @@ namespace boost::parser::detail { namespace text { BOOST_PARSER_DETAIL_TEXT_NAME
     }
 
     template<typename Range, typename OutIter>
-    transcode_result<utf_range_like_iterator_t<Range>, OutIter>
+    transcode_result<detail::iterator_t<Range>, OutIter>
     transcode_to_utf16(Range && r, OutIter out)
     {
         return dtl::transcode_to_16_dispatch<false, Range, OutIter>::call(
@@ -688,7 +660,7 @@ namespace boost::parser::detail { namespace text { BOOST_PARSER_DETAIL_TEXT_NAME
     }
 
     template<typename Range, typename OutIter>
-    transcode_result<utf_range_like_iterator_t<Range>, OutIter>
+    transcode_result<detail::iterator_t<Range>, OutIter>
     transcode_to_utf32(Range && r, OutIter out)
     {
         return dtl::transcode_to_32_dispatch<false, Range, OutIter>::call(
@@ -719,16 +691,12 @@ namespace boost::parser::detail { namespace text { BOOST_PARSER_DETAIL_TEXT_NAME
     }
 
     template<typename R, std::output_iterator<uint32_t> O>
-        requires(utf16_range_like<R> || utf32_range_like<R>)
+        requires(utf16_range<R> || utf32_range<R>)
     transcode_result<dtl::uc_result_iterator<R>, O> transcode_to_utf8(
         R && r, O out)
     {
-        if constexpr (std::is_pointer_v<std::remove_reference_t<R>>) {
-            return text::transcode_to_utf8(r, null_sentinel, out);
-        } else {
-            return text::transcode_to_utf8(
-                std::ranges::begin(r), std::ranges::end(r), out);
-        }
+        return text::transcode_to_utf8(
+            std::ranges::begin(r), std::ranges::end(r), out);
     }
 
 
@@ -750,16 +718,12 @@ namespace boost::parser::detail { namespace text { BOOST_PARSER_DETAIL_TEXT_NAME
     }
 
     template<typename R, std::output_iterator<uint32_t> O>
-        requires(utf8_range_like<R> || utf32_range_like<R>)
+        requires(utf8_range<R> || utf32_range<R>)
     transcode_result<dtl::uc_result_iterator<R>, O> transcode_to_utf16(
         R && r, O out)
     {
-        if constexpr (std::is_pointer_v<std::remove_reference_t<R>>) {
-            return text::transcode_to_utf16(r, null_sentinel, out);
-        } else {
-            return text::transcode_to_utf16(
-                std::ranges::begin(r), std::ranges::end(r), out);
-        }
+        return text::transcode_to_utf16(
+            std::ranges::begin(r), std::ranges::end(r), out);
     }
 
 
@@ -781,16 +745,12 @@ namespace boost::parser::detail { namespace text { BOOST_PARSER_DETAIL_TEXT_NAME
     }
 
     template<typename R, std::output_iterator<uint32_t> O>
-        requires(utf8_range_like<R> || utf16_range_like<R>)
+        requires(utf8_range<R> || utf16_range<R>)
     transcode_result<dtl::uc_result_iterator<R>, O> transcode_to_utf32(
         R && r, O out)
     {
-        if constexpr (std::is_pointer_v<std::remove_reference_t<R>>) {
-            return text::transcode_to_utf32(r, null_sentinel, out);
-        } else {
-            return text::transcode_to_utf32(
-                std::ranges::begin(r), std::ranges::end(r), out);
-        }
+        return text::transcode_to_utf32(
+            std::ranges::begin(r), std::ranges::end(r), out);
     }
 
 }}}

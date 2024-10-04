@@ -50,8 +50,8 @@ struct string_int_double_priv
     std::string s;
 
 private:
-    int i;
-    double d;
+    [[maybe_unused]] int i;
+    [[maybe_unused]] double d;
 };
 
 struct string_int_double_no_copy_move
@@ -62,8 +62,8 @@ struct string_int_double_no_copy_move
 
 private:
     std::string s;
-    int i;
-    double d;
+    [[maybe_unused]] int i;
+    [[maybe_unused]] double d;
 };
 
 struct employee

@@ -272,18 +272,18 @@ constexpr auto double_s = u8"sS";       // U+0073 U+0073
 
         {
             auto const result =
-                parse(capital_sharp_s | as_utf32, capital_sharp_s_p);
+                parse(null_term(capital_sharp_s) | as_utf32, capital_sharp_s_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)capital_sharp_s);
         }
         {
             auto const result =
-                parse(small_sharp_s | as_utf32, capital_sharp_s_p);
+                parse(null_term(small_sharp_s) | as_utf32, capital_sharp_s_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)small_sharp_s);
         }
         {
-            auto const result = parse(double_s | as_utf32, capital_sharp_s_p);
+            auto const result = parse(null_term(double_s) | as_utf32, capital_sharp_s_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)double_s);
         }
@@ -302,18 +302,19 @@ constexpr auto double_s = u8"sS";       // U+0073 U+0073
 
         {
             auto const result =
-                parse(capital_sharp_s | as_utf32, small_sharp_s_p);
+                parse(null_term(capital_sharp_s) | as_utf32, small_sharp_s_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)capital_sharp_s);
         }
         {
             auto const result =
-                parse(small_sharp_s | as_utf32, small_sharp_s_p);
+                parse(null_term(small_sharp_s) | as_utf32, small_sharp_s_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)small_sharp_s);
         }
         {
-            auto const result = parse(double_s | as_utf32, small_sharp_s_p);
+            auto const result =
+                parse(null_term(double_s) | as_utf32, small_sharp_s_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)double_s);
         }
@@ -331,17 +332,20 @@ constexpr auto double_s = u8"sS";       // U+0073 U+0073
         constexpr auto double_s_p = no_case[string(double_s)];
 
         {
-            auto const result = parse(capital_sharp_s | as_utf32, double_s_p);
+            auto const result =
+                parse(null_term(capital_sharp_s) | as_utf32, double_s_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)capital_sharp_s);
         }
         {
-            auto const result = parse(small_sharp_s | as_utf32, double_s_p);
+            auto const result =
+                parse(null_term(small_sharp_s) | as_utf32, double_s_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)small_sharp_s);
         }
         {
-            auto const result = parse(double_s | as_utf32, double_s_p);
+            auto const result =
+                parse(null_term(double_s) | as_utf32, double_s_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)double_s);
         }
@@ -364,13 +368,13 @@ constexpr auto double_s = u8"sS";       // U+0073 U+0073
             BOOST_TEST(*result == "s");
         }
         {
-            BOOST_TEST(!parse(capital_sharp_s | as_utf32, s_p));
+            BOOST_TEST(!parse(null_term(capital_sharp_s) | as_utf32, s_p));
         }
         {
-            BOOST_TEST(!parse(small_sharp_s | as_utf32, s_p));
+            BOOST_TEST(!parse(null_term(small_sharp_s) | as_utf32, s_p));
         }
         {
-            BOOST_TEST(!parse(double_s | as_utf32, s_p));
+            BOOST_TEST(!parse(null_term(double_s) | as_utf32, s_p));
         }
         {
             BOOST_TEST(!parse("x" | as_utf32, s_p));
@@ -482,19 +486,20 @@ constexpr auto double_s = u8"sS";       // U+0073 U+0073
     {
         constexpr auto mixed_sharp_s1_p = no_case[string(mixed_sharp_s1)];
         {
-            auto const result = parse(triple_s | as_utf32, mixed_sharp_s1_p);
+            auto const result =
+                parse(null_term(triple_s) | as_utf32, mixed_sharp_s1_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)triple_s);
         }
         {
             auto const result =
-                parse(mixed_sharp_s1 | as_utf32, mixed_sharp_s1_p);
+                parse(null_term(mixed_sharp_s1) | as_utf32, mixed_sharp_s1_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)mixed_sharp_s1);
         }
         {
             auto const result =
-                parse(mixed_sharp_s2 | as_utf32, mixed_sharp_s1_p);
+                parse(null_term(mixed_sharp_s2) | as_utf32, mixed_sharp_s1_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)mixed_sharp_s2);
         }
@@ -502,19 +507,20 @@ constexpr auto double_s = u8"sS";       // U+0073 U+0073
     {
         constexpr auto mixed_sharp_s2_p = no_case[string(mixed_sharp_s2)];
         {
-            auto const result = parse(triple_s | as_utf32, mixed_sharp_s2_p);
+            auto const result =
+                parse(null_term(triple_s) | as_utf32, mixed_sharp_s2_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)triple_s);
         }
         {
             auto const result =
-                parse(mixed_sharp_s1 | as_utf32, mixed_sharp_s2_p);
+                parse(null_term(mixed_sharp_s1) | as_utf32, mixed_sharp_s2_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)mixed_sharp_s1);
         }
         {
             auto const result =
-                parse(mixed_sharp_s2 | as_utf32, mixed_sharp_s2_p);
+                parse(null_term(mixed_sharp_s2) | as_utf32, mixed_sharp_s2_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)mixed_sharp_s2);
         }
@@ -522,17 +528,20 @@ constexpr auto double_s = u8"sS";       // U+0073 U+0073
     {
         constexpr auto triple_s_p = no_case[string(triple_s)];
         {
-            auto const result = parse(triple_s | as_utf32, triple_s_p);
+            auto const result =
+                parse(null_term(triple_s) | as_utf32, triple_s_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)triple_s);
         }
         {
-            auto const result = parse(mixed_sharp_s1 | as_utf32, triple_s_p);
+            auto const result =
+                parse(null_term(mixed_sharp_s1) | as_utf32, triple_s_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)mixed_sharp_s1);
         }
         {
-            auto const result = parse(mixed_sharp_s2 | as_utf32, triple_s_p);
+            auto const result =
+                parse(null_term(mixed_sharp_s2) | as_utf32, triple_s_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)mixed_sharp_s2);
         }
@@ -541,12 +550,13 @@ constexpr auto double_s = u8"sS";       // U+0073 U+0073
         constexpr auto mixed_sharp_s3_p = no_case[string(mixed_sharp_s3)];
         {
             auto const result =
-                parse(mixed_sharp_s3 | as_utf32, mixed_sharp_s3_p);
+                parse(null_term(mixed_sharp_s3) | as_utf32, mixed_sharp_s3_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)mixed_sharp_s3);
         }
         {
-            auto const result = parse(quadruple_s | as_utf32, mixed_sharp_s3_p);
+            auto const result =
+                parse(null_term(quadruple_s) | as_utf32, mixed_sharp_s3_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)quadruple_s);
         }
@@ -554,12 +564,14 @@ constexpr auto double_s = u8"sS";       // U+0073 U+0073
     {
         constexpr auto quadruple_s_p = no_case[string(quadruple_s)];
         {
-            auto const result = parse(mixed_sharp_s3 | as_utf32, quadruple_s_p);
+            auto const result =
+                parse(null_term(mixed_sharp_s3) | as_utf32, quadruple_s_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)mixed_sharp_s3);
         }
         {
-            auto const result = parse(quadruple_s | as_utf32, quadruple_s_p);
+            auto const result =
+                parse(null_term(quadruple_s) | as_utf32, quadruple_s_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)quadruple_s);
         }
@@ -567,17 +579,20 @@ constexpr auto double_s = u8"sS";       // U+0073 U+0073
     {
         constexpr auto all_sharp_s1_p = no_case[string(all_sharp_s1)];
         {
-            auto const result = parse(all_sharp_s1 | as_utf32, all_sharp_s1_p);
+            auto const result =
+                parse(null_term(all_sharp_s1) | as_utf32, all_sharp_s1_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)all_sharp_s1);
         }
         {
-            auto const result = parse(all_sharp_s2 | as_utf32, all_sharp_s1_p);
+            auto const result =
+                parse(null_term(all_sharp_s2) | as_utf32, all_sharp_s1_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)all_sharp_s2);
         }
         {
-            auto const result = parse(all_sharp_s3 | as_utf32, all_sharp_s1_p);
+            auto const result =
+                parse(null_term(all_sharp_s3) | as_utf32, all_sharp_s1_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)all_sharp_s3);
         }
@@ -590,17 +605,20 @@ constexpr auto double_s = u8"sS";       // U+0073 U+0073
     {
         constexpr auto all_sharp_s2_p = no_case[string(all_sharp_s1)];
         {
-            auto const result = parse(all_sharp_s1 | as_utf32, all_sharp_s2_p);
+            auto const result =
+                parse(null_term(all_sharp_s1) | as_utf32, all_sharp_s2_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)all_sharp_s1);
         }
         {
-            auto const result = parse(all_sharp_s2 | as_utf32, all_sharp_s2_p);
+            auto const result =
+                parse(null_term(all_sharp_s2) | as_utf32, all_sharp_s2_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)all_sharp_s2);
         }
         {
-            auto const result = parse(all_sharp_s3 | as_utf32, all_sharp_s2_p);
+            auto const result =
+                parse(null_term(all_sharp_s3) | as_utf32, all_sharp_s2_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)all_sharp_s3);
         }
@@ -613,17 +631,20 @@ constexpr auto double_s = u8"sS";       // U+0073 U+0073
     {
         constexpr auto all_sharp_s3_p = no_case[string(all_sharp_s1)];
         {
-            auto const result = parse(all_sharp_s1 | as_utf32, all_sharp_s3_p);
+            auto const result =
+                parse(null_term(all_sharp_s1) | as_utf32, all_sharp_s3_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)all_sharp_s1);
         }
         {
-            auto const result = parse(all_sharp_s2 | as_utf32, all_sharp_s3_p);
+            auto const result =
+                parse(null_term(all_sharp_s2) | as_utf32, all_sharp_s3_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)all_sharp_s2);
         }
         {
-            auto const result = parse(all_sharp_s3 | as_utf32, all_sharp_s3_p);
+            auto const result =
+                parse(null_term(all_sharp_s3) | as_utf32, all_sharp_s3_p);
             BOOST_TEST(result);
             BOOST_TEST(*result == (char const *)all_sharp_s3);
         }

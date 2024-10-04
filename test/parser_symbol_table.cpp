@@ -12,7 +12,6 @@ using namespace boost::parser;
 
 int main()
 {
-
 // symbols_empty
 {
     symbols<int> roman_numerals;
@@ -161,6 +160,177 @@ int main()
     {
         auto const result = parse("L50C", numerals_parser);
         BOOST_TEST(!result);
+    }
+}
+
+// insert/erase/clear
+{
+    symbols<int> roman_numerals;
+    roman_numerals.insert_for_next_parse("I", 1)("V", 5)("X", 10);
+
+    auto const insert_numeral = [&roman_numerals](auto & context) {
+        using namespace boost::parser::literals;
+        char chars[2] = {get(_attr(context), 0_c), 0};
+        roman_numerals.insert(context, chars, get(_attr(context), 1_c));
+    };
+    auto const erase_numeral = [&roman_numerals](auto & context) {
+        using namespace boost::parser::literals;
+        char chars[2] = {_attr(context), 0};
+        roman_numerals.erase(context, chars);
+    };
+    auto const clear_numerals = [&roman_numerals](auto & context) {
+        roman_numerals.clear(context);
+    };
+
+    auto const add_parser = ("add" >> char_ >> int_)[insert_numeral];
+    auto const delete_parser = ("del" >> char_)[erase_numeral];
+    auto const clear_parser = lit("clear")[clear_numerals];
+
+    auto const next_insert_numeral = [&roman_numerals](auto & context) {
+        using namespace boost::parser::literals;
+        char chars[2] = {get(_attr(context), 0_c), 0};
+        roman_numerals.insert_for_next_parse(chars, get(_attr(context), 1_c));
+    };
+    auto const next_erase_numeral = [&roman_numerals](auto & context) {
+        using namespace boost::parser::literals;
+        char chars[2] = {_attr(context), 0};
+        roman_numerals.erase_for_next_parse(chars);
+    };
+    auto const next_clear_numerals = [&roman_numerals](auto &) {
+        roman_numerals.clear_for_next_parse();
+    };
+
+    auto const next_add_parser =
+        ("next-add" >> char_ >> int_)[next_insert_numeral];
+    auto const next_delete_parser = ("next-del" >> char_)[next_erase_numeral];
+    auto const next_clear_parser = lit("next-clear")[next_clear_numerals];
+
+    {
+        // add only for this parse
+        auto result = parse("addL50L", add_parser >> roman_numerals);
+        BOOST_TEST(result);
+        BOOST_TEST(*result == 50);
+
+        result = parse("L", roman_numerals);
+        BOOST_TEST(!result);
+    }
+    {
+        // add only for the next parse
+        auto result = parse("next-addL50L", next_add_parser >> roman_numerals);
+        BOOST_TEST(!result); // TODO
+
+        result = parse("L", roman_numerals);
+        BOOST_TEST(result);
+        BOOST_TEST(*result == 50);
+    }
+    {
+        // add for both parses
+        auto result = parse("addL50next-addL50L",
+                            add_parser >> next_add_parser >> roman_numerals);
+        BOOST_TEST(result);
+        BOOST_TEST(*result == 50);
+
+        result = parse("L", roman_numerals);
+        BOOST_TEST(result);
+        BOOST_TEST(*result == 50);
+    }
+    {
+        // add for both parses
+        auto result = parse("next-addL50addL50L",
+                            next_add_parser >> add_parser >> roman_numerals);
+        BOOST_TEST(result);
+        BOOST_TEST(*result == 50);
+
+        result = parse("L", roman_numerals);
+        BOOST_TEST(result);
+        BOOST_TEST(*result == 50);
+    }
+
+    {
+        // delete nonexistent entry
+        auto result = parse("delQ", delete_parser);
+        BOOST_TEST(result);
+    }
+    {
+        // delete nonexistent entry
+        auto result = parse("next-delQ", next_delete_parser);
+        BOOST_TEST(result);
+    }
+
+    {
+        // delete only for this parse
+        BOOST_TEST(*parse("V", roman_numerals) == 5);
+
+        auto result = parse("delVV", delete_parser >> roman_numerals);
+        BOOST_TEST(!result);
+
+        result = parse("V", roman_numerals);
+        BOOST_TEST(result);
+        BOOST_TEST(*result == 5);
+    }
+    {
+        // delete only for the next parse
+        BOOST_TEST(*parse("V", roman_numerals) == 5);
+
+        auto result = parse("next-delVV", next_delete_parser >> roman_numerals);
+        BOOST_TEST(result);       // TODO
+        BOOST_TEST(*result == 5); // TODO
+
+        result = parse("V", roman_numerals);
+        BOOST_TEST(!result);
+    }
+    {
+        // delete for both parses
+        BOOST_TEST(*parse("X", roman_numerals) == 10);
+
+        auto result = parse(
+            "delXnext-delXX",
+            delete_parser >> next_delete_parser >> roman_numerals);
+        BOOST_TEST(!result);
+
+        result = parse("X", roman_numerals);
+        BOOST_TEST(!result);
+    }
+    {
+        // add and then delete only for this parse
+        auto result = parse(
+            "addC100CdelCC",
+            add_parser >> roman_numerals >> delete_parser >> roman_numerals);
+        BOOST_TEST(!result);
+    }
+    {
+        // add for this parse and then delete only for the next parse
+        auto result = parse(
+            "addC100Cnext-delCC",
+            add_parser >> roman_numerals >> next_delete_parser >>
+            roman_numerals);
+        BOOST_TEST(result);
+        BOOST_TEST(*result == std::tuple(100, 100));
+    }
+
+    {
+        // clear only for this parse
+        BOOST_TEST(*parse("I", roman_numerals) == 1);
+        BOOST_TEST(*parse("L", roman_numerals) == 50);
+
+        BOOST_TEST(!parse("clearI", clear_parser >> roman_numerals));
+        BOOST_TEST(!parse("clearL", clear_parser >> roman_numerals));
+
+        BOOST_TEST(*parse("I", roman_numerals) == 1);
+        BOOST_TEST(*parse("L", roman_numerals) == 50);
+    }
+
+    {
+        // clear only for the next parse
+        BOOST_TEST(*parse("I", roman_numerals) == 1);
+        BOOST_TEST(*parse("L", roman_numerals) == 50);
+
+        auto result = parse("next-clearI", next_clear_parser >> roman_numerals);
+        BOOST_TEST(result);       // TODO
+        BOOST_TEST(*result == 1); // TODO
+
+        BOOST_TEST(!parse("I", roman_numerals));
+        BOOST_TEST(!parse("L", roman_numerals));
     }
 }
 

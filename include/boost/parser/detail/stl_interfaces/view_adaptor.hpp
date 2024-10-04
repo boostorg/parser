@@ -58,6 +58,30 @@ namespace boost::parser::detail { namespace stl_interfaces {
         constexpr bool is_invocable_v =
             is_detected_v<invocable_expr, F, Args...>;
 
+        // This ensures that captures don't decay from arrays to pointers.
+        // The decay is fine to do for NTBSs, but not arrays like {'a', 'b'}.
+        // This is done here since it's too late to see that we were passed an
+        // array where we need it, much later.  Consider a call to replace()
+        // for instance -- we'd want to know in the replace_impl function that
+        // we were passed an array, but by then it's too late.  We are
+        // *thoroughly* unlikely to be passed anything but an array of
+        // characters, so I'm not checking here that the array is not ints or
+        // whatever before chopping off the null terminator.
+        template<size_t N, typename CharT>
+        auto array_to_range(CharT (&arr)[N])
+        {
+            auto const first = std::begin(arr);
+            auto last = std::end(arr);
+            if (N && !arr[N - 1])
+                --last;
+            return BOOST_PARSER_SUBRANGE(first, last);
+        }
+        template<typename T>
+        decltype(auto) array_to_range(T && x)
+        {
+            return (T &&)x;
+        }
+
         template<typename Func, typename... CapturedArgs>
         struct bind_back_t
         {
@@ -69,7 +93,8 @@ namespace boost::parser::detail { namespace stl_interfaces {
 
             template<typename F, typename... Args>
             explicit constexpr bind_back_t(int, F && f, Args &&... args) :
-                f_((F &&) f), bound_args_((Args &&) args...)
+                f_((F &&) f),
+                bound_args_((Args &&) args...)
             {
                 static_assert(sizeof...(Args) == sizeof...(CapturedArgs), "");
             }
@@ -125,8 +150,9 @@ namespace boost::parser::detail { namespace stl_interfaces {
     template<typename Func, typename... Args>
     constexpr auto bind_back(Func && f, Args &&... args)
     {
-        return detail::bind_back_result<Func, Args...>(
-            0, (Func &&) f, (Args &&) args...);
+        return detail::bind_back_result<
+            Func, detail::remove_cvref_t<decltype(detail::array_to_range(std::declval<Args>()))>...>(
+            0, (Func &&) f, detail::array_to_range((Args &&) args)...);
     }
 
 #if BOOST_PARSER_DEFINE_CUSTOM_RANGE_ADAPTOR_CLOSURE ||                \

@@ -124,7 +124,7 @@ namespace more_about_rules_3 {
 
     bp::rule<struct parens_tag> parens = "matched parentheses";
 
-    auto const parens_def = ('(' >> parens > ')') | bp::eps;
+    auto const parens_def = (('(' >> parens) > ')') | bp::eps;
 
     BOOST_PARSER_DEFINE_RULES(parens);
 }
@@ -134,7 +134,7 @@ namespace more_about_rules_4 {
 
     bp::rule<struct parens_tag> parens = "matched parentheses";
 
-    auto const parens_def = ('(' >> parens > ')') | bp::eps;
+    auto const parens_def = (('(' >> parens) > ')') | bp::eps;
 
     BOOST_PARSER_DEFINE_RULES(parens);
 

@@ -1042,7 +1042,7 @@ Now we just need to put the pieces together to make a parser:
 
 We've got a few new bits in play here, so let's break it down.  `'M'_l` is a
 /literal parser/.  That is, it is a parser that parses a literal `char`, code
-point, or string.  In this case, a `char` "M" is being parsed.  The `_l` bit
+point, or string.  In this case, a `char` `'M'` is being parsed.  The `_l` bit
 at the end is a _udl_ suffix that you can put after any `char`, `char32_t`, or
 `char const *` to form a literal parser.  You can also make a literal parser
 by writing _lit_, passing an argument of one of the previously mentioned
@@ -1134,13 +1134,6 @@ The full program:
 
 [self_filling_symbol_table_example]
 
-[note It is possible to add symbols to a _symbols_ permanently.  To do so, you
-have to use a mutable _symbols_ object `s`, and add the symbols by calling
-`s.insert_for_next_parse()`, instead of `s.insert()`.  These two operations
-are orthogonal, so if you want to both add a symbol to the table for the
-current top-level parse, and leave it in the table for subsequent top-level
-parses, you need to call both functions. ]
-
 [tip _symbols_ also has a call operator that does exactly what
 `.insert_for_next_parse()` does.  This allows you to chain additions with a
 convenient syntax, like this:
@@ -1156,6 +1149,19 @@ Unicode or ASCII parsing, this will not matter to you at all.  If you do
 non-Unicode parsing of a character encoding that is not a subset of Unicode
 (EBCDIC, for instance), it could cause problems.  See the section on _unicode_
 for more information.]
+
+It is possible to add symbols to a _symbols_ permanently.  To do so, you
+have to use a mutable _symbols_ object `s`, and add the symbols by calling
+`s.insert_for_next_parse()`, instead of `s.insert()`.  These two operations
+are orthogonal, so if you want to both add a symbol to the table for the
+current top-level parse, and leave it in the table for subsequent top-level
+parses, you need to call both functions.
+
+It is also possible to erase a single entry from the symbol table, or to clear
+the symbol table entirely.  Just as with insertion, there are versions of
+erase and clear for the current parse, and another that applies only to
+subsequent parses.  The full set of operations can be found in the _symbols_
+API docs.
 
 [endsect]
 
@@ -1807,8 +1813,7 @@ common:
 * They each return a value contextually convertible to `bool`.
 
 * They each take at least a range to parse and a parser.  The "range to parse"
-  may be an iterator/sentinel pair or an single range-like object.  Note that
-  "range-like" includes null-terminated string pointers.
+  may be an iterator/sentinel pair or an single range object.
 
 * They each require forward iterability of the range to parse.
 
@@ -1823,7 +1828,7 @@ common:
   the last location within the input that `p` matched.  The *whole* input was
   matched if and only if `first == last` after the call to _p_.
 
-* When you call any of the range-like overloads of _p_, for example `_p_np_(r,
+* When you call any of the range overloads of _p_, for example `_p_np_(r,
   p, _ws_)`, _p_ only indicates success if *all* of `r` was matched by `p`.
 
 [note `wchar_t` is an accepted value type for the input.  Please note that
@@ -1834,7 +1839,7 @@ this is interpreted as UTF-16 on MSVC, and UTF-32 everywhere else.]
 There are eight overloads of _p_ and _pp_ combined, because there are three
 either/or options in how you call them.
 
-[heading Iterator/sentinel versus range-like]
+[heading Iterator/sentinel versus range]
 
 You can call _pp_ with an iterator and sentinel that delimit a range of
 character values.  For example:
@@ -1868,32 +1873,11 @@ allows calls like `_p_np_("str", p)` to work naturally.
     auto result_2 = bp::parse(U"str", p, bp::ws);
 
     char const * str_3 = "str";
-    auto result_3 = bp::parse(str_3 | boost::parser::as_utf16, p, bp::ws);
-
-You can also call _p_ with a pointer to a null-terminated string of character
-values.  _p_ considers pointers to null-terminated strings to be ranges,
-since, for any pointer `T *` to a null-terminated string, `T *` is isomorphic
-with `subrange<T *, _null_sent_>`.
-
-    namespace bp = boost::parser;
-    auto const p = /* some parser ... */;
-
-    char const * str_1 = /* ... */ ;
-    auto result_1 = bp::parse(str_1, p, bp::ws);
-    char8_t const * str_2 = /* ... */ ;
-    auto result_2 = bp::parse(str_2, p, bp::ws);
-    char16_t const * str_3 = /* ... */ ;
-    auto result_3 = bp::parse(str_3, p, bp::ws);
-    char32_t const * str_4 = /* ... */ ;
-    auto result_4 = bp::parse(str_4, p, bp::ws);
-
-    int const array[] = { 's', 't', 'r', 0 };
-    int const * array_ptr = array;
-    auto result_5 = bp::parse(array_ptr, p, bp::ws);
+    auto result_3 = bp::parse(bp::null_term(str_3) | bp::as_utf16, p, bp::ws);
 
 Since there is no way to indicate that `p` matches the input, but only a
-prefix of the input was matched, the range-like (non-iterator/sentinel)
-overloads of _p_ indicate failure if the entire input is not matched.
+prefix of the input was matched, the range (non-iterator/sentinel) overloads
+of _p_ indicate failure if the entire input is not matched.
 
 [heading With or without an attribute out-parameter]
 
@@ -3049,10 +3033,9 @@ code paths, as they are written generically.  The only difference is that the
 Unicode code path parses the input as a range of code points, and the
 non-Unicode path does not.  In effect, this means that, in the Unicode code
 path, when you call `_p_np_(r, p)` for some input range `r` and some parser
-`p`, the parse happens as if you called `_p_np_(r | boost::parser::as_utf32, p)`
-instead.  (Of course, it does not matter if `r` is a null-terminated pointer,
-a proper range, or an iterator/sentinel pair; those all work fine with
-`boost::parser::as_utf32`.)
+`p`, the parse happens as if you called `_p_np_(r | boost::parser::as_utf32,
+p)` instead.  (Of course, it does not matter if `r` is a proper range, or an
+iterator/sentinel pair; those both work fine with `boost::parser::as_utf32`.)
 
 Matching "characters" within _Parser_'s parsers is assumed to be a code point
 match.  In the Unicode path there is a code point from the input that is
@@ -3187,8 +3170,7 @@ the parser.
 
 The other adaptors `as_utf8` and `as_utf16` are also provided for
 completeness, if you want to use them.  They each can transcode any sequence
-of character types.  A null-terminated string is considered a sequence of
-character type.
+of character types.
 
 [important The `as_utfN` adaptors are optional, so they don't come with
 `parser.hpp`.  To get access to them, `#include

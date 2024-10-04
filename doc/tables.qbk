@@ -34,19 +34,17 @@ itself be used as a parser; it must be called.  In the table below:
 
 * `a` is a semantic action;
 
-* `r` is an object whose type models `parsable_range_like`; and
+* `r` is an object whose type models `parsable_range`; and
 
 * `p`, `p1`, `p2`, ... are parsers.
 
 * `escapes` is a _symbols_t_ object, where `T` is `char` or `char32_t`.
 
-[note The definition of `parsable_range_like` is:
+[note The definition of `parsable_range` is:
 
-[parsable_range_like_concept]
+[parsable_range_concept]
 
-It is intended to be a range-like thing; a null-terminated sequence of
-characters is considered range-like, given that a pointer `T *` to a
-null-terminated string is isomorphic with `subrange<T *, _null_sent_>`.]
+]
 
 [note Some of the parsers in this table consume no input.  All parsers consume
 the input they match unless otherwise stated in the table below.]
@@ -371,7 +369,7 @@ Here are all the operator overloaded for parsers.  In the tables below:
 
 * `a` is a semantic action;
 
-* `r` is an object whose type models `parsable_range_like` (see _concepts_);
+* `r` is an object whose type models `parsable_range` (see _concepts_);
   and
 
 * `p`, `p1`, `p2`, ... are parsers.

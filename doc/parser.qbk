@@ -3,7 +3,7 @@
  / file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
  /]
 
-[library Boost.Parser (Proposed)
+[library Boost.Parser
     [quickbook 1.3]
     [authors [Laine, Zach]]
     [copyright 2020 T. Zachary Laine]
@@ -227,22 +227,22 @@
 [def _ATTR_                ['[^ATTR]]`()`]
 [def _ATTR_np_             ['[^ATTR]]]
 
-[def _p_api_               [link boost_parser__proposed_.tutorial.the__parse____api The `parse()` API]]
-[def _parsers_uses_        [link boost_parser__proposed_.tutorial.the_parsers_and_their_uses The Parsers And Their Uses]]
-[def _parse_ctx_           [link boost_parser__proposed_.tutorial.the_parse_context The Parse Context]]
-[def _rule_parsers_        [link boost_parser__proposed_.tutorial.rule_parsers Rule Parsers]]
-[def _parsing_structs_     [link boost_parser__proposed_.tutorial.parsing_into__struct_s_and__class_es Parsing into `struct`s and `class`es]]
-[def _expect_pts_          [link boost_parser__proposed_.tutorial.backtracking.expectation_points Expectation points]]
-[def _attr_gen_            [link boost_parser__proposed_.tutorial.attribute_generation Attribute Generation]]
-[def _directives_          [link boost_parser__proposed_.tutorial.directives Directives]]
-[def _eh_debugging_        [link boost_parser__proposed_.tutorial.error_handling_and_debugging Error Handling and Debugging]]
-[def _more_about_rules_    [link boost_parser__proposed_.tutorial.more_about_rules More About Rules]]
-[def _unicode_             [link boost_parser__proposed_.tutorial.unicode_support Unicode Support]]
-[def _concepts_            [link boost_parser__proposed_.concepts Concepts]]
-[def _ex_json_             [link boost_parser__proposed_.extended_examples.parsing_json Parsing JSON]]
-[def _ex_cb_json_          [link boost_parser__proposed_.extended_examples.parsing_json_with_callbacks Parsing JSON With Callbacks]]
-[def _rationale_           [link boost_parser__proposed_.rationale Rationale]]
-[def _n_is_weird_          [link boost_parser__proposed_.rationale._classname_alt__boost__parser__none___code__phrase_role__identifier__none__phrase___code___classname__is_weird `none` is weird]]
+[def _p_api_               [link boost_parser.tutorial.the__parse____api The `parse()` API]]
+[def _parsers_uses_        [link boost_parser.tutorial.the_parsers_and_their_uses The Parsers And Their Uses]]
+[def _parse_ctx_           [link boost_parser.tutorial.the_parse_context The Parse Context]]
+[def _rule_parsers_        [link boost_parser.tutorial.rule_parsers Rule Parsers]]
+[def _parsing_structs_     [link boost_parser.tutorial.parsing_into__struct_s_and__class_es Parsing into `struct`s and `class`es]]
+[def _expect_pts_          [link boost_parser.tutorial.backtracking.expectation_points Expectation points]]
+[def _attr_gen_            [link boost_parser.tutorial.attribute_generation Attribute Generation]]
+[def _directives_          [link boost_parser.tutorial.directives Directives]]
+[def _eh_debugging_        [link boost_parser.tutorial.error_handling_and_debugging Error Handling and Debugging]]
+[def _more_about_rules_    [link boost_parser.tutorial.more_about_rules More About Rules]]
+[def _unicode_             [link boost_parser.tutorial.unicode_support Unicode Support]]
+[def _concepts_            [link boost_parser.concepts Concepts]]
+[def _ex_json_             [link boost_parser.extended_examples.parsing_json Parsing JSON]]
+[def _ex_cb_json_          [link boost_parser.extended_examples.parsing_json_with_callbacks Parsing JSON With Callbacks]]
+[def _rationale_           [link boost_parser.rationale Rationale]]
+[def _n_is_weird_          [link boost_parser.rationale._classname_alt__boost__parser__none___code__phrase_role__identifier__none__phrase___code___classname__is_weird `none` is weird]]
 
 [def _err_fwd_hpp_         [headerref boost/parser/error_handling_fwd.hpp error_handling_fwd.hpp]]
 [def _err_hpp_             [headerref boost/parser/error_handling.hpp error_handling.hpp]]
@@ -270,7 +270,7 @@ _Parser_ requires C++17 or later.  It is known to work with these compilers:
 
 * GCC 9 and later
 * Clang 11 and later (and XCode 10.3 and later)
-* Visual Studio 2019 and later
+* Visual Studio 2022 and later
 
 [heading C++20 Support]
 

@@ -58,6 +58,15 @@ namespace boost { namespace parser {
     template<typename R, typename Parser>
     using attribute_t = typename attribute<R, Parser>::type;
 
+    /** Produces a `subrange` comprising the given pointer and
+        `null_sentinel`.  This should be used to make Null-Terminated Byte
+        Strings ("NTBSs") compatible with ranges. */
+    template<typename CharT>
+    constexpr auto null_term(CharT * ptr)
+    {
+        return BOOST_PARSER_SUBRANGE(ptr, detail::text::null_sentinel);
+    }
+
     namespace detail {
         template<typename T>
         constexpr bool is_optional_v = enable_optional<T>;
@@ -71,8 +80,15 @@ namespace boost { namespace parser {
             in_apply_parser = 1 << 3
         };
 
+        struct symbol_table_trie_element
+        {
+            std::any trie_;
+            bool has_case_folded_;
+            bool pending_operations_;
+        };
+
         using symbol_table_tries_t =
-            std::map<void *, std::pair<std::any, bool>, std::less<void *>>;
+            std::map<void *, symbol_table_trie_element, std::less<void *>>;
 
         template<
             bool DoTrace,

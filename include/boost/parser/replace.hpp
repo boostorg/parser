@@ -522,18 +522,16 @@ namespace boost::parser {
 #if BOOST_PARSER_USE_CONCEPTS
 
             template<
-                parsable_range_like R,
-                range_like ReplacementR,
+                parsable_range R,
+                std::ranges::range ReplacementR,
                 typename Parser,
                 typename GlobalState,
                 typename ErrorHandler,
                 typename SkipParser>
             requires
                 // clang-format off
-                (std::is_pointer_v<std::remove_cvref_t<R>> ||
-                 std::ranges::viewable_range<R>) &&
-                (std::is_pointer_v<std::remove_cvref_t<ReplacementR>> ||
-                 std::ranges::viewable_range<ReplacementR>) &&
+                std::ranges::viewable_range<R> &&
+                std::ranges::viewable_range<ReplacementR> &&
                 // clang-format on
                 can_replace_view<
                     to_range_t<R>,
@@ -569,17 +567,15 @@ namespace boost::parser {
             }
 
             template<
-                parsable_range_like R,
-                range_like ReplacementR,
+                parsable_range R,
+                std::ranges::range ReplacementR,
                 typename Parser,
                 typename GlobalState,
                 typename ErrorHandler>
             requires
                 // clang-format off
-                (std::is_pointer_v<std::remove_cvref_t<R>> ||
-                 std::ranges::viewable_range<R>) &&
-                (std::is_pointer_v<std::remove_cvref_t<ReplacementR>> ||
-                 std::ranges::viewable_range<ReplacementR>) &&
+                std::ranges::viewable_range<R> &&
+                std::ranges::viewable_range<ReplacementR> &&
                 // clang-format on
                 can_replace_view<
                     to_range_t<R>,
@@ -619,7 +615,7 @@ namespace boost::parser {
                 typename SkipParser,
                 typename ReplacementR = trace,
                 typename Trace = trace,
-                typename Enable = std::enable_if_t<is_parsable_range_like_v<R>>>
+                typename Enable = std::enable_if_t<is_parsable_range_v<R>>>
             [[nodiscard]] constexpr auto operator()(
                 R && r,
                 parser_interface<Parser, GlobalState, ErrorHandler> const &
@@ -630,7 +626,7 @@ namespace boost::parser {
             {
                 if constexpr (
                     is_parser_iface<remove_cv_ref_t<SkipParser>> &&
-                    is_range_like<remove_cv_ref_t<ReplacementR>> &&
+                    is_range<remove_cv_ref_t<ReplacementR>> &&
                     std::is_same_v<Trace, trace>) {
                     // (r, parser, skip, replacement, trace) case
                     return impl(
@@ -640,7 +636,7 @@ namespace boost::parser {
                         (ReplacementR &&) replacement,
                         trace_mode);
                 } else if constexpr (
-                    is_range_like<remove_cv_ref_t<SkipParser>> &&
+                    is_range<remove_cv_ref_t<SkipParser>> &&
                     std::is_same_v<remove_cv_ref_t<ReplacementR>, trace> &&
                     std::is_same_v<Trace, trace>) {
                     // (r, parser, replacement, trace) case

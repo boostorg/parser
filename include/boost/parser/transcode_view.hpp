@@ -13,17 +13,6 @@ namespace boost::parser {
 
     using format = detail::text::format;
 
-#if BOOST_PARSER_DETAIL_TEXT_USE_ALIAS_CTAD
-
-    template<class V>
-    using utf8_view = detail::text::utf_view<format::utf8, V>;
-    template<class V>
-    using utf16_view = detail::text::utf_view<format::utf16, V>;
-    template<class V>
-    using utf32_view = detail::text::utf_view<format::utf32, V>;
-
-#else
-
     /** A view that produces UTF-8 from an given sequence of UTF.
 
         \tparam V Constrained by `std::ranges::view<V>`.  Additionally, the
@@ -103,8 +92,6 @@ namespace boost::parser {
     utf16_view(R &&) -> utf16_view<std::views::all_t<R>>;
     template<class R>
     utf32_view(R &&) -> utf32_view<std::views::all_t<R>>;
-#endif
-
 #endif
 
     /** A view adaptor that produces a `utf8_view` of the given view. */

@@ -253,13 +253,12 @@ namespace boost::parser {
 #if BOOST_PARSER_USE_CONCEPTS
 
             template<
-                parsable_range_like R,
+                parsable_range R,
                 typename Parser,
                 typename GlobalState,
                 typename ErrorHandler,
                 typename SkipParser>
             requires(
-                std::is_pointer_v<std::remove_cvref_t<R>> ||
                 std::ranges::viewable_range<R>) &&
                 can_split_view<
                     to_range_t<R>,
@@ -281,12 +280,11 @@ namespace boost::parser {
             }
 
             template<
-                parsable_range_like R,
+                parsable_range R,
                 typename Parser,
                 typename GlobalState,
                 typename ErrorHandler>
             requires(
-                std::is_pointer_v<std::remove_cvref_t<R>> ||
                 std::ranges::viewable_range<R>) &&
                 can_split_view<
                     to_range_t<R>,
@@ -319,7 +317,7 @@ namespace boost::parser {
                 typename SkipParser =
                     parser_interface<eps_parser<detail::phony>>,
                 typename Trace = trace,
-                typename Enable = std::enable_if_t<is_parsable_range_like_v<R>>>
+                typename Enable = std::enable_if_t<is_parsable_range_v<R>>>
             [[nodiscard]] constexpr auto operator()(
                 R && r,
                 parser_interface<Parser, GlobalState, ErrorHandler> const &

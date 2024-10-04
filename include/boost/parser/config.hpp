@@ -80,7 +80,7 @@
 #endif
 
 #if defined(__cpp_lib_concepts) && !defined(BOOST_PARSER_DISABLE_CONCEPTS) &&  \
-    (!defined(__clang__) || 16 <= __clang__)
+    (!defined(__clang_major__) || 16 <= __clang_major__)
 #    define BOOST_PARSER_USE_CONCEPTS 1
 #else
 #    define BOOST_PARSER_USE_CONCEPTS 0

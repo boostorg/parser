@@ -176,21 +176,24 @@ namespace boost::parser::detail { namespace text {
             requires std::sentinel_for<sentinel_type, std::ranges::iterator_t<detail::maybe_const<OtherConst, V>>>
 #endif
         friend constexpr bool operator==(const iterator<OtherConst> & x,
-                                         const sentinel & y);
+                                         const sentinel & y)
+            { return x.it_ == y.end_; }
 
         template<bool OtherConst>
 #if BOOST_PARSER_DETAIL_TEXT_USE_CONCEPTS
             requires std::sized_sentinel_for<sentinel_type, std::ranges::iterator_t<detail::maybe_const<OtherConst, V>>>
 #endif
         friend constexpr detail::range_difference_t<detail::maybe_const<OtherConst, V>>
-        operator-(const iterator<OtherConst> & x, const sentinel & y);
+        operator-(const iterator<OtherConst> & x, const sentinel & y)
+           { return x.it_ - y.end_; }
 
         template<bool OtherConst>
 #if BOOST_PARSER_DETAIL_TEXT_USE_CONCEPTS
             requires std::sized_sentinel_for<sentinel_type, std::ranges::iterator_t<detail::maybe_const<OtherConst, V>>>
 #endif
         friend constexpr detail::range_difference_t<detail::maybe_const<OtherConst, V>>
-        operator-(const sentinel & y, const iterator<OtherConst> & x);
+        operator-(const sentinel & y, const iterator<OtherConst> & x)
+            { return y.end_ - x.it_; }
 
     public:
         constexpr iterator() = default;
@@ -263,11 +266,6 @@ namespace boost::parser::detail { namespace text {
             { return y.end_ - x.it_; }
     };
 
-#if BOOST_PARSER_DETAIL_TEXT_USE_ALIAS_CTAD
-    template<class R, auto F>
-    project_view(R &&) -> project_view<std::views::all_t<R>, F>;
-#endif
-
     namespace detail {
 #if BOOST_PARSER_DETAIL_TEXT_USE_CONCEPTS
         template<auto F>
@@ -290,11 +288,7 @@ namespace boost::parser::detail { namespace text {
 #endif
             [[nodiscard]] constexpr auto operator()(R && r) const
             {
-#if BOOST_PARSER_DETAIL_TEXT_USE_ALIAS_CTAD
-                return project_view_type(std::forward<R>(r));
-#else
                 return project_view_type<R>(std::forward<R>(r));
-#endif
             }
         };
     }
@@ -305,17 +299,6 @@ namespace boost::parser::detail { namespace text {
     template<typename F>
 #endif
     constexpr detail::project_impl<F> project{};
-
-#if BOOST_PARSER_DETAIL_TEXT_USE_ALIAS_CTAD
-
-    template<class V>
-    using char8_view = project_view<V, detail::cast_to_charn<char8_t>{}>;
-    template<class V>
-    using char16_view = project_view<V, detail::cast_to_charn<char16_t>{}>;
-    template<class V>
-    using char32_view = project_view<V, detail::cast_to_charn<char32_t>{}>;
-
-#else
 
 #if defined(__cpp_char8_t)
 #if BOOST_PARSER_DETAIL_TEXT_USE_CONCEPTS
@@ -398,8 +381,6 @@ namespace boost::parser::detail { namespace text {
     char32_view(R &&) -> char32_view<detail::all_t<R>>;
 #endif
 
-#endif
-
     namespace detail {
         template<template<class> class View, format Format>
         struct as_charn_impl : stl_interfaces::range_adaptor_closure<as_charn_impl<View, Format>>
@@ -408,8 +389,7 @@ namespace boost::parser::detail { namespace text {
             template<class R>
             requires (std::ranges::viewable_range<R> &&
                       std::ranges::input_range<R> &&
-                      std::convertible_to<std::ranges::range_reference_t<R>, format_to_type_t<Format>>) ||
-                     utf_pointer<std::remove_cvref_t<R>>
+                      std::convertible_to<std::ranges::range_reference_t<R>, format_to_type_t<Format>>)
 #else
             template<class R>
 #endif
@@ -422,9 +402,6 @@ namespace boost::parser::detail { namespace text {
 #else
                     return 42; // Never gonna happen.
 #endif
-                } else if constexpr (std::is_pointer_v<T>) {
-                    return View(
-                        BOOST_PARSER_DETAIL_TEXT_SUBRANGE(r, null_sentinel));
                 } else {
                     return View(std::forward<R>(r));
                 }
@@ -607,20 +584,6 @@ namespace boost::parser::detail { namespace text {
     };
 
 
-#if BOOST_PARSER_DETAIL_TEXT_USE_ALIAS_CTAD
-
-    template<format Format, class R>
-    utf_view(R &&) -> utf_view<Format, std::views::all_t<R>>;
-
-    template<class V>
-    using utf8_view = utf_view<format::utf8, V>;
-    template<class V>
-    using utf16_view = utf_view<format::utf16, V>;
-    template<class V>
-    using utf32_view = utf_view<format::utf32, V>;
-
-#else
-
 #if BOOST_PARSER_DETAIL_TEXT_USE_CONCEPTS
     template<utf_range V>
         requires std::ranges::view<V>
@@ -676,16 +639,12 @@ namespace boost::parser::detail { namespace text {
         {}
     };
 
-#if !BOOST_PARSER_DETAIL_TEXT_USE_ALIAS_CTAD
     template<class R>
     utf8_view(R &&) -> utf8_view<detail::all_t<R>>;
     template<class R>
     utf16_view(R &&) -> utf16_view<detail::all_t<R>>;
     template<class R>
     utf32_view(R &&) -> utf32_view<detail::all_t<R>>;
-#endif
-
-#endif
 
 #if defined(BOOST_TEXT_DOXYGEN)
 
@@ -762,8 +721,7 @@ namespace boost::parser::detail { namespace text {
             template<class R>
                 requires is_utf_view<std::remove_cvref_t<R>> ||
                          (std::ranges::viewable_range<R> &&
-                          can_utf_view<unpacked_range<R>, View>) ||
-                         utf_pointer<std::remove_cvref_t<R>>
+                          can_utf_view<unpacked_range<R>, View>)
 #else
             template<typename R>
 #endif
@@ -780,9 +738,6 @@ namespace boost::parser::detail { namespace text {
                     return View(std::forward<R>(r).base());
                 } else if constexpr (detail::is_charn_view<T>) {
                     return View(std::forward<R>(r));
-                } else if constexpr (std::is_pointer_v<T>) {
-                    return View(
-                        BOOST_PARSER_DETAIL_TEXT_SUBRANGE(r, null_sentinel));
                 } else {
                     return View(detail::unpack_range(std::forward<R>(r)));
                 }
@@ -818,7 +773,6 @@ namespace std::ranges {
     inline constexpr bool enable_borrowed_range<boost::parser::detail::text::utf_view<Format, V>> =
         enable_borrowed_range<V>;
 
-#if !BOOST_PARSER_DETAIL_TEXT_USE_ALIAS_CTAD
     template<class V>
     inline constexpr bool enable_borrowed_range<boost::parser::detail::text::utf8_view<V>> =
         enable_borrowed_range<V>;
@@ -828,7 +782,6 @@ namespace std::ranges {
     template<class V>
     inline constexpr bool enable_borrowed_range<boost::parser::detail::text::utf32_view<V>> =
         enable_borrowed_range<V>;
-#endif
 }
 
 #endif

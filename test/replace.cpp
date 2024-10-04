@@ -37,7 +37,7 @@ namespace deduction {
 // MSVC and older Clangs produce hard errors here, so ill_formed does not
 // work.
 #if defined(__cpp_char8_t) && !defined(_MSC_VER) &&                            \
-    (!defined(__clang__) || 16 <= __clang__)
+    (!defined(__clang_major__) || 16 <= __clang_major__)
 char const empty_str[] = "";
 
 template<typename T>
@@ -49,11 +49,6 @@ template<typename T>
 using char_str_utf16_replacement =
     decltype(std::declval<T>() | bp::replace(bp::lit("XYZ"), std::declval<T>() | bp::as_utf16));
 static_assert(ill_formed<char_str_utf16_replacement, decltype(empty_str)>{});
-
-template<typename T>
-using utf8_str_char_replacement =
-    decltype(std::declval<T>() | bp::as_utf8 | bp::replace(bp::lit("XYZ"), std::declval<T>()));
-static_assert(ill_formed<utf8_str_char_replacement, decltype(empty_str)>{});
 #endif
 
 static_assert(
@@ -61,6 +56,17 @@ static_assert(
 
 int main()
 {
+
+// bind_back
+{
+    auto f = [](auto x) {
+        static_assert(std::is_same_v<
+                      decltype(x),
+                      BOOST_PARSER_SUBRANGE<char const *, char const *>>);
+        BOOST_TEST(x.size() == 4u); // stripped off null
+    };
+    bp::detail::stl_interfaces::bind_back(f, "text");
+}
 
 // either_iterator
 {
@@ -89,26 +95,6 @@ int main()
              ++it, ++v_array_curr) {
             BOOST_TEST(*it == *v_array_curr);
         }
-    }
-    {
-        auto r1 = bp::detail::to_range<decltype("")>::call("");
-        auto r2 = bp::detail::to_range<decltype("foo")>::call("foo");
-
-        bp::detail::either_iterator<decltype(r1), decltype(r2)> either_r1_begin(
-            r1.begin());
-        bp::detail::either_iterator<decltype(r1), decltype(r2)> either_r1_end(
-            r1.end());
-        bp::detail::either_iterator<decltype(r1), decltype(r2)> either_r2_begin(
-            r2.begin());
-        bp::detail::either_iterator<decltype(r1), decltype(r2)> either_r2_end(
-            r2.end());
-
-        BOOST_TEST(either_r1_begin == either_r1_end);
-        std::string copy;
-        for (auto it = either_r2_begin; it != either_r2_end; ++it) {
-            copy.push_back(*it);
-        }
-        BOOST_TEST(copy == "foo");
     }
 }
 
@@ -218,7 +204,8 @@ int main()
     {
         char const * str = "XYZXYZaaXYZbaabaXYZXYZ";
         char const * replacement = "foo";
-        auto r = str | bp::replace(bp::lit("XYZ"), replacement);
+        auto r = bp::null_term(str) |
+            bp::replace(bp::lit("XYZ"), bp::null_term(replacement));
         int count = 0;
         std::string_view const strs[] = {
             "foo", "foo", "aa", "foo", "baaba", "foo", "foo"};
@@ -232,7 +219,8 @@ int main()
     {
         char const * str = "XYZXYZaaXYZbaabaXYZXYZ";
         char const * replacement = "foo";
-        auto const r = str | bp::replace(bp::lit("XYZ"), replacement);
+        auto const r = bp::null_term(str) |
+            bp::replace(bp::lit("XYZ"), bp::null_term(replacement));
         int count = 0;
         std::string_view const strs[] = {
             "foo", "foo", "aa", "foo", "baaba", "foo", "foo"};
@@ -260,7 +248,7 @@ int main()
     }
     {
         char const * str_ = "aaXYZb";
-        auto str = str_ | bp::as_utf16;
+        auto str = bp::null_term(str_) | bp::as_utf16;
         auto r = bp::replace(str, bp::lit("XYZ"), bp::ws, "foo" | bp::as_utf16);
         int count = 0;
         std::string_view const strs[] = {"aa", "foo", "b"};

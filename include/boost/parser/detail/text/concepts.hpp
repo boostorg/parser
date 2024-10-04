@@ -52,10 +52,6 @@ namespace boost::parser::detail { namespace text { BOOST_PARSER_DETAIL_TEXT_NAME
 
 
     template<typename T, format F>
-    concept code_unit_pointer =
-        std::is_pointer_v<T> && code_unit<std::iter_value_t<T>, F>;
-
-    template<typename T, format F>
     concept code_unit_range = std::ranges::input_range<T> &&
         code_unit<std::ranges::range_value_t<T>, F>;
 
@@ -66,16 +62,12 @@ namespace boost::parser::detail { namespace text { BOOST_PARSER_DETAIL_TEXT_NAME
     template<typename T>
     concept utf8_iter = code_unit_iter<T, format::utf8>;
     template<typename T>
-    concept utf8_pointer = code_unit_pointer<T, format::utf8>;
-    template<typename T>
     concept utf8_range = code_unit_range<T, format::utf8>;
     template<typename T>
     concept contiguous_utf8_range = contiguous_code_unit_range<T, format::utf8>;
 
     template<typename T>
     concept utf16_iter = code_unit_iter<T, format::utf16>;
-    template<typename T>
-    concept utf16_pointer = code_unit_pointer<T, format::utf16>;
     template<typename T>
     concept utf16_range = code_unit_range<T, format::utf16>;
     template<typename T>
@@ -84,8 +76,6 @@ namespace boost::parser::detail { namespace text { BOOST_PARSER_DETAIL_TEXT_NAME
 
     template<typename T>
     concept utf32_iter = code_unit_iter<T, format::utf32>;
-    template<typename T>
-    concept utf32_pointer = code_unit_pointer<T, format::utf32>;
     template<typename T>
     concept utf32_range = code_unit_range<T, format::utf32>;
     template<typename T>
@@ -101,9 +91,6 @@ namespace boost::parser::detail { namespace text { BOOST_PARSER_DETAIL_TEXT_NAME
 
     template<typename T>
     concept utf_iter = utf8_iter<T> || utf16_iter<T> || utf32_iter<T>;
-    template<typename T>
-    concept utf_pointer =
-        utf8_pointer<T> || utf16_pointer<T> || utf32_pointer<T>;
     template<typename T>
     concept utf_range = utf8_range<T> || utf16_range<T> || utf32_range<T>;
 
@@ -182,23 +169,6 @@ namespace boost::parser::detail { namespace text { BOOST_PARSER_DETAIL_TEXT_NAME
         { t(msg) } -> std::same_as<char32_t>;
         // clang-format on
     };
-
-    template<typename T>
-    // clang-format off
-    concept utf_range_like =
-        utf_range<std::remove_reference_t<T>> ||
-        utf_pointer<std::remove_reference_t<T>>;
-    // clang-format on
-
-    template<typename T>
-    concept utf8_range_like = utf8_code_unit<std::iter_value_t<T>> ||
-        utf8_pointer<std::remove_reference_t<T>>;
-    template<typename T>
-    concept utf16_range_like = utf16_code_unit<std::iter_value_t<T>> ||
-        utf16_pointer<std::remove_reference_t<T>>;
-    template<typename T>
-    concept utf32_range_like = utf32_code_unit<std::iter_value_t<T>> ||
-        utf32_pointer<std::remove_reference_t<T>>;
     //]
 
     // Clang 13 defines __cpp_lib_concepts but not std::indirectly copyable.

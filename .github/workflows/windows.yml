@@ -1,4 +1,4 @@
-name: macos-12 - Clang 14
+name: Windows MSVC
 
 on:
   push:
@@ -13,14 +13,16 @@ env:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
-        cxx_std: [17]
+        cxx_std: [17, 20, 23]
+        os: [windows-2022]
 
-    runs-on: macos-12
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
-  
+
       - name: Configure CMake
         # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
         # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
@@ -28,8 +30,8 @@ jobs:
 
       - name: Build
         working-directory: build
-        run: cmake --build .
+        run: cmake --build . -- /p:CL_MPcount=4
 
       - name: Test
-        working-directory: build
-        run: make check
+        working-directory: build/test
+        run: ctest -j4 -C ${{ env.BUILD_TYPE }} --output-on-failure

@@ -58,26 +58,22 @@ Online docs: https://tzlaine.github.io/parser
 
 Master status:
 
-![example workflow](https://github.com/tzlaine/parser/actions/workflows/ubuntu-20.04.yml/badge.svg?branch=master)
+[![Ubuntu](https://github.com/tzlaine/parser/actions/workflows/ubuntu.yml/badge.svg?branch=master)](https://github.com/tzlaine/parser/actions/workflows/ubuntu.yml)
 
-![example workflow](https://github.com/tzlaine/parser/actions/workflows/ubuntu-22.04.yml/badge.svg?branch=master)
+[![Fedora](https://github.com/tzlaine/parser/actions/workflows/fedora.yml/badge.svg?branch=master)](https://github.com/tzlaine/parser/actions/workflows/fedora.yml)
 
-![example workflow](https://github.com/tzlaine/parser/actions/workflows/windows-2019.yml/badge.svg?branch=master)
+[![Windows MSVC](https://github.com/tzlaine/parser/actions/workflows/windows.yml/badge.svg?branch=master)](https://github.com/tzlaine/parser/actions/workflows/windows.yml)
 
-![example workflow](https://github.com/tzlaine/parser/actions/workflows/windows-2022.yml/badge.svg?branch=master)
-
-![example workflow](https://github.com/tzlaine/parser/actions/workflows/macos-12.yml/badge.svg?branch=master)
+[![macos-12 - Clang 14](https://github.com/tzlaine/parser/actions/workflows/macos-12.yml/badge.svg?branch=master)](https://github.com/tzlaine/parser/actions/workflows/macos-12.yml)
 
 Develop status:
 
-![example workflow](https://github.com/tzlaine/parser/actions/workflows/ubuntu-20.04.yml/badge.svg?branch=develop)
+[![Ubuntu](https://github.com/tzlaine/parser/actions/workflows/ubuntu.yml/badge.svg?branch=develop)](https://github.com/tzlaine/parser/actions/workflows/ubuntu.yml)
 
-![example workflow](https://github.com/tzlaine/parser/actions/workflows/ubuntu-22.04.yml/badge.svg?branch=develop)
+[![Fedora](https://github.com/tzlaine/parser/actions/workflows/fedora.yml/badge.svg?branch=develop)](https://github.com/tzlaine/parser/actions/workflows/fedora.yml)
 
-![example workflow](https://github.com/tzlaine/parser/actions/workflows/windows-2019.yml/badge.svg?branch=develop)
+[![Windows MSVC](https://github.com/tzlaine/parser/actions/workflows/windows.yml/badge.svg?branch=develop)](https://github.com/tzlaine/parser/actions/workflows/windows.yml)
 
-![example workflow](https://github.com/tzlaine/parser/actions/workflows/windows-2022.yml/badge.svg?branch=develop)
-
-![example workflow](https://github.com/tzlaine/parser/actions/workflows/macos-12.yml/badge.svg?branch=develop)
+[![macos-12 - Clang 14](https://github.com/tzlaine/parser/actions/workflows/macos-12.yml/badge.svg?branch=develop)](https://github.com/tzlaine/parser/actions/workflows/macos-12.yml)
 
 [![License](https://img.shields.io/badge/license-boost-brightgreen.svg)](LICENSE_1_0.txt)

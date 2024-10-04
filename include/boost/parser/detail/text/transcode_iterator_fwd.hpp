@@ -51,51 +51,6 @@ namespace boost::parser::detail { namespace text {
 #endif
     class utf_iterator;
 
-#if BOOST_PARSER_DETAIL_TEXT_USE_ALIAS_CTAD
-
-    template<
-        utf8_iter I,
-        std::sentinel_for<I> S = I,
-        transcoding_error_handler ErrorHandler = use_replacement_character>
-    using utf_8_to_16_iterator =
-        utf_iterator<format::utf8, format::utf16, I, S, ErrorHandler>;
-    template<
-        utf16_iter I,
-        std::sentinel_for<I> S = I,
-        transcoding_error_handler ErrorHandler = use_replacement_character>
-    using utf_16_to_8_iterator =
-        utf_iterator<format::utf16, format::utf8, I, S, ErrorHandler>;
-
-
-    template<
-        utf8_iter I,
-        std::sentinel_for<I> S = I,
-        transcoding_error_handler ErrorHandler = use_replacement_character>
-    using utf_8_to_32_iterator =
-        utf_iterator<format::utf8, format::utf32, I, S, ErrorHandler>;
-    template<
-        utf32_iter I,
-        std::sentinel_for<I> S = I,
-        transcoding_error_handler ErrorHandler = use_replacement_character>
-    using utf_32_to_8_iterator =
-        utf_iterator<format::utf32, format::utf8, I, S, ErrorHandler>;
-
-
-    template<
-        utf16_iter I,
-        std::sentinel_for<I> S = I,
-        transcoding_error_handler ErrorHandler = use_replacement_character>
-    using utf_16_to_32_iterator =
-        utf_iterator<format::utf16, format::utf32, I, S, ErrorHandler>;
-    template<
-        utf32_iter I,
-        std::sentinel_for<I> S = I,
-        transcoding_error_handler ErrorHandler = use_replacement_character>
-    using utf_32_to_16_iterator =
-        utf_iterator<format::utf32, format::utf16, I, S, ErrorHandler>;
-
-#endif
-
 }}
 
 #endif

@@ -81,7 +81,7 @@ struct s1_boost_variant
     std::vector<int> vec_;
 };
 #endif
-#if TEST_BOOST_VARIANT
+#if TEST_BOOST_VARIANT2
 struct s1_boost_variant2
 {
     int i_;

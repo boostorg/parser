@@ -52,7 +52,7 @@ Features:
 - Trace support for debugging your parsers.
 - Clever hacks to make compile time errors easier to deal with.  (These are totally optional.)
 
-This library targets submission to Boost.
+This library first appeared in Boost 1.87.0
 
 Online docs: https://tzlaine.github.io/parser
 

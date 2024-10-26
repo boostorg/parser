@@ -6,6 +6,7 @@
 #ifndef BOOST_PARSER_LEXER_HPP
 #define BOOST_PARSER_LEXER_HPP
 
+#include <boost/parser/config.hpp>
 #include <boost/parser/ctre-unicode.hpp>
 #include <boost/parser/detail/debug_assert.hpp>
 
@@ -137,22 +138,57 @@ namespace boost { namespace parser {
         }
     }
 
-    /** TODO */
-    template<auto & Regex, typename Value = none>
-    struct lexer_token_spec
-    {
-        static_assert(
-            std::is_same_v<Value, none> || std::is_same_v<Value, long long> ||
-            std::is_same_v<Value, double>);
+    namespace detail {
+        template<ctll::fixed_string Regex, typename ID, typename Value>
+        struct token_spec
+        {
+            using id_type = ID;
+            using value_type = Value;
 
-        using value_type = Value;
+            static_assert(
+                std::is_same_v<value_type, none> ||
+                std::is_same_v<value_type, long long> ||
+                std::is_same_v<value_type, double>);
 
-        explicit lexer_token_spec(int id) : id(id) {}
+            explicit token_spec(id_type id) : id(id) {}
+            explicit token_spec(id_type id, value_type value) :
+                id(id), value(value)
+            {}
 
-        static constexpr auto & regex = Regex;
+            static constexpr ctll::fixed_string regex = Regex;
 
-        int id;
-    };
+            id_type id;
+            value_type value;
+        };
+
+        template<ctll::fixed_string Regex>
+        struct token_spec_facade
+        {
+            template<typename ID>
+            constexpr auto operator()(ID id)
+            {
+                return token_spec<Regex, ID, none>(id);
+            }
+
+            template<typename ID, typename Value>
+            constexpr auto operator()(ID id, Value value)
+            {
+                if constexpr (std::is_integral_v<Value>) {
+                    return token_spec<Regex, ID, long long>(id);
+                } else if constexpr (std::is_floating_point_v<Value>) {
+                    return token_spec<Regex, ID, double>(id);
+                } else {
+                    static_assert(
+                        !std::is_same_v<Value, Value>,
+                        "Only integral types and floating point types are "
+                        "acceptable as values for tokens.");
+                }
+            }
+        };
+    }
+
+    template<ctll::fixed_string Regex>
+    auto token_spec = detail::token_spec_facade<Regex>{};
 
 #ifdef BOOST_PARSER_DOXYGEN
 
@@ -178,6 +214,8 @@ namespace boost { namespace parser {
     template<typename T, typename... Ts>
     auto make_lexer(T const & x, Ts const &... xs)
     {
+        // TODO: Check that the id_type is the same for all of these.
+
         auto regex = (ctre::re<T::regex>() | ... | ctre::re<Ts::regex>());
         return lexer<decltype(regex), sizeof...(xs) + 1>{
             regex,

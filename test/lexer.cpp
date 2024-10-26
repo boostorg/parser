@@ -12,28 +12,88 @@
 #include <boost/core/lightweight_test.hpp>
 
 
+namespace bp = boost::parser;
+
+enum class my_tokens { foo, bar };
+
 int main()
 {
-#if 0
-    std::string const str = "a";
+#if BOOST_PARSER_USE_CONCEPTS
 
-    // attr out param, iter/sent
+    // formation of token_specs
     {
-        char out = 0;
-        auto first = str.c_str();
-        BOOST_TEST(prefix_parse(
-            first, boost::parser::detail::text::null_sentinel, char_, out));
-        first = str.c_str();
-        BOOST_TEST(out == 'a');
-        out = 0;
-        first = str.c_str();
-        BOOST_TEST(!prefix_parse(
-            first,
-            boost::parser::detail::text::null_sentinel,
-            char_('b'),
-            out));
-        BOOST_TEST(out == 0);
+        auto const token_spec = bp::token_spec<"foo">(12);
+
+        const bp::detail::token_spec<"foo", int, bp::none> token_spec_explicit(
+            12);
+        static_assert(
+            std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
     }
+    {
+        auto const token_spec = bp::token_spec<"foo">(my_tokens::foo);
+
+        const bp::detail::token_spec<"foo", my_tokens, bp::none>
+            token_spec_explicit(my_tokens::foo);
+        static_assert(
+            std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
+    }
+    {
+        auto const token_spec = bp::token_spec<"bar">(my_tokens::bar);
+
+        const bp::detail::token_spec<"bar", my_tokens, bp::none>
+            token_spec_explicit(my_tokens::bar);
+        static_assert(
+            std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
+    }
+    {
+        auto const token_spec = bp::token_spec<"foo">(12, 42);
+
+        const bp::detail::token_spec<"foo", int, long long> token_spec_explicit(
+            12, 42);
+        static_assert(
+            std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
+    }
+    {
+        auto const token_spec = bp::token_spec<"foo">(12, 'c');
+
+        const bp::detail::token_spec<"foo", int, long long> token_spec_explicit(
+            12, 'c');
+        static_assert(
+            std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
+    }
+    {
+        auto const token_spec = bp::token_spec<"foo">(12, 3u);
+
+        const bp::detail::token_spec<"foo", int, long long> token_spec_explicit(
+            12, 3u);
+        static_assert(
+            std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
+    }
+    {
+        auto const token_spec = bp::token_spec<"foo">(12, short(1));
+
+        const bp::detail::token_spec<"foo", int, long long> token_spec_explicit(
+            12, short(1));
+        static_assert(
+            std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
+    }
+    {
+        auto const token_spec = bp::token_spec<"foo">(12, 0.0f);
+
+        const bp::detail::token_spec<"foo", int, double> token_spec_explicit(
+            12, 0.0f);
+        static_assert(
+            std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
+    }
+    {
+        auto const token_spec = bp::token_spec<"foo">(12, 1.0);
+
+        const bp::detail::token_spec<"foo", int, double> token_spec_explicit(
+            12, 1.0);
+        static_assert(
+            std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
+    }
+
 #endif
 
     return boost::report_errors();

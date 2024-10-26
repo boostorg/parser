@@ -9,14 +9,12 @@
 #include <boost/parser/config.hpp>
 #include <boost/parser/detail/debug_assert.hpp>
 
-// TODO: remove boost/parser/ prefix.
-#if !BOOST_PARSER_USE_CONCEPTS || !__has_include(<boost/parser/ctre-unicode.hpp>)
+#if !BOOST_PARSER_USE_CONCEPTS || !__has_include(<ctre-unicode.hpp>)
 #error                                                                         \
-    "In order to work, the Boost.Parser lexer requires C++20 and CTRE's ctre-unicode.hpp single-header file in the #include path.  See https://github.com/hanickadot/compile-time-regular-expressions ."
+    "In order to work, the Boost.Parser lexer requires C++20 and CTRE's ctre-unicode.hpp single-header file in the #include path.  CTRE can be found at https://github.com/hanickadot/compile-time-regular-expressions .  The required header is at https://raw.githubusercontent.com/hanickadot/compile-time-regular-expressions/refs/heads/main/single-header/ctre-unicode.hpp ."
 #endif
 
-// TODO: remove boost/parser/ prefix.
-#include <boost/parser/ctre-unicode.hpp>
+#include <ctre-unicode.hpp>
 
 #include <string_view>
 #include <type_traits>

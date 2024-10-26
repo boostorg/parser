@@ -1629,7 +1629,7 @@ namespace boost { namespace parser {
                     initial_elements.begin(),
                     initial_elements.end(),
                     str,
-                    [&str](auto const & a, auto b) {
+                    [](auto const & a, auto b) {
                         return a.first < b;
                     });
             };

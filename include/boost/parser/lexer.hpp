@@ -6,8 +6,12 @@
 #ifndef BOOST_PARSER_LEXER_HPP
 #define BOOST_PARSER_LEXER_HPP
 
+#include <boost/parser/ctre-unicode.hpp>
+#include <boost/parser/detail/debug_assert.hpp>
+
 #include <string_view>
 #include <type_traits>
+#include <vector>
 
 
 namespace boost { namespace parser {
@@ -20,7 +24,7 @@ namespace boost { namespace parser {
 #endif
 
     namespace detail {
-        enum class token_kind { string_view, long_long, double_ };
+        enum class token_kind { no_value, string_view, long_long, double_ };
     }
 
     /** TODO */
@@ -30,33 +34,33 @@ namespace boost { namespace parser {
         using char_type = CharType;
         using string_view = std::basic_string_view<CharType>;
 
-        constexpr token() : id_(0), kind_(detail::token_kind::no_value) {}
+        constexpr token() : id_(0), kind_(detail::token_kind::string_view) {}
         constexpr token(int id, string_view value) :
-            id_(id), kind_(detail::token_kind::no_value)
+            id_(id), kind_(detail::token_kind::string_view)
         {
-            sv_ = value;
+            value_.sv_ = value;
         }
         constexpr token(int id, long long value) :
             id_(id), kind_(detail::token_kind::long_long)
         {
-            ll_ = value;
+            value_.ll_ = value;
         }
         constexpr token(int id, double value) :
-            id(id), kind(detail::token_kind::double_)
+            id_(id), kind_(detail::token_kind::double_)
         {
-            d_ = value;
+            value_.d_ = value;
         }
 
         constexpr bool id() const { return id_; }
 
-        constexpr nool has_string_view() const
+        constexpr bool has_string_view() const
         {
             return kind_ == detail::token_kind::string_view;
         }
         constexpr string_view get_string_view() const
         {
-            BOOST_PARSER_DEBUG_ASSERT(kind == detail::token_kind::string_view);
-            return match_range_;
+            BOOST_PARSER_DEBUG_ASSERT(kind_ == detail::token_kind::string_view);
+            return value_.sv_;
         }
 
         constexpr bool has_long_long() const
@@ -65,8 +69,8 @@ namespace boost { namespace parser {
         }
         constexpr long long get_long_long() const
         {
-            BOOST_PARSER_DEBUG_ASSERT(kind == detail::token_kind::long_long);
-            return value.ll;
+            BOOST_PARSER_DEBUG_ASSERT(kind_ == detail::token_kind::long_long);
+            return value_.ll_;
         }
 
         constexpr bool has_double() const
@@ -75,17 +79,30 @@ namespace boost { namespace parser {
         }
         constexpr double get_double() const
         {
-            BOOST_PARSER_DEBUG_ASSERT(kind == detail::token_kind::double_);
-            return value.d;
+            BOOST_PARSER_DEBUG_ASSERT(kind_ == detail::token_kind::double_);
+            return value_.d_;
         }
 
         constexpr bool operator==(token const & rhs) const
         {
-            if (id != rhs.id || kind != rhs.kind)
+            if (id_ != rhs.id_ || (kind_ != rhs.kind_ &&
+                                   rhs.kind_ != detail::token_kind::no_value)) {
                 return false;
-            if (has_value()) {
-                if (kind == detail::token_kind::long_long)
-                    return
+            }
+            switch (rhs.kind_) {
+            case detail::token_kind::no_value: return true;
+            case detail::token_kind::string_view:
+                return get_string_view() == rhs.get_string_view();
+            case detail::token_kind::long_long:
+                return get_long_long() == rhs.get_long_long();
+            case detail::token_kind::double_:
+                return get_double() == rhs.get_double();
+            default:
+                BOOST_PARSER_DEBUG_ASSERT(!"Error: invalid token kind.");
+#if defined(__cpp_lib_unreachable)
+                std::unreachable();
+#endif
+                return false;
             }
         }
 
@@ -95,7 +112,7 @@ namespace boost { namespace parser {
             string_view sv_;
             long long ll_;
             double d_;
-        };
+        } value_;
         int id_;
         detail::token_kind kind_;
     };
@@ -104,11 +121,11 @@ namespace boost { namespace parser {
         template<typename T>
         token_kind token_kind_for()
         {
-            if constexpr (std::is_smae_v<T, none>) {
+            if constexpr (std::is_same_v<T, none>) {
                 return token_kind::string_view;
-            } else if constexpr (std::is_smae_v<T, long long>) {
+            } else if constexpr (std::is_same_v<T, long long>) {
                 return token_kind::long_long;
-            } else if constexpr (std::is_smae_v<T, double>) {
+            } else if constexpr (std::is_same_v<T, double>) {
                 return token_kind::double_;
             } else {
                 static_assert(
@@ -161,7 +178,7 @@ namespace boost { namespace parser {
     template<typename T, typename... Ts>
     auto make_lexer(T const & x, Ts const &... xs)
     {
-        auto regex = (re<T::regex>() | ... | re<Ts::regex>());
+        auto regex = (ctre::re<T::regex>() | ... | ctre::re<Ts::regex>());
         return lexer<decltype(regex), sizeof...(xs) + 1>{
             regex,
             {detail::token_kind_for<typename T::value_type>(),
@@ -169,6 +186,7 @@ namespace boost { namespace parser {
             {T::id, Ts::id...}};
     }
 
+#if 0
     // TODO: Jus' a sketch.
     void process_tokens(lexer<Regex, Count> lex, std::string_view input)
     {
@@ -187,6 +205,7 @@ namespace boost { namespace parser {
                 });
         }
     }
+#endif
 
 }}
 

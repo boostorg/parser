@@ -31,11 +31,12 @@ tmp_file.write('''// Copyright (C) 2024 Hana Dusíková, T. Zachary Laine
 
 for line in lines:
     line = line
-    line = line.replace('CTRE', 'BOOST_PARSER_CTRE', 1)
-    line = line.replace('CTLL', 'BOOST_PARSER_CTLL', 1)
-    namespaces = ['ctll', 'ctre', 'detail', 'detail::tables', 'literals', 'test_literals', 'tables', 'uni', 'uni::detail']
+    line = line.replace('CTRE', 'BOOST_PARSER_CTRE')
+    line = line.replace('CTLL', 'BOOST_PARSER_CTLL')
+    namespaces = ['ctll', 'ctre', 'literals', 'test_literals', 'uni', 'uni::detail']
     for ns in namespaces:
-        line = line.replace(f'namespace {ns}', f'namespace boost::parser::{ns}')
+        if line.startswith('namespace'):
+            line = line.replace(f'namespace {ns}', f'namespace boost::parser::{ns}')
     tmp_file.write(line)
     #print(line[:-1])
 

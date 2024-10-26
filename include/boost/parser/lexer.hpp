@@ -161,34 +161,30 @@ namespace boost { namespace parser {
             value_type value;
         };
 
-        template<ctll::fixed_string Regex>
+        template<ctll::fixed_string Regex, typename Value>
         struct token_spec_facade
         {
             template<typename ID>
             constexpr auto operator()(ID id)
             {
-                return token_spec<Regex, ID, none>(id);
-            }
-
-            template<typename ID, typename Value>
-            constexpr auto operator()(ID id, Value value)
-            {
                 if constexpr (std::is_integral_v<Value>) {
                     return token_spec<Regex, ID, long long>(id);
                 } else if constexpr (std::is_floating_point_v<Value>) {
                     return token_spec<Regex, ID, double>(id);
+                } else if constexpr (std::same_as<Value, none>) {
+                    return token_spec<Regex, ID, none>(id);
                 } else {
                     static_assert(
                         !std::is_same_v<Value, Value>,
-                        "Only integral types and floating point types are "
-                        "acceptable as values for tokens.");
+                        "Only boost::parser::none, integral types and floating "
+                        "point types are acceptable as values for tokens.");
                 }
             }
         };
     }
 
-    template<ctll::fixed_string Regex>
-    auto token_spec = detail::token_spec_facade<Regex>{};
+    template<ctll::fixed_string Regex, typename Value = none>
+    auto token_spec = detail::token_spec_facade<Regex, Value>{};
 
 #ifdef BOOST_PARSER_DOXYGEN
 

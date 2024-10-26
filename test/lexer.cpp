@@ -46,50 +46,50 @@ int main()
             std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
     }
     {
-        auto const token_spec = bp::token_spec<"foo">(12, 42);
+        auto const token_spec = bp::token_spec<"foo", int>(12);
 
         const bp::detail::token_spec<"foo", int, long long> token_spec_explicit(
-            12, 42);
+            12);
         static_assert(
             std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
     }
     {
-        auto const token_spec = bp::token_spec<"foo">(12, 'c');
+        auto const token_spec = bp::token_spec<"foo", char>(12);
 
         const bp::detail::token_spec<"foo", int, long long> token_spec_explicit(
-            12, 'c');
+            12);
         static_assert(
             std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
     }
     {
-        auto const token_spec = bp::token_spec<"foo">(12, 3u);
+        auto const token_spec = bp::token_spec<"foo", unsigned int>(12);
 
         const bp::detail::token_spec<"foo", int, long long> token_spec_explicit(
-            12, 3u);
+            12);
         static_assert(
             std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
     }
     {
-        auto const token_spec = bp::token_spec<"foo">(12, short(1));
+        auto const token_spec = bp::token_spec<"foo", short>(12);
 
         const bp::detail::token_spec<"foo", int, long long> token_spec_explicit(
-            12, short(1));
+            12);
         static_assert(
             std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
     }
     {
-        auto const token_spec = bp::token_spec<"foo">(12, 0.0f);
+        auto const token_spec = bp::token_spec<"foo", float>(12);
 
         const bp::detail::token_spec<"foo", int, double> token_spec_explicit(
-            12, 0.0f);
+            12);
         static_assert(
             std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
     }
     {
-        auto const token_spec = bp::token_spec<"foo">(12, 1.0);
+        auto const token_spec = bp::token_spec<"foo", double>(12);
 
         const bp::detail::token_spec<"foo", int, double> token_spec_explicit(
-            12, 1.0);
+            12);
         static_assert(
             std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
     }

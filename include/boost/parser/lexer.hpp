@@ -7,8 +7,16 @@
 #define BOOST_PARSER_LEXER_HPP
 
 #include <boost/parser/config.hpp>
-#include <boost/parser/ctre-unicode.hpp>
 #include <boost/parser/detail/debug_assert.hpp>
+
+// TODO: remove boost/parser/ prefix.
+#if !BOOST_PARSER_USE_CONCEPTS || !__has_include(<boost/parser/ctre-unicode.hpp>)
+#error                                                                         \
+    "In order to work, the Boost.Parser lexer requires C++20 and CTRE's ctre-unicode.hpp single-header file in the #include path.  See https://github.com/hanickadot/compile-time-regular-expressions ."
+#endif
+
+// TODO: remove boost/parser/ prefix.
+#include <boost/parser/ctre-unicode.hpp>
 
 #include <string_view>
 #include <type_traits>
@@ -186,7 +194,7 @@ namespace boost { namespace parser {
     template<ctll::fixed_string Regex, typename Value = none>
     auto token_spec = detail::token_spec_facade<Regex, Value>{};
 
-#ifdef BOOST_PARSER_DOXYGEN
+#if defined(BOOST_PARSER_DOXYGEN)
 
     /** TODO */
     template<typename Regex>
@@ -196,11 +204,11 @@ namespace boost { namespace parser {
 
     // TODO: Indicate in the docs that using the lexer implies using these
     // allocating variables.
-    template<typename Regex, int Count>
+    template<typename Regex, typename ID, int Count>
     struct lexer
     {
         Regex regex;
-        std::vector<int> ids; // TODO: reintroduce IDType.
+        std::vector<ID> ids; // TODO: reintroduce IDType.
         std::vector<detail::token_kind> value_types;
     };
 
@@ -210,10 +218,13 @@ namespace boost { namespace parser {
     template<typename T, typename... Ts>
     auto make_lexer(T const & x, Ts const &... xs)
     {
-        // TODO: Check that the id_type is the same for all of these.
+        static_assert(
+            (std::same_as<typename T::id_type, typename Ts::id_type> && ... &&
+             true),
+            "All id_types must be the same for all token_specs.");
 
         auto regex = (ctre::re<T::regex>() | ... | ctre::re<Ts::regex>());
-        return lexer<decltype(regex), sizeof...(xs) + 1>{
+        return lexer<decltype(regex), typename T::id_type, sizeof...(xs) + 1>{
             regex,
             {detail::token_kind_for<typename T::value_type>(),
              detail::token_kind_for<typename Ts::value_type>()...},

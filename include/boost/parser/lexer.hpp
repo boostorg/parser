@@ -206,7 +206,7 @@ namespace boost { namespace parser {
     struct lexer
     {
         Regex regex;
-        std::vector<ID> ids; // TODO: reintroduce IDType.
+        std::vector<ID> ids;
         std::vector<detail::token_kind> value_types;
     };
 
@@ -222,11 +222,11 @@ namespace boost { namespace parser {
             "All id_types must be the same for all token_specs.");
 
         auto regex = (ctre::re<T::regex>() | ... | ctre::re<Ts::regex>());
-        return lexer<decltype(regex), typename T::id_type, sizeof...(xs) + 1>{
+        return lexer<decltype(regex), typename T::id_type, sizeof...(Ts) + 1>{
             regex,
+            {x.id, xs.id...},
             {detail::token_kind_for<typename T::value_type>(),
-             detail::token_kind_for<typename Ts::value_type>()...},
-            {T::id, Ts::id...}};
+             detail::token_kind_for<typename Ts::value_type>()...}};
     }
 
 #if 0

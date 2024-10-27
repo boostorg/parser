@@ -32,6 +32,35 @@ namespace boost { namespace parser {
 
     namespace detail {
         enum class token_kind { no_value, string_view, long_long, double_ };
+
+        enum class token_parsed_type {
+            string_view,
+
+            signed_char,
+            unsigned_char,
+            short_,
+            unsigned_short,
+            int_,
+            unsigned_int,
+            long_,
+            unsigned_long,
+            long_long,
+            unsigned_long_long,
+            wchar_t_,
+            char8_t_,
+            char16_t_,
+            char32_t_,
+
+            float_,
+            double_,
+            long_double
+        };
+
+        struct parse_spec
+        {
+            token_parsed_type type;
+            int base;
+        };
     }
 
     /** TODO */
@@ -124,7 +153,62 @@ namespace boost { namespace parser {
         detail::token_kind kind_;
     };
 
+    /** TODO */
+    template<typename CharType, typename Attr = none>
+    struct token_parser
+    {
+        // TODO
+    };
+
     namespace detail {
+        template<typename T>
+        parse_spec parse_spec_for(int base)
+        {
+            if constexpr (std::is_same_v<T, none>) {
+                return parse_spec{token_parsed_type::string_view, base};
+            } else if constexpr (std::is_same_v<T, signed char>) {
+                return parse_spec{token_parsed_type::signed_char, base};
+            } else if constexpr (std::is_same_v<T, unsigned char>) {
+                return parse_spec{token_parsed_type::unsigned_char, base};
+            } else if constexpr (std::is_same_v<T, short>) {
+                return parse_spec{token_parsed_type::short_, base};
+            } else if constexpr (std::is_same_v<T, unsigned short>) {
+                return parse_spec{token_parsed_type::unsigned_short, base};
+            } else if constexpr (std::is_same_v<T, int>) {
+                return parse_spec{token_parsed_type::int_, base};
+            } else if constexpr (std::is_same_v<T, unsigned int>) {
+                return parse_spec{token_parsed_type::unsigned_int, base};
+            } else if constexpr (std::is_same_v<T, long>) {
+                return parse_spec{token_parsed_type::long_, base};
+            } else if constexpr (std::is_same_v<T, unsigned long>) {
+                return parse_spec{token_parsed_type::unsigned_long, base};
+            } else if constexpr (std::is_same_v<T, long long>) {
+                return parse_spec{token_parsed_type::long_long, base};
+            } else if constexpr (std::is_same_v<T, unsigned long long>) {
+                return parse_spec{token_parsed_type::unsigned_long_long, base};
+            } else if constexpr (std::is_same_v<T, wchar_t>) {
+                return parse_spec{token_parsed_type::wchar_t_, base};
+            } else if constexpr (std::is_same_v<T, char8_t>) {
+                return parse_spec{token_parsed_type::char8_t_, base};
+            } else if constexpr (std::is_same_v<T, char16_t>) {
+                return parse_spec{token_parsed_type::char16_t_, base};
+            } else if constexpr (std::is_same_v<T, char32_t>) {
+                return parse_spec{token_parsed_type::char32_t_, base};
+            } else if constexpr (std::is_same_v<T, float>) {
+                return parse_spec{token_parsed_type::float_, base};
+            } else if constexpr (std::is_same_v<T, double>) {
+                return parse_spec{token_parsed_type::double_, base};
+            } else if constexpr (std::is_same_v<T, long double>) {
+                return parse_spec{token_parsed_type::long_double, base};
+            } else {
+                static_assert(
+                    !std::is_same_v<T, T>,
+                    "The only valid types for the 'Value' template parameter "
+                    "to 'lexer_token_spec' are 'none', integral types, and "
+                    "floating-point types.");
+            }
+        }
+
         template<typename T>
         token_kind token_kind_for()
         {
@@ -142,19 +226,18 @@ namespace boost { namespace parser {
                     "'double'.");
             }
         }
-    }
 
-    namespace detail {
-        template<ctll::fixed_string Regex, typename ID, typename Value>
+        template<
+            ctll::fixed_string Regex,
+            typename ID,
+            typename Value,
+            int Base>
         struct token_spec
         {
             using id_type = ID;
             using value_type = Value;
 
-            static_assert(
-                std::is_same_v<value_type, none> ||
-                std::is_same_v<value_type, long long> ||
-                std::is_same_v<value_type, double>);
+            static constexpr int base = Base;
 
             explicit token_spec(id_type id) : id(id) {}
             explicit token_spec(id_type id, value_type value) :
@@ -167,30 +250,19 @@ namespace boost { namespace parser {
             value_type value;
         };
 
-        template<ctll::fixed_string Regex, typename Value>
+        template<ctll::fixed_string Regex, typename Value, int Base>
         struct token_spec_facade
         {
             template<typename ID>
             constexpr auto operator()(ID id)
             {
-                if constexpr (std::is_integral_v<Value>) {
-                    return token_spec<Regex, ID, long long>(id);
-                } else if constexpr (std::is_floating_point_v<Value>) {
-                    return token_spec<Regex, ID, double>(id);
-                } else if constexpr (std::same_as<Value, none>) {
-                    return token_spec<Regex, ID, none>(id);
-                } else {
-                    static_assert(
-                        !std::is_same_v<Value, Value>,
-                        "Only boost::parser::none, integral types and floating "
-                        "point types are acceptable as values for tokens.");
-                }
+                return token_spec<Regex, ID, Value, Base>(id);
             }
         };
     }
 
-    template<ctll::fixed_string Regex, typename Value = none>
-    auto token_spec = detail::token_spec_facade<Regex, Value>{};
+    template<ctll::fixed_string Regex, typename Value = none, int Base = 10>
+    auto token_spec = detail::token_spec_facade<Regex, Value, Base>{};
 
 #if defined(BOOST_PARSER_DOXYGEN)
 
@@ -207,7 +279,7 @@ namespace boost { namespace parser {
     {
         Regex regex;
         std::vector<ID> ids;
-        std::vector<detail::token_kind> value_types;
+        std::vector<detail::parse_spec> value_types;
     };
 
 #endif
@@ -225,8 +297,8 @@ namespace boost { namespace parser {
         return lexer<decltype(regex), typename T::id_type, sizeof...(Ts) + 1>{
             regex,
             {x.id, xs.id...},
-            {detail::token_kind_for<typename T::value_type>(),
-             detail::token_kind_for<typename Ts::value_type>()...}};
+            {detail::parse_spec_for<typename T::value_type>(T::base),
+             detail::parse_spec_for<typename Ts::value_type>(Ts::base)...}};
     }
 
 #if 0

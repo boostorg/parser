@@ -8,6 +8,7 @@
 
 #include <boost/parser/config.hpp>
 #include <boost/parser/detail/debug_assert.hpp>
+#include <boost/parser/detail/numeric.hpp>
 
 #if !BOOST_PARSER_USE_CONCEPTS || !__has_include(<ctre-unicode.hpp>)
 #error                                                                         \
@@ -35,6 +36,8 @@ namespace boost { namespace parser {
 
         enum class token_parsed_type {
             string_view,
+
+            bool_,
 
             signed_char,
             unsigned_char,
@@ -64,24 +67,25 @@ namespace boost { namespace parser {
     }
 
     /** TODO */
-    template<typename CharType>
+    template<typename CharType, typename ID>
     struct token
     {
         using char_type = CharType;
+        using id_type = ID;
         using string_view = std::basic_string_view<CharType>;
 
         constexpr token() : id_(0), kind_(detail::token_kind::string_view) {}
-        constexpr token(int id, string_view value) :
+        constexpr token(id_type id, string_view value) :
             id_(id), kind_(detail::token_kind::string_view)
         {
             value_.sv_ = value;
         }
-        constexpr token(int id, long long value) :
+        constexpr token(id_type id, long long value) :
             id_(id), kind_(detail::token_kind::long_long)
         {
             value_.ll_ = value;
         }
-        constexpr token(int id, double value) :
+        constexpr token(id_type id, double value) :
             id_(id), kind_(detail::token_kind::double_)
         {
             value_.d_ = value;
@@ -149,7 +153,7 @@ namespace boost { namespace parser {
             long long ll_;
             double d_;
         } value_;
-        int id_;
+        id_type id_;
         detail::token_kind kind_;
     };
 
@@ -293,12 +297,135 @@ namespace boost { namespace parser {
              true),
             "All id_types must be the same for all token_specs.");
 
+        // Check that id_type is an enum, or an integral type.
+
         auto regex = (ctre::re<T::regex>() | ... | ctre::re<Ts::regex>());
         return lexer<decltype(regex), typename T::id_type, sizeof...(Ts) + 1>{
             regex,
             {x.id, xs.id...},
             {detail::parse_spec_for<typename T::value_type>(T::base),
              detail::parse_spec_for<typename Ts::value_type>(Ts::base)...}};
+    }
+
+    namespace detail {
+        template<typename CharType, typename ID>
+        token<CharType, ID> make_token(
+            ID id, std::basic_string_view<CharType> ctre_token, parse_spec spec)
+        {
+            auto f = ctre_token.data();
+            auto const l = f + ctre_token.size();
+
+            auto parse_int = [](auto f, auto l, auto & value) {
+                bool const success = numeric::parse_int(f, l, value);
+                if (!success)
+                    ; // TODO: report error.
+            };
+            auto parse_real = [](auto f, auto l, auto & value) {
+                bool const success = numeric::parse_int(f, l, value);
+                if (!success)
+                    ; // TODO: report error.
+            };
+
+            switch (spec.type) {
+            case token_parsed_type::string_view: return {id, ctre_token};
+
+            case token_parsed_type::bool_:
+                if (ctre_token == "true") {
+                    return {id, 1ll};
+                } else if (ctre_token == "false") {
+                    return {id, 0ll};
+                } else {
+                    // TODO: report error.
+                }
+
+            case token_parsed_type::signed_char: {
+                signed char value;
+                parse_int(f, l, value);
+                return {id, ctre_token};
+            }
+            case token_parsed_type::unsigned_char: {
+                unsigned char value;
+                parse_int(f, l, value);
+                return {id, ctre_token};
+            }
+            case token_parsed_type::short_: {
+                short value;
+                parse_int(f, l, value);
+                return {id, ctre_token};
+            }
+            case token_parsed_type::unsigned_short: {
+                unsigned short value;
+                parse_int(f, l, value);
+                return {id, ctre_token};
+            }
+            case token_parsed_type::int_: {
+                int value;
+                parse_int(f, l, value);
+                return {id, ctre_token};
+            }
+            case token_parsed_type::unsigned_int: {
+                unsigned int value;
+                parse_int(f, l, value);
+                return {id, ctre_token};
+            }
+            case token_parsed_type::long_: {
+                long value;
+                parse_int(f, l, value);
+                return {id, ctre_token};
+            }
+            case token_parsed_type::unsigned_long: {
+                unsigned long value;
+                parse_int(f, l, value);
+                return {id, ctre_token};
+            }
+            case token_parsed_type::long_long: {
+                long long value;
+                parse_int(f, l, value);
+                return {id, ctre_token};
+            }
+            case token_parsed_type::unsigned_long_long: {
+                unsigned long long value;
+                parse_int(f, l, value);
+                return {id, ctre_token};
+            }
+            case token_parsed_type::wchar_t_: {
+                wchar_t value;
+                parse_int(f, l, value);
+                return {id, ctre_token};
+            }
+            case token_parsed_type::char8_t_: {
+                char8_t value;
+                parse_int(f, l, value);
+                return {id, ctre_token};
+            }
+            case token_parsed_type::char16_t_: {
+                char16_t value;
+                parse_int(f, l, value);
+                return {id, ctre_token};
+            }
+            case token_parsed_type::char32_t_: {
+                char32_t value;
+                parse_int(f, l, value);
+                return {id, ctre_token};
+            }
+
+            case token_parsed_type::float_: {
+                float value;
+                parse_real(f, l, value);
+                return {id, ctre_token};
+            }
+            case token_parsed_type::double_: {
+                double value;
+                parse_real(f, l, value);
+                return {id, ctre_token};
+            }
+            case token_parsed_type::long_double: {
+                long double value;
+                parse_real(f, l, value);
+                return {id, ctre_token};
+            }
+            }
+        }
     }
 
 #if 0
@@ -310,11 +437,11 @@ namespace boost { namespace parser {
             if (!results) {
                 // TODO: Report error.
             }
-            hl::fold_n<Count>(
-                std::string_view{},
+            auto [ctre_token, i] = hl::fold_n<Count>(
+                std::pair(std::string_view{}, 0),
                 [&](auto state, auto i) -> std::string_view {
                     if (results.get<i.value>())
-                        return results.get<i.value>();
+                        return std::pair(results.get<i.value>(), (int)i);
                     else
                         return state;
                 });

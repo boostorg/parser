@@ -267,6 +267,61 @@ namespace boost { namespace parser {
         std::same_as<T, char8_t> || std::same_as<T, char16_t> ||
         std::same_as<T, char32_t>;
 
+    /** TODO */
+    // TODO: Indicate in the docs that using the lexer implies using these
+    // allocating variables.
+    template<typename ID, typename Regex = none, int Count = 0>
+    struct lexer
+    {
+        using id_type = ID;
+        using regex_type = Regex;
+
+        static constexpr int count = Count;
+
+        lexer()
+            requires std::same_as<regex_type, none>
+        {}
+
+        template<
+            ctll::fixed_string Regex2,
+            typename ID2,
+            typename Value,
+            int Base>
+        auto operator|(detail::token_spec<Regex2, ID2, Value, Base> rhs) &&
+        {
+            static_assert(
+                character_type<ID> || character_type<ID2> ||
+                    std::same_as<ID, ID2>,
+                "All id_types must be the same for all token_specs.");
+            if constexpr (std::same_as<regex_type, none>) {
+                auto new_regex = ctre::re<Regex2>();
+                return lexer<decltype(new_regex), ID, 1>{
+                    new_regex, std::move(ids), std::move(value_types)};
+            } else {
+                auto new_regex = regex | ctre::re<Regex2>();
+                return lexer<decltype(new_regex), ID, Count + 1>{
+                    new_regex, std::move(ids), std::move(value_types)};
+            }
+        }
+
+        // TODO: private:
+        lexer(
+            regex_type regex,
+            std::vector<int> && ids,
+            std::vector<detail::parse_spec> && value_types)
+            requires(!std::same_as<regex_type, none>)
+            :
+            regex(regex),
+            ids(std::move(ids)),
+            value_types(std::move(value_types))
+        {}
+
+        regex_type regex;
+        std::vector<int> ids; // TODO: non-character tokens' IDs must be
+                              // cast to ID before calling make_token().
+        std::vector<detail::parse_spec> value_types;
+    };
+
     namespace detail {
         inline constexpr int char_id_offset = (1 << 30);
 
@@ -316,27 +371,6 @@ namespace boost { namespace parser {
     auto char_token =
         detail::token_spec_facade<Ch, decltype(Ch), 10>{}((decltype(Ch))0);
 
-#if defined(BOOST_PARSER_DOXYGEN)
-
-    /** TODO */
-    template<typename Regex>
-    struct lexer;
-
-#else
-
-    // TODO: Indicate in the docs that using the lexer implies using these
-    // allocating variables.
-    template<typename Regex, typename ID, int Count>
-    struct lexer
-    {
-        Regex regex;
-        std::vector<int> ids; // TODO: non-character tokens' IDs must be cast to
-                              // ID before calling make_token().
-        std::vector<detail::parse_spec> value_types;
-    };
-
-#endif
-
     // TODO: Document that every T before needs to be in the same UTF (or
     // none).
 
@@ -354,7 +388,7 @@ namespace boost { namespace parser {
         // Check that the IDs are never repeated.
 
         auto regex = (ctre::re<T::regex>() | ... | ctre::re<Ts::regex>());
-        return lexer<decltype(regex), typename T::id_type, sizeof...(Ts) + 1>{
+        return lexer<typename T::id_type, decltype(regex), sizeof...(Ts) + 1>{
             regex,
             {(int)x.id, (int)xs.id...},
             {detail::parse_spec_for<T>(), detail::parse_spec_for<Ts>()...}};

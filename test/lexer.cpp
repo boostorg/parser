@@ -99,8 +99,43 @@ int main()
         auto const lexer = bp::make_lexer(
             bp::token_spec<"foo">(my_tokens::foo),
             bp::token_spec<"bar">(my_tokens::bar),
-            bp::token_spec<"baz">(my_tokens::baz));
+            bp::token_spec<"baz">(my_tokens::baz),
+            bp::char_token<'='>);
     }
+
+#if 0
+    {
+        "true|false"
+        "empty"
+        "[a-zA-Z]\\w*"
+        "\\/\\*[^*]*\\*+([^/*][^*]*\\*+)*\\/"
+        "\\/\\/.*$"
+        "\\\"[^\\\"]*\\\"|'[^']*'"
+        "\\d+(\\.\\d*)?"
+        "==|!="
+        "<|>|<=|>="
+        "\\*|\\/|%"
+        "<=="
+        "\"||\""
+        "&&"
+        '='
+        '+'
+        '-'
+        '!'
+        '?'
+        ':'
+        '.'
+        ','
+        '('
+        ')'
+        '['
+        ']'
+        '{'
+        '}'
+        '@'
+        ';'
+    }
+#endif
 
 #endif
 

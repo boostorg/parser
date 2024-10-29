@@ -321,15 +321,13 @@ namespace boost { namespace parser {
             static_assert(
                 std::same_as<ID, ID2>,
                 "All id_types must be the same for all token_specs.");
+            auto new_regex = ctre::re<detail::wrap_and_escape<Regex2>()>();
             if constexpr (std::same_as<regex_type, none>) {
-                auto new_regex = ctre::re<detail::wrap_and_escape<Regex2>()>();
                 return lexer<decltype(new_regex), ID, 1>{
                     new_regex, std::move(ids), std::move(value_types)};
             } else {
-                auto new_regex =
-                    regex | ctre::re<detail::wrap_and_escape<Regex2>()>();
-                return lexer<decltype(new_regex), ID, Count + 1>{
-                    new_regex, std::move(ids), std::move(value_types)};
+                return lexer<decltype(regex | new_regex), ID, Count + 1>{
+                    regex | new_regex, std::move(ids), std::move(value_types)};
             }
         }
 
@@ -357,6 +355,7 @@ namespace boost { namespace parser {
         template<auto Regex, typename Value, int Base>
         struct token_spec_facade
         {
+            // TODO: Assert that there are no parens in Regex.
             template<typename ID>
             constexpr auto operator()(ID id)
             {

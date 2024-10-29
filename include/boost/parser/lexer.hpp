@@ -166,6 +166,9 @@ namespace boost { namespace parser {
         // TODO
     };
 
+    template<typename T>
+    concept character_type = std::same_as<T, char> || std::same_as<T, char8_t>;
+
     namespace detail {
         template<typename TokenSpec>
         parse_spec parse_spec_for()
@@ -259,14 +262,40 @@ namespace boost { namespace parser {
             id_type id;
             value_type value;
         };
+
+        constexpr bool is_pcre_metacharacter(unsigned char c)
+        {
+            constexpr unsigned char chars[] = {
+                '$', '(', ')', '*', '+', '.', '?', '[', '\\', '^', '{', '|'};
+            auto const it = std::ranges::lower_bound(chars, c);
+            return it != std::end(chars) && *it == c;
+        }
+
+        template<auto Regex>
+        constexpr auto wrap_and_escape()
+        {
+            using regex_t = decltype(Regex);
+            if constexpr (character_type<regex_t>) {
+                if constexpr (detail::is_pcre_metacharacter(Regex)) {
+                    constexpr char str[] = {'(', '\\', Regex, ')', 0};
+                    return ctll::fixed_string{str};
+                } else {
+                    constexpr char str[] = {'(', Regex, ')', 0};
+                    return ctll::fixed_string{str};
+                }
+            } else {
+                constexpr char str[Regex.size() + 2];
+                str[0] = '(';
+                std::ranges::copy(Regex, str + 1);
+                str[Regex.size()] = ')';
+                str[Regex.size() + 1] = 0;
+                return ctll::fixed_string{str};
+            }
+        }
     }
 
-    template<typename T>
-    concept character_type =
-        std::same_as<T, char> || std::same_as<T, wchar_t> ||
-        std::same_as<T, char8_t> || std::same_as<T, char16_t> ||
-        std::same_as<T, char32_t>;
-
+    // TODO: Document that the ID type given to the inital lexer<>() is the one
+    // that must be used for all non-character token specs.
     /** TODO */
     // TODO: Indicate in the docs that using the lexer implies using these
     // allocating variables.
@@ -290,15 +319,15 @@ namespace boost { namespace parser {
         auto operator|(detail::token_spec<Regex2, ID2, Value, Base> rhs) &&
         {
             static_assert(
-                character_type<ID> || character_type<ID2> ||
-                    std::same_as<ID, ID2>,
+                std::same_as<ID, ID2>,
                 "All id_types must be the same for all token_specs.");
             if constexpr (std::same_as<regex_type, none>) {
-                auto new_regex = ctre::re<Regex2>();
+                auto new_regex = ctre::re<detail::wrap_and_escape<Regex2>()>();
                 return lexer<decltype(new_regex), ID, 1>{
                     new_regex, std::move(ids), std::move(value_types)};
             } else {
-                auto new_regex = regex | ctre::re<Regex2>();
+                auto new_regex =
+                    regex | ctre::re<detail::wrap_and_escape<Regex2>()>();
                 return lexer<decltype(new_regex), ID, Count + 1>{
                     new_regex, std::move(ids), std::move(value_types)};
             }

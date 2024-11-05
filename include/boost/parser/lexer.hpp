@@ -7,15 +7,18 @@
 #define BOOST_PARSER_LEXER_HPP
 
 #include <boost/parser/config.hpp>
-#include <boost/parser/detail/debug_assert.hpp>
-#include <boost/parser/detail/hl.hpp>
-#include <boost/parser/detail/numeric.hpp>
-#include <boost/parser/detail/text/transcode_view.hpp>
 
 #if !BOOST_PARSER_USE_CONCEPTS || !__has_include(<ctre-unicode.hpp>)
 #error                                                                         \
     "In order to work, the Boost.Parser lexer requires C++20 and CTRE's ctre-unicode.hpp single-header file in the #include path.  CTRE can be found at https://github.com/hanickadot/compile-time-regular-expressions .  The required header is at https://raw.githubusercontent.com/hanickadot/compile-time-regular-expressions/refs/heads/main/single-header/ctre-unicode.hpp ."
 #endif
+
+#include <boost/parser/concepts.hpp>
+#include <boost/parser/detail/debug_assert.hpp>
+#include <boost/parser/detail/hl.hpp>
+#include <boost/parser/detail/make_input_subrange.hpp>
+#include <boost/parser/detail/numeric.hpp>
+#include <boost/parser/detail/text/transcode_view.hpp>
 
 #include <ctre-unicode.hpp>
 
@@ -213,8 +216,7 @@ namespace boost { namespace parser {
                 return get_long_long() == rhs.get_long_long();
             case detail::token_kind::double_:
                 return get_double() == rhs.get_double();
-            default:
-                BOOST_PARSER_DEBUG_ASSERT(!"Error: invalid token kind.");
+            default: BOOST_PARSER_DEBUG_ASSERT(!"Error: invalid token kind.");
 #if defined(__cpp_lib_unreachable)
                 std::unreachable();
 #endif
@@ -540,14 +542,15 @@ namespace boost { namespace parser {
                 new_specs>{};
         }
 
-        template<typename V>
+        template<parsable_range V>
         static constexpr auto regex_range(V & base)
         {
+            auto r = detail::make_input_subrange(base);
             if constexpr (has_ws) {
                 return ctre::multiline_tokenize<
-                    detail::wrap_escape_concat<regex_str, WsStr>()>(base);
+                    detail::wrap_escape_concat<regex_str, WsStr>()>(r);
             } else {
-                return ctre::multiline_tokenize<regex_str>(base);
+                return ctre::multiline_tokenize<regex_str>(r);
             }
         }
     };
@@ -758,7 +761,8 @@ namespace boost { namespace parser {
 
     template<std::ranges::forward_range V, typename Lexer>
         requires std::ranges::view<V>
-    struct token_view : public std::ranges::view_interface<token_view<V, Lexer>>
+    struct tokens_view
+        : public std::ranges::view_interface<tokens_view<V, Lexer>>
     {
     private:
         template<bool>
@@ -775,15 +779,22 @@ namespace boost { namespace parser {
     public:
         using token_type = typename Lexer::token_type;
 
-        token_view()
+        tokens_view()
             requires std::default_initializable<V>
             : base_(), lexer_(), tokens_(Lexer::regex_range(base_))
         {}
-        constexpr explicit token_view(V base, Lexer lexer) :
+        constexpr explicit tokens_view(V base, Lexer lexer) :
             base_(std::move(base)),
             lexer_(std::move(lexer)),
             tokens_(Lexer::regex_range(base_))
         {}
+
+        // TODO: Document this, and explain that it's due to the way CTRE
+        // defines its "views" as a pair of iterators.
+        tokens_view(tokens_view const &) = delete;
+        tokens_view(tokens_view &&) = delete;
+        // TODO: Investigate removing the tokens_type member and just making a
+        // new one when needed in begin()/end().
 
         constexpr V base() const &
             requires std::copy_constructible<V>
@@ -836,14 +847,14 @@ namespace boost { namespace parser {
             base_iterator_type & base_reference() noexcept { return current_; }
             base_iterator_type base_reference() const { return current_; }
 
-            token_view * parent_;
+            tokens_view * parent_;
             base_iterator_type current_ = base_iterator_type();
 
-            friend token_view::sentinel<Const>;
+            friend tokens_view::sentinel<Const>;
 
         public:
             constexpr iterator() = default;
-            constexpr iterator(token_view & parent, base_iterator_type it) :
+            constexpr iterator(tokens_view & parent, base_iterator_type it) :
                 parent_(&parent), current_(std::move(it))
             {}
 
@@ -860,8 +871,7 @@ namespace boost { namespace parser {
 
 #if 1
                 if constexpr (Lexer::has_ws) {
-                    if (auto sv =
-                            parse_results.template get<Lexer::size()>()) {
+                    if (auto sv = parse_results.template get<Lexer::size()>()) {
                         retval = token_type(ws_id, sv);
                         return retval; // TODO: Skip this ws token instead.
                     }
@@ -897,7 +907,7 @@ namespace boost { namespace parser {
         class sentinel
         {
         private:
-            using Parent = detail::maybe_const<Const, token_view>;
+            using Parent = detail::maybe_const<Const, tokens_view>;
             using Base = detail::maybe_const<Const, tokens_type>;
 
         public:
@@ -959,9 +969,27 @@ namespace boost { namespace parser {
     };
 
     template<typename R, typename Lexer>
-    token_view(R &&, Lexer) -> token_view<std::views::all_t<R>, Lexer>;
+    tokens_view(R &&, Lexer) -> tokens_view<std::views::all_t<R>, Lexer>;
 
-    // TODO: Needs Range adaptor.
+    namespace detail {
+        template<typename R, typename Lexer>
+        concept can_tokens_view =
+            requires { tokens_view(std::declval<R>(), Lexer()); };
+
+        struct to_tokens_impl
+        {
+            template<parsable_range R, typename Lexer>
+                requires std::ranges::viewable_range<R>
+            [[nodiscard]] constexpr auto operator()(R && r, Lexer lexer) const
+            {
+                return tokens_view((R &&)r, lexer);
+            }
+        };
+    }
+
+    /** TODO */
+    inline constexpr detail::stl_interfaces::adaptor<detail::to_tokens_impl>
+        to_tokens = detail::to_tokens_impl{};
 
 }}
 

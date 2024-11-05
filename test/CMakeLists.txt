@@ -6,6 +6,23 @@ enable_testing()
 
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -j4 -C ${CMAKE_CFG_INTDIR})
 
+if (CXX_STD GREATER_EQUAL 20)
+    include(FetchContent)
+    FetchContent_Declare(
+      ctre
+      URL https://raw.githubusercontent.com/hanickadot/compile-time-regular-expressions/refs/heads/main/single-header/ctre-unicode.hpp
+      DOWNLOAD_NO_EXTRACT true
+    )
+
+    FetchContent_MakeAvailable(ctre)
+
+    set(ctre_include_dir ${CMAKE_BINARY_DIR}/_deps/ctre-src)
+    add_library(ctre_single_header INTERFACE)
+    target_include_directories(ctre_single_header INTERFACE ${ctre_include_dir})
+else()
+    add_library(ctre_single_header INTERFACE)
+endif()
+
 ##################################################
 # Parser tests
 ##################################################
@@ -44,7 +61,7 @@ target_link_libraries(compile_tests parser boost)
 macro(add_test_executable name)
     add_executable(${name} ${name}.cpp)
     set_property(TARGET ${name} PROPERTY CXX_STANDARD ${CXX_STD})
-    target_link_libraries(${name} parser boost ${link_flags})
+    target_link_libraries(${name} parser boost ctre_single_header ${link_flags})
     if (MSVC)
         target_compile_options(${name} PRIVATE /source-charset:utf-8 /bigobj)
     elseif (USE_ASAN OR USE_UBSAN)
@@ -82,6 +99,9 @@ add_test_executable(parser_seq_permutations_1)
 add_test_executable(parser_seq_permutations_2)
 add_test_executable(parser_or_permutations_1)
 add_test_executable(parser_or_permutations_2)
+if (CXX_STD GREATER_EQUAL 20)
+    add_test_executable(lexer)
+endif()
 
 if (MSVC)
     add_executable(vs_output_tracing tracing.cpp)

@@ -116,4 +116,18 @@
 #    define BOOST_PARSER_TRACE_OSTREAM std::cout
 #endif
 
+#if defined(_MSC_VER)
+#    define BOOST_PARSER_DIAGNOSTIC_PUSH __pragma(warning(push))
+#    define BOOST_PARSER_DIAGNOSTIC_POP __pragma(warning(pop))
+#elif defined(__clang_major__)
+#    define BOOST_PARSER_DIAGNOSTIC_PUSH _Pragma("clang diagnostic push")
+#    define BOOST_PARSER_DIAGNOSTIC_POP _Pragma("clang diagnostic pop")
+#elif defined(__GNUC__)
+#    define BOOST_PARSER_DIAGNOSTIC_PUSH _Pragma("GCC diagnostic push")
+#    define BOOST_PARSER_DIAGNOSTIC_POP _Pragma("GCC diagnostic pop")
+#else
+#    define BOOST_PARSER_DIAGNOSTIC_PUSH
+#    define BOOST_PARSER_DIAGNOSTIC_POP
+#endif
+
 #endif

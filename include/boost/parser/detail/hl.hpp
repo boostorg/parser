@@ -197,6 +197,31 @@ namespace boost { namespace parser { namespace detail::hl {
     }
 
 
+    // fold_n
+
+    template<std::size_t I, std::size_t N>
+    struct fold_n_dispatch
+    {
+        template<typename F, typename State>
+        constexpr static auto call(State && s, F const & f)
+        {
+            if constexpr (I + 1 == N) {
+                return f((State &&)s, llong<I>{});
+            } else {
+                return fold_n_dispatch<I + 1, N>::call(
+                    f((State &&)s, llong<I>{}), f);
+            }
+        }
+    };
+
+    template<std::size_t N, typename F, typename State>
+    constexpr auto fold_n(State && s, F const & f)
+    {
+        static_assert(0 < N, "fold_n must operate on sequences of length >= 1");
+        return hl::fold_n_dispatch<0, N>::call((State &&)s, (F &&)f);
+    }
+
+
     // size
 
     template<typename... Args>

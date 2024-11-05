@@ -46,11 +46,6 @@ namespace boost { namespace parser {
 
     struct none;
 
-#if 1 // TODO
-    struct none
-    {};
-#endif
-
     namespace detail {
         enum class token_kind { no_value, string_view, long_long, double_ };
 
@@ -479,8 +474,6 @@ namespace boost { namespace parser {
     // TODO: Document that the ID type given to the inital lexer<>() is the one
     // that must be used for all non-character token specs.
     /** TODO */
-    // TODO: Indicate in the docs that using the lexer implies using these
-    // allocating variables.
     template<
         typename CharType,
         typename ID,
@@ -574,7 +567,7 @@ namespace boost { namespace parser {
     constexpr auto lexer = lexer_t<CharType, ID, WsStr, RegexStr, IDs, Specs>{};
 
     // TODO: Document that every spec's chars need to be in the same UTF (or
-    // none).
+    // none).   Wait -- is this actually true?  Tests needed....
 
     namespace detail {
         template<typename T>

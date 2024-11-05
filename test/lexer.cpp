@@ -358,7 +358,7 @@ int main()
         static_assert(decltype(lexer)::size() == 29 + 1);
         static_assert(std::same_as<decltype(lexer)::id_type, adobe_tokens>);
 
-        // token_view from lexer
+        // tokens_view from lexer
         {
             // first, just make a ctre range
             {
@@ -382,9 +382,9 @@ output:
                 // TODO: Instead of printing, check against expected results.
             }
 
-            // make a token_view
+            // make a tokens_view
             {
-                auto r = bp::token_view(
+                auto r = bp::tokens_view(
                     R"(/*
     Copyright 2005-2007 Adobe Systems Incorporated
     Distributed under the MIT License (see accompanying file LICENSE_1_0_0.txt
@@ -402,12 +402,33 @@ output:
                 }
                 std::cout << "\n";
             }
+
+            // to_tokens range adaptor
+            {
+                auto r = bp::to_tokens(
+                    R"(/*
+    Copyright 2005-2007 Adobe Systems Incorporated
+    Distributed under the MIT License (see accompanying file LICENSE_1_0_0.txt
+    or a copy at http://stlab.adobe.com/licenses.html)
+*/
+
+sheet alert_dialog
+{
+output:
+    result <== { dummy_value: 42 };
+})",
+                    lexer);
+                for (auto tok: r) {
+                    std::cout << tok << "\n";
+                }
+                std::cout << "\n";
+            }
         }
 
         // TODO: Test different UTF combinations (no envoding + no encoding),
         // and all combinations of (UTF-N token specs + UTF-M input).
 
-        // TODO: Test const and mutable versions of token_view.
+        // TODO: Test const and mutable versions of tokens_view.
 
         // TODO: Add a lexing test for a lexer with no whitespace.
     }

@@ -775,26 +775,19 @@ namespace boost { namespace parser {
         friend struct iterator;
 
         using tokens_type = decltype(Lexer::regex_range(std::declval<V &>()));
+        using const_tokens_type =
+            decltype(Lexer::regex_range(std::declval<V const &>()));
 
     public:
         using token_type = typename Lexer::token_type;
 
         tokens_view()
             requires std::default_initializable<V>
-            : base_(), lexer_(), tokens_(Lexer::regex_range(base_))
+            : base_(), lexer_()
         {}
         constexpr explicit tokens_view(V base, Lexer lexer) :
-            base_(std::move(base)),
-            lexer_(std::move(lexer)),
-            tokens_(Lexer::regex_range(base_))
+            base_(std::move(base)), lexer_(std::move(lexer))
         {}
-
-        // TODO: Document this, and explain that it's due to the way CTRE
-        // defines its "views" as a pair of iterators.
-        tokens_view(tokens_view const &) = delete;
-        tokens_view(tokens_view &&) = delete;
-        // TODO: Investigate removing the tokens_type member and just making a
-        // new one when needed in begin()/end().
 
         constexpr V base() const &
             requires std::copy_constructible<V>
@@ -807,54 +800,51 @@ namespace boost { namespace parser {
 
         constexpr iterator<false> begin()
         {
-            return iterator<false>(*this, tokens_.begin());
+            return iterator<false>(*this, Lexer::regex_range(base_).begin());
         }
         constexpr iterator<true> begin() const
-            requires std::ranges::range<const tokens_type>
         {
-            return iterator<true>(*this, tokens_.begin());
+            return iterator<true>(*this, Lexer::regex_range(base_).begin());
         }
 
         constexpr sentinel<false> end()
         {
-            return sentinel<false>(tokens_.end());
+            return sentinel<false>(Lexer::regex_range(base_).end());
         }
         constexpr sentinel<true> end() const
-            requires std::ranges::range<const tokens_type>
         {
-            return sentinel<true>(tokens_.end());
+            return sentinel<true>(Lexer::regex_range(base_).end());
         }
 
     private:
         V base_ = V();
         Lexer lexer_;
-        tokens_type tokens_;
 
         template<bool Const>
         struct iterator
             : public detail::stl_interfaces::proxy_iterator_interface<
                   iterator<Const>,
-                  detail::text::detail::iterator_to_tag_t<
-                      std::ranges::iterator_t<
-                          detail::maybe_const<Const, tokens_type>>>,
+                  std::forward_iterator_tag,
                   token_type>
         {
         private:
-            using base_iterator_type = std::ranges::iterator_t<
-                detail::maybe_const<Const, tokens_type>>;
+            using Parent = detail::maybe_const<Const, tokens_view>;
+            using Base =
+                std::conditional_t<Const, const_tokens_type, tokens_type>;
+            using base_iterator_type = std::ranges::iterator_t<Base>;
 
             friend detail::stl_interfaces::access;
             base_iterator_type & base_reference() noexcept { return current_; }
             base_iterator_type base_reference() const { return current_; }
 
-            tokens_view * parent_;
+            Parent * parent_;
             base_iterator_type current_ = base_iterator_type();
 
             friend tokens_view::sentinel<Const>;
 
         public:
             constexpr iterator() = default;
-            constexpr iterator(tokens_view & parent, base_iterator_type it) :
+            constexpr iterator(Parent & parent, base_iterator_type it) :
                 parent_(&parent), current_(std::move(it))
             {}
 
@@ -908,7 +898,8 @@ namespace boost { namespace parser {
         {
         private:
             using Parent = detail::maybe_const<Const, tokens_view>;
-            using Base = detail::maybe_const<Const, tokens_type>;
+            using Base =
+                std::conditional_t<Const, const_tokens_type, tokens_type>;
 
         public:
             sentinel() = default;
@@ -930,36 +921,14 @@ namespace boost { namespace parser {
             template<bool OtherConst>
                 requires std::sentinel_for<
                     std::ranges::sentinel_t<Base>,
-                    std::ranges::iterator_t<
-                        detail::maybe_const<OtherConst, tokens_type>>>
+                    std::ranges::iterator_t<std::conditional_t<
+                        OtherConst,
+                        const_tokens_type,
+                        tokens_type>>>
             friend constexpr bool
             operator==(const iterator<OtherConst> & x, const sentinel & y)
             {
                 return x.current_ == y.end_;
-            }
-
-            template<bool OtherConst>
-                requires std::sized_sentinel_for<
-                    std::ranges::sentinel_t<Base>,
-                    std::ranges::iterator_t<
-                        detail::maybe_const<OtherConst, tokens_type>>>
-            friend constexpr std::ranges::range_difference_t<
-                detail::maybe_const<OtherConst, tokens_type>>
-            operator-(const iterator<OtherConst> & x, const sentinel & y)
-            {
-                return x.current_ - y.end_;
-            }
-
-            template<bool OtherConst>
-                requires std::sized_sentinel_for<
-                    std::ranges::sentinel_t<Base>,
-                    std::ranges::iterator_t<
-                        detail::maybe_const<OtherConst, tokens_type>>>
-            friend constexpr std::ranges::range_difference_t<
-                detail::maybe_const<OtherConst, tokens_type>>
-            operator-(const sentinel & y, const iterator<OtherConst> & x)
-            {
-                return y.end_ - x.current_;
             }
 
         private:

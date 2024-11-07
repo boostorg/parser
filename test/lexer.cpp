@@ -14,6 +14,9 @@
 #include "ill_formed.hpp"
 
 #include <boost/core/lightweight_test.hpp>
+#include <boost/container/small_vector.hpp>
+
+#include <deque>
 
 
 namespace bp = boost::parser;
@@ -360,9 +363,7 @@ int main()
 
         // tokens_view from lexer
         {
-            // first, just make a ctre range
-            {
-                auto r = lexer.regex_range(R"(/*
+            char const input[] = R"(/*
     Copyright 2005-2007 Adobe Systems Incorporated
     Distributed under the MIT License (see accompanying file LICENSE_1_0_0.txt
     or a copy at http://stlab.adobe.com/licenses.html)
@@ -372,7 +373,10 @@ sheet alert_dialog
 {
 output:
     result <== { dummy_value: 42 };
-})");
+})";
+            // first, just make a ctre range
+            {
+                auto r = lexer.regex_range(input);
                 for (auto subrange : r) {
                     std::string_view sv = subrange;
                     std::cout << sv << "\n";
@@ -384,46 +388,64 @@ output:
 
             // make a tokens_view
             {
-                auto r = bp::tokens_view(
-                    R"(/*
-    Copyright 2005-2007 Adobe Systems Incorporated
-    Distributed under the MIT License (see accompanying file LICENSE_1_0_0.txt
-    or a copy at http://stlab.adobe.com/licenses.html)
-*/
-
-sheet alert_dialog
-{
-output:
-    result <== { dummy_value: 42 };
-})",
-                    lexer);
+                auto r = bp::tokens_view(input, lexer);
                 for (auto tok : r) {
                     std::cout << tok << "\n";
                 }
                 std::cout << "\n";
+
+                // TODO: Instead of printing, check against expected results.
             }
 
             // to_tokens range adaptor
             {
-                auto r = bp::to_tokens(
-                    R"(/*
-    Copyright 2005-2007 Adobe Systems Incorporated
-    Distributed under the MIT License (see accompanying file LICENSE_1_0_0.txt
-    or a copy at http://stlab.adobe.com/licenses.html)
-*/
-
-sheet alert_dialog
-{
-output:
-    result <== { dummy_value: 42 };
-})",
-                    lexer);
-                for (auto tok: r) {
+                for (auto tok: bp::to_tokens(input, lexer)) {
                     std::cout << tok << "\n";
                 }
                 std::cout << "\n";
+
+                // TODO: Instead of printing, check against expected results.
             }
-        }
+            {
+                std::string const input_str = input;
+                for (auto tok: bp::to_tokens(input_str, lexer)) {
+                    std::cout << tok << "\n";
+                }
+                std::cout << "\n";
+
+                // TODO: Instead of printing, check against expected results.
+            }
+            {
+                for (auto tok : std::string(input) | bp::to_tokens(lexer)) {
+                    std::cout << tok << "\n";
+                }
+                std::cout << "\n";
+
+                // TODO: Instead of printing, check against expected results.
+            }
+
+            // using external caches
+            {
+                std::vector<bp::token<char>> cache;
+                for (auto tok : bp::to_tokens(input, lexer, std::ref(cache))) {
+                    std::cout << tok << "\n";
+                }
+                std::cout << "\n";
+
+                // TODO: Instead of printing, check against expected results.
+            }
+            {
+                boost::container::small_vector<bp::token<char>, 10> cache;
+                for (auto tok : input | bp::to_tokens(lexer, std::ref(cache))) {
+                    std::cout << tok << "\n";
+                }
+                std::cout << "\n";
+
+                // TODO: Instead of printing, check against expected results.
+            }
+
+            // TODO: Need a lex that requires the cache to grow!
+       }
 
         // TODO: Test different UTF combinations (no envoding + no encoding),
         // and all combinations of (UTF-N token specs + UTF-M input).

@@ -787,7 +787,12 @@ namespace boost { namespace parser {
         {}
         constexpr explicit tokens_view(V base, Lexer lexer) :
             base_(std::move(base)), lexer_(std::move(lexer))
-        {}
+        {
+            latest_ = base_.begin();
+        }
+
+        tokens_view(tokens_view const &) = delete;
+        tokens_view(tokens_view &&) = delete;
 
         constexpr V base() const &
             requires std::copy_constructible<V>
@@ -798,27 +803,25 @@ namespace boost { namespace parser {
 
         constexpr Lexer lexer() { return lexer_; }
 
-        constexpr iterator<false> begin()
-        {
-            return iterator<false>(*this, Lexer::regex_range(base_).begin());
-        }
-        constexpr iterator<true> begin() const
-        {
-            return iterator<true>(*this, Lexer::regex_range(base_).begin());
-        }
+        constexpr iterator<false> begin() { return iterator<false>(*this); }
+        constexpr iterator<true> begin() const { return iterator<true>(*this); }
 
-        constexpr sentinel<false> end()
-        {
-            return sentinel<false>(Lexer::regex_range(base_).end());
-        }
-        constexpr sentinel<true> end() const
-        {
-            return sentinel<true>(Lexer::regex_range(base_).end());
-        }
+        constexpr sentinel<false> end() { return sentinel<false>(); }
+        constexpr sentinel<true> end() const { return sentinel<true>(); }
 
     private:
+        // Called during parse after reaching an expectation point.
+        template<bool Const>
+        void clear_tokens_before(iterator<Const> it)
+        {
+            tokens_.erase(tokens_.begin(), it);
+        }
+
         V base_ = V();
         Lexer lexer_;
+        mutable std::ranges::iterator_t<V> latest_;
+        mutable std::vector<token_type> tokens_;
+        mutable size_t base_token_offset_ = 0;
 
         template<bool Const>
         struct iterator
@@ -833,63 +836,94 @@ namespace boost { namespace parser {
                 std::conditional_t<Const, const_tokens_type, tokens_type>;
             using base_iterator_type = std::ranges::iterator_t<Base>;
 
-            friend detail::stl_interfaces::access;
-            base_iterator_type & base_reference() noexcept { return current_; }
-            base_iterator_type base_reference() const { return current_; }
+            Parent * parent_ = nullptr;
+            size_t token_offset_ = 0;
 
-            Parent * parent_;
-            base_iterator_type current_ = base_iterator_type();
-
+            friend tokens_view;
             friend tokens_view::sentinel<Const>;
 
-        public:
-            constexpr iterator() = default;
-            constexpr iterator(Parent & parent, base_iterator_type it) :
-                parent_(&parent), current_(std::move(it))
-            {}
+            static constexpr size_t initial_tokens_cache_size = 64;
 
-            // TODO: Needs caching of tokens.  Don't forget to allow the token
-            // cache to be user-supplied.
-
-            constexpr token_type operator*() const
+            void fill_cache()
             {
                 using string_view = typename Lexer::string_view;
 
-                token_type retval;
+                size_t const new_size = parent_->tokens_.empty()
+                                            ? initial_tokens_cache_size
+                                            : parent_->tokens_.size() * 2;
+                parent_->tokens_.reserve(new_size);
 
-                auto const parse_results = *current_;
+                auto r = std::ranges::subrange(
+                    parent_->latest_, parent_->base_.end());
+                auto ctre_range = Lexer::regex_range(r);
+                auto ctre_first = ctre_range.begin();
+                auto const ctre_last = ctre_range.end();
 
-#if 1
-                if constexpr (Lexer::has_ws) {
-                    if (auto sv = parse_results.template get<Lexer::size()>()) {
-                        retval = token_type(ws_id, sv);
-                        return retval; // TODO: Skip this ws token instead.
-                    }
-                }
-#endif
+                size_t i = parent_->tokens_.size();
+                for (; i < new_size && ctre_first != ctre_last;
+                     ++i, ++ctre_first) {
+                    auto const parse_results = *ctre_first;
 
-                detail::hl::fold_n<Lexer::size()>(
-                    string_view{}, [&](auto state, auto i) {
-                        if constexpr (!i.value) {
-                            return state;
+                    if constexpr (Lexer::has_ws) {
+                        // TODO: Document that ws is implicitly and unalterably
+                        // filtered out; to get ws tokens, you must explicitly
+                        // provide "" as the ws str for lexer<>, and then add a
+                        // token spec for ws separately.
+                        if (auto sv =
+                                parse_results.template get<Lexer::size()>()) {
+                            continue;
                         }
-                        if (parse_results.template get<i.value>()) {
-                            string_view const sv =
-                                parse_results.template get<i.value>();
-                            if constexpr (i.value == Lexer::size()) {
-                                retval = token_type(ws_id, sv);
-                            } else {
+                    }
+
+                    detail::hl::fold_n<Lexer::size()>(
+                        string_view{}, [&](auto state, auto i) {
+                            if constexpr (!i.value) {
+                                return state;
+                            }
+                            if (parse_results.template get<i.value>()) {
+                                string_view const sv =
+                                    parse_results.template get<i.value>();
                                 int const id = parent_->lexer_.ids()[i.value];
                                 constexpr detail::parse_spec parse_spec =
                                     parent_->lexer_.specs()[i.value];
-                                retval = detail::make_token<parse_spec>(id, sv);
+                                parent_->tokens_.push_back(
+                                    detail::make_token<parse_spec>(id, sv));
+                                return sv;
+                            } else {
+                                return state;
                             }
-                            return sv;
-                        } else {
-                            return state;
-                        }
-                    });
-                return retval;
+                        });
+                }
+
+                parent_->latest_ = ctre_first.current;
+            }
+
+        public:
+            constexpr iterator() = default;
+            constexpr iterator(Parent & parent) : parent_(&parent)
+            {
+                fill_cache();
+            }
+
+            iterator & operator++()
+            {
+                if (parent_->tokens_.size() <=
+                    ++token_offset_ - parent_->base_token_offset_) {
+                    fill_cache();
+                }
+                return *this;
+            }
+
+            constexpr token_type const & operator*() const
+            {
+                return parent_
+                    ->tokens_[token_offset_ - parent_->base_token_offset_];
+            }
+
+            bool operator==(iterator rhs) const
+            {
+                BOOST_PARSER_DEBUG_ASSERT(parent_ == rhs.parent_);
+                return token_offset_ == rhs.token_offset_;
             }
         };
 
@@ -903,20 +937,7 @@ namespace boost { namespace parser {
 
         public:
             sentinel() = default;
-            constexpr explicit sentinel(std::ranges::sentinel_t<Base> end) :
-                end_(end)
-            {}
-            constexpr sentinel(sentinel<!Const> i)
-                requires Const && std::convertible_to<
-                                      std::ranges::sentinel_t<tokens_type>,
-                                      std::ranges::sentinel_t<Base>>
-                : end_(std::move(end))
-            {}
-
-            constexpr std::ranges::sentinel_t<Base> base() const
-            {
-                return end_;
-            }
+            constexpr sentinel(sentinel<!Const> i) {}
 
             template<bool OtherConst>
                 requires std::sentinel_for<
@@ -926,14 +947,22 @@ namespace boost { namespace parser {
                         const_tokens_type,
                         tokens_type>>>
             friend constexpr bool
-            operator==(const iterator<OtherConst> & x, const sentinel & y)
+            operator==(iterator<OtherConst> const & x, const sentinel & y)
             {
-                return x.current_ == y.end_;
+                return y.equal_to(x);
             }
 
         private:
-            std::ranges::sentinel_t<Base> end_ =
-                std::ranges::sentinel_t<Base>();
+            template<bool OtherConst>
+            bool equal_to(iterator<OtherConst> const & x) const
+            {
+                if (x.token_offset_ != x.parent_->tokens_.size())
+                    return false;
+                auto r = std::ranges::subrange(
+                    x.parent_->latest_, x.parent_->base_.end());
+                auto ctre_range = Lexer::regex_range(r);
+                return !ctre_range.begin().current_match;
+            }
         };
     };
 

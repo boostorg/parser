@@ -5,11 +5,10 @@
  *   accompanying file LICENSE_1_0.txt or copy at
  *   http://www.boost.org/LICENSE_1_0.txt)
  */
-#include <iostream> // TODO
 #define BOOST_PARSER_TESTING
 #include <boost/parser/lexer.hpp>
 
-#include <boost/parser/transcode_view.hpp> // TODO
+#include <boost/parser/transcode_view.hpp>
 
 #include "ill_formed.hpp"
 
@@ -376,75 +375,138 @@ output:
 })";
             // first, just make a ctre range
             {
+                std::string_view const expected[] = {
+                    R"(/*
+    Copyright 2005-2007 Adobe Systems Incorporated
+    Distributed under the MIT License (see accompanying file LICENSE_1_0_0.txt
+    or a copy at http://stlab.adobe.com/licenses.html)
+*/)",
+                    R"(
+
+)",
+                    R"(sheet)",
+                    R"( )",
+                    R"(alert_dialog)",
+                    R"(
+)",
+                    R"({)",
+                    R"(
+)",
+                    R"(output)",
+                    R"(:)",
+                    R"(
+    )",
+                    R"(result)",
+                    R"( )",
+                    R"(<==)",
+                    R"( )",
+                    R"({)",
+                    R"( )",
+                    R"(dummy_value)",
+                    R"(:)",
+                    R"( )",
+                    R"(42)",
+                    R"( )",
+                    R"(})",
+                    R"(;)",
+                    R"(
+)",
+                    R"(})"};
                 auto r = lexer.regex_range(input);
+                int position = 0;
                 for (auto subrange : r) {
                     std::string_view sv = subrange;
-                    std::cout << sv << "\n";
+                    BOOST_TEST(sv == expected[position]);
+                    ++position;
                 }
+                BOOST_TEST(position == (int)std::size(expected));
                 std::cout << "\n";
-
-                // TODO: Instead of printing, check against expected results.
             }
+
+            using tok_t = bp::token<char>;
+            tok_t expected[] = {
+                tok_t((int)adobe_tokens::lead_comment, R"(/*
+    Copyright 2005-2007 Adobe Systems Incorporated
+    Distributed under the MIT License (see accompanying file LICENSE_1_0_0.txt
+    or a copy at http://stlab.adobe.com/licenses.html)
+*/)"),
+                tok_t((int)adobe_tokens::identifier, "sheet"),
+                tok_t((int)adobe_tokens::identifier, "alert_dialog"),
+                tok_t(bp::character_id, (long long)'{'),
+                tok_t((int)adobe_tokens::identifier, "output"),
+                tok_t(bp::character_id, (long long)':'),
+                tok_t((int)adobe_tokens::identifier, "result"),
+                tok_t((int)adobe_tokens::define, "<=="),
+                tok_t(bp::character_id, (long long)'{'),
+                tok_t((int)adobe_tokens::identifier, "dummy_value"),
+                tok_t(bp::character_id, (long long)':'),
+                tok_t((int)adobe_tokens::number, "42"),
+                tok_t(bp::character_id, (long long)'}'),
+                tok_t(bp::character_id, (long long)';'),
+                tok_t(bp::character_id, (long long)'}')};
 
             // make a tokens_view
             {
                 auto r = bp::tokens_view(input, lexer);
+                int position = 0;
                 for (auto tok : r) {
-                    std::cout << tok << "\n";
+                    BOOST_TEST(tok == expected[position]);
+                    ++position;
                 }
-                std::cout << "\n";
-
-                // TODO: Instead of printing, check against expected results.
+                BOOST_TEST(position == (int)std::size(expected));
             }
 
             // to_tokens range adaptor
             {
+                int position = 0;
                 for (auto tok: bp::to_tokens(input, lexer)) {
-                    std::cout << tok << "\n";
+                    BOOST_TEST(tok == expected[position]);
+                    ++position;
                 }
-                std::cout << "\n";
-
-                // TODO: Instead of printing, check against expected results.
+                BOOST_TEST(position == (int)std::size(expected));
             }
             {
                 std::string const input_str = input;
+                int position = 0;
                 for (auto tok: bp::to_tokens(input_str, lexer)) {
-                    std::cout << tok << "\n";
+                    BOOST_TEST(tok == expected[position]);
+                    ++position;
                 }
-                std::cout << "\n";
-
-                // TODO: Instead of printing, check against expected results.
+                BOOST_TEST(position == (int)std::size(expected));
             }
             {
+                int position = 0;
                 for (auto tok : std::string(input) | bp::to_tokens(lexer)) {
-                    std::cout << tok << "\n";
+                    BOOST_TEST(tok == expected[position]);
+                    ++position;
                 }
-                std::cout << "\n";
-
-                // TODO: Instead of printing, check against expected results.
+                BOOST_TEST(position == (int)std::size(expected));
             }
 
             // using external caches
             {
                 std::vector<bp::token<char>> cache;
+                int position = 0;
                 for (auto tok : bp::to_tokens(input, lexer, std::ref(cache))) {
-                    std::cout << tok << "\n";
+                    BOOST_TEST(tok == expected[position]);
+                    ++position;
                 }
-                std::cout << "\n";
-
-                // TODO: Instead of printing, check against expected results.
+                BOOST_TEST(position == (int)std::size(expected));
             }
             {
                 boost::container::small_vector<bp::token<char>, 10> cache;
+                int position = 0;
                 for (auto tok : input | bp::to_tokens(lexer, std::ref(cache))) {
-                    std::cout << tok << "\n";
+                    BOOST_TEST(tok == expected[position]);
+                    ++position;
                 }
-                std::cout << "\n";
-
-                // TODO: Instead of printing, check against expected results.
+                BOOST_TEST(position == (int)std::size(expected));
             }
 
             // TODO: Need a lex that requires the cache to grow!
+
+            // TODO: Need tests with the various supported kinds of input
+            // sequence.
        }
 
         // TODO: Test different UTF combinations (no envoding + no encoding),

@@ -452,8 +452,9 @@ namespace boost { namespace parser {
         static_assert(
             0 <= (int)ID, "Token IDs must be integral values or enums >=0.");
 
-        // TODO: Check for subgroups within Regex.  That is, make sure that
-        // every '(' seen is followed immediately by a '?'.
+        // TODO: Document that capture groups are not allowed within a
+        // token_spec regex, and to  Use '(?:' followed by ')' to create a
+        // non-capturing group.
 
         static constexpr ctll::fixed_string regex = Regex;
         static constexpr id_type id = ID;

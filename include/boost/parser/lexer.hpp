@@ -759,7 +759,11 @@ namespace boost { namespace parser {
         using maybe_const = std::conditional_t<Const, T const, T>;
     }
 
-    template<std::ranges::forward_range V, typename Lexer>
+    /** TODO */
+    template<
+        std::ranges::forward_range V,
+        typename Lexer,
+        typename TokenCache = std::vector<typename Lexer::token_type>>
         requires std::ranges::view<V>
     struct tokens_view
         : public std::ranges::view_interface<tokens_view<V, Lexer>>
@@ -783,16 +787,25 @@ namespace boost { namespace parser {
 
         tokens_view()
             requires std::default_initializable<V>
-            : base_(), lexer_()
+            : base_(), lexer_(), tokens_(owned_cache_)
         {}
         constexpr explicit tokens_view(V base, Lexer lexer) :
-            base_(std::move(base)), lexer_(std::move(lexer))
+            base_(std::move(base)),
+            lexer_(std::move(lexer)),
+            tokens_(owned_cache_)
         {
             latest_ = base_.begin();
         }
-
-        tokens_view(tokens_view const &) = delete;
-        tokens_view(tokens_view &&) = delete;
+        constexpr explicit tokens_view(
+            V base,
+            Lexer lexer,
+            std::reference_wrapper<TokenCache> external_cache) :
+            base_(std::move(base)),
+            lexer_(std::move(lexer)),
+            tokens_(external_cache.get())
+        {
+            latest_ = base_.begin();
+        }
 
         constexpr V base() const &
             requires std::copy_constructible<V>
@@ -814,13 +827,16 @@ namespace boost { namespace parser {
         template<bool Const>
         void clear_tokens_before(iterator<Const> it)
         {
-            tokens_.erase(tokens_.begin(), it);
+            size_t const erasure = it.token_offset_ - base_token_offset_;
+            tokens_.erase(tokens_.begin(), tokens_.begin() + erasure);
+            base_token_offset_ += erasure;
         }
 
         V base_ = V();
         Lexer lexer_;
         mutable std::ranges::iterator_t<V> latest_;
-        mutable std::vector<token_type> tokens_;
+        mutable TokenCache owned_cache_;
+        TokenCache & tokens_;
         mutable size_t base_token_offset_ = 0;
 
         template<bool Const>
@@ -968,6 +984,9 @@ namespace boost { namespace parser {
 
     template<typename R, typename Lexer>
     tokens_view(R &&, Lexer) -> tokens_view<std::views::all_t<R>, Lexer>;
+    template<typename R, typename Lexer, typename TokenCache>
+    tokens_view(R &&, Lexer, std::reference_wrapper<TokenCache>)
+        -> tokens_view<std::views::all_t<R>, Lexer, TokenCache>;
 
     namespace detail {
         template<typename R, typename Lexer>
@@ -981,6 +1000,16 @@ namespace boost { namespace parser {
             [[nodiscard]] constexpr auto operator()(R && r, Lexer lexer) const
             {
                 return tokens_view((R &&)r, lexer);
+            }
+
+            template<parsable_range R, typename Lexer, typename TokenCache>
+                requires std::ranges::viewable_range<R>
+            [[nodiscard]] constexpr auto operator()(
+                R && r,
+                Lexer lexer,
+                std::reference_wrapper<TokenCache> cache) const
+            {
+                return tokens_view((R &&)r, lexer, cache);
             }
         };
     }

@@ -101,6 +101,7 @@ add_test_executable(parser_or_permutations_1)
 add_test_executable(parser_or_permutations_2)
 if (CXX_STD GREATER_EQUAL 20)
     add_test_executable(lexer)
+    add_test_executable(lexer_adobe_files)
 endif()
 
 if (MSVC)

@@ -557,9 +557,6 @@ namespace boost { namespace parser {
         detail::nttp_array Specs = detail::nttp_array<detail::parse_spec{}>{}>
     constexpr auto lexer = lexer_t<CharType, ID, WsStr, RegexStr, IDs, Specs>{};
 
-    // TODO: Document that every spec's chars need to be in the same UTF (or
-    // none).   Wait -- is this actually true?  Tests needed....
-
     namespace detail {
         template<typename T>
         struct wrapper

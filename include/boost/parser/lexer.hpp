@@ -140,8 +140,14 @@ namespace boost { namespace parser {
         };
     }
 
+    /** TODO */
     inline constexpr int ws_id = -1000000;
+
+    /** TODO */
     inline constexpr int character_id = -2000000;
+
+    /** TODO */
+    inline constexpr ctll::fixed_string no_ws = "";
 
     /** TODO */
     template<typename CharType>

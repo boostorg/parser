@@ -287,18 +287,159 @@ int main()
     }
 #endif
 
-    // TODO: Need tests with the various supported kinds of input sequence.
+    {
+        // Mixed UTFs.
+        auto const lexer =
+            bp::lexer<char, my_tokens> | bp::token_spec<"foo", my_tokens::foo> |
+            bp::token_spec<u"bar", my_tokens::bar> |
+            bp::token_spec<U"baz", my_tokens::baz> | bp::token_chars<'='>;
 
-    // TODO: Test different UTF combinations (no envoding + no encoding), and
-    // all combinations of (UTF-N token specs + UTF-M input).
+        // mutable vs. const token_views + mutable vs. const input views
+        std::string input = "foo = bar";
+        auto mr_mi = input | bp::to_tokens(lexer);
+        auto const cr_mi = input | bp::to_tokens(lexer);
 
-    // TODO: Test const and mutable versions of tokens_view.
+        auto const const_input = input;
+        auto mr_ci = input | bp::to_tokens(lexer);
+        auto const cr_ci = input | bp::to_tokens(lexer);
+
+        using tok_t = bp::token<char>;
+        tok_t const expected[] = {
+            tok_t((int)my_tokens::foo, "foo"),
+            tok_t(bp::character_id, (long long)'='),
+            tok_t((int)my_tokens::bar, "bar")};
+
+        int position = 0;
+
+        position = 0;
+        for (auto tok : mr_mi) {
+            BOOST_TEST(tok == expected[position]);
+            ++position;
+        }
+        BOOST_TEST(position == (int)std::size(expected));
+
+        position = 0;
+        for (auto tok : cr_mi) {
+            BOOST_TEST(tok == expected[position]);
+            ++position;
+        }
+        BOOST_TEST(position == (int)std::size(expected));
+
+        position = 0;
+        for (auto tok : mr_ci) {
+            BOOST_TEST(tok == expected[position]);
+            ++position;
+        }
+        BOOST_TEST(position == (int)std::size(expected));
+
+        position = 0;
+        for (auto tok : cr_ci) {
+            BOOST_TEST(tok == expected[position]);
+            ++position;
+        }
+        BOOST_TEST(position == (int)std::size(expected));
+    }
+
+    // Check basic plumbing of connecting UTF inputs to CTRE.
+    {
+        auto const lexer =
+            bp::lexer<char, my_tokens> | bp::token_spec<"foo", my_tokens::foo> |
+            bp::token_spec<"bar", my_tokens::bar> |
+            bp::token_spec<"baz", my_tokens::baz> | bp::token_chars<'='>;
+
+        std::string s = "foo = bar";
+        using tok_t = bp::token<char>;
+        tok_t const expected[] = {
+            tok_t((int)my_tokens::foo, "foo"),
+            tok_t(bp::character_id, (long long)'='),
+            tok_t((int)my_tokens::bar, "bar")};
+
+        auto const lexer8 = bp::lexer<char8_t, my_tokens> |
+                            bp::token_spec<"foo", my_tokens::foo> |
+                            bp::token_spec<"bar", my_tokens::bar> |
+                            bp::token_spec<"baz", my_tokens::baz> |
+                            bp::token_chars<'='>;
+
+        std::u8string u8s = u8"foo = bar";
+        using tok8_t = bp::token<char8_t>;
+        tok8_t const expected8[] = {
+            tok8_t((int)my_tokens::foo, u8"foo"),
+            tok8_t(bp::character_id, (long long)'='),
+            tok8_t((int)my_tokens::bar, u8"bar")};
+
+        auto const lexer16 = bp::lexer<char16_t, my_tokens> |
+                             bp::token_spec<"foo", my_tokens::foo> |
+                             bp::token_spec<"bar", my_tokens::bar> |
+                             bp::token_spec<"baz", my_tokens::baz> |
+                             bp::token_chars<'='>;
+
+        std::u16string u16s = u"foo = bar";
+        using tok16_t = bp::token<char16_t>;
+        tok16_t const expected16[] = {
+            tok16_t((int)my_tokens::foo, u"foo"),
+            tok16_t(bp::character_id, (long long)'='),
+            tok16_t((int)my_tokens::bar, u"bar")};
+
+        auto const lexer32 = bp::lexer<char32_t, my_tokens> |
+                             bp::token_spec<"foo", my_tokens::foo> |
+                             bp::token_spec<"bar", my_tokens::bar> |
+                             bp::token_spec<"baz", my_tokens::baz> |
+                             bp::token_chars<'='>;
+
+        std::u32string u32s = U"foo = bar";
+        using tok32_t = bp::token<char32_t>;
+        tok32_t const expected32[] = {
+            tok32_t((int)my_tokens::foo, U"foo"),
+            tok32_t(bp::character_id, (long long)'='),
+            tok32_t((int)my_tokens::bar, U"bar")};
+
+
+        int position = 0;
+
+        position = 0;
+        for (auto tok : s | bp::to_tokens(lexer)) {
+            BOOST_TEST(tok == expected[position]);
+            ++position;
+        }
+        BOOST_TEST(position == (int)std::size(expected));
+
+        position = 0;
+        for (auto tok : u8s | bp::to_tokens(lexer8)) {
+            BOOST_TEST(tok == expected8[position]);
+            ++position;
+        }
+        BOOST_TEST(position == (int)std::size(expected));
+
+        position = 0;
+        for (auto tok : u16s | bp::to_tokens(lexer16)) {
+            BOOST_TEST(tok == expected16[position]);
+            ++position;
+        }
+        BOOST_TEST(position == (int)std::size(expected));
+
+        position = 0;
+        for (auto tok : u32s | bp::to_tokens(lexer32)) {
+            BOOST_TEST(tok == expected32[position]);
+            ++position;
+        }
+        BOOST_TEST(position == (int)std::size(expected));
+    }
+
+    // TODO: Note the limitation of CTRE that the input must be a
+    // continguous_range, so that string_views can be formed.
+
+    // TODO: Need to check that string_views in tokens are the ones expected,
+    // based on the lexer.
+
+    // TODO: Add a compile-time check to tokens_view that the CharType of the
+    // Lexer is char or char32_t, and that it matches range_value_t<V>.
 
     // TODO: Add a lexing test for a lexer with no whitespace.
 
-    // TODO: Document that every spec's chars need to be in the same UTF (or
-    // none).  Wait -- is this actually true?  Tests needed....
-
+    // TODO: Document that every spec's chars are assumed to be in UTF when
+    // CTRE_STRING_IS_UTF8 is defined, and no encoding otherwise.  Also document
+    // that char16_t is treated as UTF-16, but wchar_t and char32_t are *both*
+    // treated as UTF-32, even on windows.
 #endif
 
     return boost::report_errors();

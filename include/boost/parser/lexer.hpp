@@ -50,6 +50,7 @@ namespace boost { namespace parser {
     struct none;
 
     namespace detail {
+        // TODO: double -> long double.
         enum class token_kind { no_value, string_view, long_long, double_ };
 
         enum class token_parsed_type {

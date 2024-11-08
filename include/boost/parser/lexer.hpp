@@ -294,6 +294,8 @@ namespace boost { namespace parser {
                 return parse_spec{token_parsed_type::character, base};
             } else if constexpr (std::is_same_v<value_t, none>) {
                 return parse_spec{token_parsed_type::string_view, base};
+            } else if constexpr (std::is_same_v<value_t, bool>) {
+                return parse_spec{token_parsed_type::bool_, base};
             } else if constexpr (std::is_same_v<value_t, signed char>) {
                 return parse_spec{token_parsed_type::signed_char, base};
             } else if constexpr (std::is_same_v<value_t, unsigned char>) {
@@ -878,8 +880,7 @@ namespace boost { namespace parser {
                 auto const ctre_last = ctre_range.end();
 
                 size_t i = parent_->tokens_.size();
-                for (; i < new_size && ctre_first != ctre_last;
-                     ++i, ++ctre_first) {
+                for (; i < new_size && ctre_first != ctre_last; ++ctre_first) {
                     auto const parse_results = *ctre_first;
 
                     if constexpr (Lexer::has_ws) {
@@ -892,6 +893,8 @@ namespace boost { namespace parser {
                             continue;
                         }
                     }
+
+                    ++i;
 
                     detail::hl::fold_n<Lexer::size()>(
                         string_view{}, [&](auto state, auto i) {

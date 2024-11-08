@@ -237,8 +237,10 @@ namespace boost { namespace parser {
             long double d_;
             string_view sv_;
         } value_;
-        int id_;
-        detail::token_kind kind_;
+        // TODO: Document the 22-bit size limitation on id_ (values must be
+        // positive).
+        int id_ : 24;
+        detail::token_kind kind_ : 8;
     };
 
 #if defined(BOOST_PARSER_TESTING)

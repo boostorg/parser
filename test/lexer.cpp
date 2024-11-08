@@ -20,7 +20,7 @@
 
 namespace bp = boost::parser;
 
-enum class my_tokens { foo, bar, baz };
+enum class my_tokens { ws, foo, bar, baz };
 
 int main()
 {
@@ -399,6 +399,9 @@ int main()
         position = 0;
         for (auto tok : s | bp::to_tokens(lexer)) {
             BOOST_TEST(tok == expected[position]);
+            static_assert(
+                std::
+                    same_as<decltype(tok.get_string_view()), std::string_view>);
             ++position;
         }
         BOOST_TEST(position == (int)std::size(expected));
@@ -406,6 +409,9 @@ int main()
         position = 0;
         for (auto tok : u8s | bp::to_tokens(lexer8)) {
             BOOST_TEST(tok == expected8[position]);
+            static_assert(std::same_as<
+                          decltype(tok.get_string_view()),
+                          std::u8string_view>);
             ++position;
         }
         BOOST_TEST(position == (int)std::size(expected));
@@ -413,6 +419,9 @@ int main()
         position = 0;
         for (auto tok : u16s | bp::to_tokens(lexer16)) {
             BOOST_TEST(tok == expected16[position]);
+            static_assert(std::same_as<
+                          decltype(tok.get_string_view()),
+                          std::u16string_view>);
             ++position;
         }
         BOOST_TEST(position == (int)std::size(expected));
@@ -420,21 +429,65 @@ int main()
         position = 0;
         for (auto tok : u32s | bp::to_tokens(lexer32)) {
             BOOST_TEST(tok == expected32[position]);
+            static_assert(std::same_as<
+                          decltype(tok.get_string_view()),
+                          std::u32string_view>);
             ++position;
         }
         BOOST_TEST(position == (int)std::size(expected));
     }
 
-    // TODO: Note the limitation of CTRE that the input must be a
+    // no-ws lexer
+    {
+        auto const lexer = bp::lexer<char, my_tokens, bp::no_ws> |
+                           bp::token_spec<"foo", my_tokens::foo> |
+                           bp::token_spec<"bar", my_tokens::bar> |
+                           bp::token_spec<"baz", my_tokens::baz> |
+                           bp::token_chars<'='>;
+
+        std::string s = "foo=bar";
+        using tok_t = bp::token<char>;
+        tok_t const expected[] = {
+            tok_t((int)my_tokens::foo, "foo"),
+            tok_t(bp::character_id, (long long)'='),
+            tok_t((int)my_tokens::bar, "bar")};
+
+        int position = 0;
+        for (auto tok : s | bp::to_tokens(lexer)) {
+            BOOST_TEST(tok == expected[position]);
+            ++position;
+        }
+        BOOST_TEST(position == (int)std::size(expected));
+    }
+
+    // ws-as-token lexers
+    {
+        auto const lexer = bp::lexer<char, my_tokens, bp::no_ws> |
+                           bp::token_spec<"\\s+", my_tokens::ws> |
+                           bp::token_spec<"foo", my_tokens::foo> |
+                           bp::token_spec<"bar", my_tokens::bar> |
+                           bp::token_spec<"baz", my_tokens::baz> |
+                           bp::token_chars<'='>;
+
+        std::string s = "foo = bar";
+        using tok_t = bp::token<char>;
+        tok_t const expected[] = {
+            tok_t((int)my_tokens::foo, "foo"),
+            tok_t((int)my_tokens::ws, " "),
+            tok_t(bp::character_id, (long long)'='),
+            tok_t((int)my_tokens::ws, " "),
+            tok_t((int)my_tokens::bar, "bar")};
+
+        int position = 0;
+        for (auto tok : s | bp::to_tokens(lexer)) {
+            BOOST_TEST(tok == expected[position]);
+            ++position;
+        }
+        BOOST_TEST(position == (int)std::size(expected));
+    }
+
+    // TODO: Document the limitation of CTRE that the input must be a
     // continguous_range, so that string_views can be formed.
-
-    // TODO: Need to check that string_views in tokens are the ones expected,
-    // based on the lexer.
-
-    // TODO: Add a compile-time check to tokens_view that the CharType of the
-    // Lexer is char or char32_t, and that it matches range_value_t<V>.
-
-    // TODO: Add a lexing test for a lexer with no whitespace.
 
     // TODO: Document that every spec's chars are assumed to be in UTF when
     // CTRE_STRING_IS_UTF8 is defined, and no encoding otherwise.  Also document

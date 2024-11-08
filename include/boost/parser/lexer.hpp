@@ -281,9 +281,6 @@ namespace boost { namespace parser {
         // TODO
     };
 
-    template<typename T>
-    concept character_type = std::same_as<T, char> || std::same_as<T, char8_t>;
-
     namespace detail {
         template<typename TokenSpec>
         constexpr parse_spec parse_spec_for()
@@ -391,6 +388,10 @@ namespace boost { namespace parser {
             auto const it = std::ranges::lower_bound(chars, c);
             return it != std::end(chars) && *it == c;
         }
+
+        template<typename T>
+        concept character_type =
+            std::same_as<T, char> || std::same_as<T, char8_t>;
 
         template<auto Regex>
         consteval auto wrap_and_escape()

@@ -308,7 +308,10 @@ int main()
         auto const lexer =
             bp::lexer<char, adobe_tokens> |
 
-            bp::token_spec<"true|false", adobe_tokens::keyword_true_false> |
+            bp::token_spec<
+                "true|false",
+                adobe_tokens::keyword_true_false,
+                bool> |
             bp::token_spec<"empty", adobe_tokens::keyword_empty> |
             bp::token_spec<"[a-zA-Z]\\w*", adobe_tokens::identifier> |
             bp::token_spec<
@@ -318,7 +321,7 @@ int main()
             bp::token_spec<
                 "\\\"[^\\\"]*\\\"|'[^']*'",
                 adobe_tokens::quoted_string> |
-            bp::token_spec<"\\d+(?:\\.\\d*)?", adobe_tokens::number> |
+            bp::token_spec<"\\d+(?:\\.\\d*)?", adobe_tokens::number, double> |
             bp::token_spec<"==|!=", adobe_tokens::eq_op> |
             bp::token_spec<"<==", adobe_tokens::define> |
             bp::token_spec<"<|>|<=|>=", adobe_tokens::rel_op> |
@@ -424,7 +427,7 @@ output:
             }
 
             using tok_t = bp::token<char>;
-            tok_t expected[] = {
+            tok_t const expected[] = {
                 tok_t((int)adobe_tokens::lead_comment, R"(/*
     Copyright 2005-2007 Adobe Systems Incorporated
     Distributed under the MIT License (see accompanying file LICENSE_1_0_0.txt
@@ -440,7 +443,7 @@ output:
                 tok_t(bp::character_id, (long long)'{'),
                 tok_t((int)adobe_tokens::identifier, "dummy_value"),
                 tok_t(bp::character_id, (long long)':'),
-                tok_t((int)adobe_tokens::number, "42"),
+                tok_t((int)adobe_tokens::number, 42.0),
                 tok_t(bp::character_id, (long long)'}'),
                 tok_t(bp::character_id, (long long)';'),
                 tok_t(bp::character_id, (long long)'}')};

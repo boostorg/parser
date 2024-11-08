@@ -16,9 +16,8 @@
 #include <boost/parser/concepts.hpp>
 #include <boost/parser/detail/debug_assert.hpp>
 #include <boost/parser/detail/hl.hpp>
-#include <boost/parser/detail/make_input_subrange.hpp>
+#include <boost/parser/detail/make_input_subrange.hpp> // TODO: Now moot.
 #include <boost/parser/detail/numeric.hpp>
-#include <boost/parser/detail/text/transcode_view.hpp>
 
 #include <ctre-unicode.hpp>
 
@@ -337,7 +336,7 @@ namespace boost { namespace parser {
             }
         }
 
-        template<auto Ch, auto... Chs>
+        template<char Ch, auto... Chs>
         struct token_chars_spec
         {
             static_assert(
@@ -457,6 +456,9 @@ namespace boost { namespace parser {
         int Base = 10>
     constexpr auto token_spec = token_spec_t<Regex, ID, ValueType, Base>{};
 
+    // TODO: Document that this takes a pack of char -- and nothing else.  Also
+    // note that for anything more complicated, including a short UTF-8 sequence
+    // that encodes a code point, you must use the token_spec form.
     /** TODO */
     template<char Ch, auto... Chs>
     constexpr auto token_chars = detail::token_chars_spec<Ch, Chs...>{};
@@ -510,7 +512,7 @@ namespace boost { namespace parser {
                 new_specs>{};
         }
 
-        template<CharType Ch, auto... Chs>
+        template<auto Ch, auto... Chs>
         auto operator|(detail::token_chars_spec<Ch, Chs...> rhs) const
         {
             constexpr auto new_regex =
@@ -533,12 +535,11 @@ namespace boost { namespace parser {
         template<parsable_range V>
         static constexpr auto regex_range(V & base)
         {
-            auto r = detail::make_input_subrange(base);
             if constexpr (has_ws) {
                 return ctre::multiline_tokenize<
-                    detail::wrap_escape_concat<regex_str, WsStr>()>(r);
+                    detail::wrap_escape_concat<regex_str, WsStr>()>(base);
             } else {
-                return ctre::multiline_tokenize<regex_str>(r);
+                return ctre::multiline_tokenize<regex_str>(base);
             }
         }
     };
@@ -584,9 +585,10 @@ namespace boost { namespace parser {
             case token_parsed_type::string_view: return {id, ctre_token};
 
             case token_parsed_type::bool_:
-                if (ctre_token == "true") {
+                using namespace std::literals;
+                if (std::ranges::equal(ctre_token, "true"sv)) {
                     return {id, 1ll};
-                } else if (ctre_token == "false") {
+                } else if (std::ranges::equal(ctre_token, "false"sv)) {
                     return {id, 0ll};
                 } else {
                     // TODO: report error.

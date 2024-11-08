@@ -50,8 +50,7 @@ namespace boost { namespace parser {
     struct none;
 
     namespace detail {
-        // TODO: double -> long double.
-        enum class token_kind { no_value, string_view, long_long, double_ };
+        enum class token_kind { no_value, string_view, long_long, long_double };
 
         enum class token_parsed_type {
             ws,
@@ -165,8 +164,8 @@ namespace boost { namespace parser {
         {
             value_.ll_ = value;
         }
-        constexpr token(int id, double value) :
-            value_(0ll), id_(id), kind_(detail::token_kind::double_)
+        constexpr token(int id, long double value) :
+            value_(0ll), id_(id), kind_(detail::token_kind::long_double)
         {
             value_.d_ = value;
         }
@@ -193,13 +192,13 @@ namespace boost { namespace parser {
             return value_.ll_;
         }
 
-        constexpr bool has_double() const
+        constexpr bool has_long_double() const
         {
-            return kind_ == detail::token_kind::double_;
+            return kind_ == detail::token_kind::long_double;
         }
-        constexpr double get_double() const
+        constexpr long double get_long_double() const
         {
-            BOOST_PARSER_DEBUG_ASSERT(kind_ == detail::token_kind::double_);
+            BOOST_PARSER_DEBUG_ASSERT(kind_ == detail::token_kind::long_double);
             return value_.d_;
         }
 
@@ -215,8 +214,8 @@ namespace boost { namespace parser {
                 return get_string_view() == rhs.get_string_view();
             case detail::token_kind::long_long:
                 return get_long_long() == rhs.get_long_long();
-            case detail::token_kind::double_:
-                return get_double() == rhs.get_double();
+            case detail::token_kind::long_double:
+                return get_long_double() == rhs.get_long_double();
             default: BOOST_PARSER_DEBUG_ASSERT(!"Error: invalid token kind.");
 #if defined(__cpp_lib_unreachable)
                 std::unreachable();
@@ -235,7 +234,7 @@ namespace boost { namespace parser {
         union value
         {
             long long ll_;
-            double d_;
+            long double d_;
             string_view sv_;
         } value_;
         int id_;
@@ -255,8 +254,8 @@ namespace boost { namespace parser {
             } else {
                 os << token.get_long_long();
             }
-        } else if (token.has_double()) {
-            os << token.get_double();
+        } else if (token.has_long_double()) {
+            os << token.get_long_double();
         } else {
             os << "{no-value}";
         }
@@ -333,24 +332,6 @@ namespace boost { namespace parser {
                     "The only valid types for the 'Value' template parameter "
                     "to 'lexer_token_spec' are 'none', integral types, and "
                     "floating-point types.");
-            }
-        }
-
-        template<typename T>
-        token_kind token_kind_for()
-        {
-            if constexpr (std::is_same_v<T, none>) {
-                return token_kind::string_view;
-            } else if constexpr (std::is_same_v<T, long long>) {
-                return token_kind::long_long;
-            } else if constexpr (std::is_same_v<T, double>) {
-                return token_kind::double_;
-            } else {
-                static_assert(
-                    !std::is_same_v<T, T>,
-                    "The only valid types for the 'Value' template parameter "
-                    "to 'lexer_token_spec' are 'none', 'long long', and "
-                    "'double'.");
             }
         }
 
@@ -731,7 +712,7 @@ namespace boost { namespace parser {
                     wrapper<decltype(value)>{},
                     0,
                     numeric::parse_real(f, l, value));
-                return {id, (double)value};
+                return {id, (long double)value};
             }
             case token_parsed_type::double_: {
                 double value;
@@ -739,7 +720,7 @@ namespace boost { namespace parser {
                     wrapper<decltype(value)>{},
                     0,
                     numeric::parse_real(f, l, value));
-                return {id, (double)value};
+                return {id, (long double)value};
             }
             case token_parsed_type::long_double: {
                 long double value;
@@ -747,7 +728,7 @@ namespace boost { namespace parser {
                     wrapper<decltype(value)>{},
                     0,
                     numeric::parse_real(f, l, value));
-                return {id, (double)value};
+                return {id, value};
             }
             case token_parsed_type::ws:
             default:

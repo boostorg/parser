@@ -68,6 +68,12 @@ namespace boost { namespace parser {
         return BOOST_PARSER_SUBRANGE(ptr, detail::text::null_sentinel);
     }
 
+    /** The token ID used for whitespace tokens. */
+    inline constexpr int ws_id = -1000000;
+
+    /** The token ID used for single-character tokens. */
+    inline constexpr int character_id = -2000000;
+
     namespace detail {
         template<typename T>
         constexpr bool is_optional_v = enable_optional<T>;
@@ -147,6 +153,17 @@ namespace boost { namespace parser {
         {};
         struct upper_case_chars
         {};
+
+        struct any_token
+        {
+            bool matches_id(int) const { return true; }
+
+            template<typename T>
+            bool matches_value(T) const
+            {
+                return true;
+            }
+        };
     }
 
     /** Repeats the application of another parser `p` of type `Parser`,
@@ -428,8 +445,15 @@ namespace boost { namespace parser {
     template<typename T>
     struct float_parser;
 
+    /** A tag type used to stand in for any specialization of
+        `boost::parser::token<>`. */
+    struct token_tag
+    {};
+
     /** TODO */
-    template<typename AttributeType = void>
+    template<
+        typename AttributeType = token_tag,
+        typename Expected = detail::any_token>
     struct token_parser;
 
     /** Applies at most one of the parsers in `OrParser`.  If `switch_value_`

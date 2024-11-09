@@ -24,8 +24,6 @@ enum class my_tokens { ws, foo, bar, baz };
 
 int main()
 {
-#if BOOST_PARSER_USE_CONCEPTS
-
     // formation of token_specs
     {
         auto const token_spec = bp::token_spec<"foo", 12>;
@@ -493,7 +491,6 @@ int main()
     // CTRE_STRING_IS_UTF8 is defined, and no encoding otherwise.  Also document
     // that char16_t is treated as UTF-16, but wchar_t and char32_t are *both*
     // treated as UTF-32, even on windows.
-#endif
 
     return boost::report_errors();
 }

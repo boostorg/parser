@@ -38,8 +38,6 @@ enum class adobe_tokens {
 
 int main()
 {
-#if BOOST_PARSER_USE_CONCEPTS
-
     {
         // Document that maximum munch does not appear to apply -- putting "<=="
         // after "<|>|<=|>=" causes input "<==" to be tokenized as "<", "==".
@@ -845,8 +843,6 @@ logic:
             }
        }
     }
-
-#endif
 
     return boost::report_errors();
 }

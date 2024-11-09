@@ -248,6 +248,22 @@ namespace boost { namespace parser {
         detail::token_kind kind_ : 8;
     };
 
+#if BOOST_PARSER_DOXYGEN
+
+    /** TODO */
+    template<typename T>
+    constexpr bool is_token_v = detail::foo;
+
+#else
+
+    template<typename T>
+    constexpr bool is_token_v = false;
+
+    template<typename CharType>
+    constexpr bool is_token_v<token<CharType>> = true;
+
+#endif
+
 #if defined(BOOST_PARSER_TESTING)
     template<typename CharType>
     std::ostream & operator<<(std::ostream & os, token<CharType> const & token)
@@ -278,14 +294,6 @@ namespace boost { namespace parser {
         return os;
     }
 #endif
-
-    // TODO: Actually, this should go in parse.hpp.
-    /** TODO */
-    template<typename CharType, typename Attr = none>
-    struct token_parser
-    {
-        // TODO
-    };
 
     namespace detail {
         template<typename TokenSpec>
@@ -566,7 +574,7 @@ namespace boost { namespace parser {
 
     namespace detail {
         template<typename T>
-        struct wrapper
+        struct type_wrapper
         {
             using type = T;
         };
@@ -603,7 +611,7 @@ namespace boost { namespace parser {
             case token_parsed_type::signed_char: {
                 signed char value;
                 report_error(
-                    wrapper<decltype(value)>{},
+                    type_wrapper<decltype(value)>{},
                     Spec.radix,
                     numeric::parse_int<true, Spec.radix, 1, -1>(f, l, value));
                 return {id, (long long)value};
@@ -611,7 +619,7 @@ namespace boost { namespace parser {
             case token_parsed_type::unsigned_char: {
                 unsigned char value;
                 report_error(
-                    wrapper<decltype(value)>{},
+                    type_wrapper<decltype(value)>{},
                     Spec.radix,
                     numeric::parse_int<false, Spec.radix, 1, -1>(f, l, value));
                 return {id, (long long)value};
@@ -619,7 +627,7 @@ namespace boost { namespace parser {
             case token_parsed_type::short_: {
                 short value;
                 report_error(
-                    wrapper<decltype(value)>{},
+                    type_wrapper<decltype(value)>{},
                     Spec.radix,
                     numeric::parse_int<true, Spec.radix, 1, -1>(f, l, value));
                 return {id, (long long)value};
@@ -627,7 +635,7 @@ namespace boost { namespace parser {
             case token_parsed_type::unsigned_short: {
                 unsigned short value;
                 report_error(
-                    wrapper<decltype(value)>{},
+                    type_wrapper<decltype(value)>{},
                     Spec.radix,
                     numeric::parse_int<false, Spec.radix, 1, -1>(f, l, value));
                 return {id, (long long)value};
@@ -635,7 +643,7 @@ namespace boost { namespace parser {
             case token_parsed_type::int_: {
                 int value;
                 report_error(
-                    wrapper<decltype(value)>{},
+                    type_wrapper<decltype(value)>{},
                     Spec.radix,
                     numeric::parse_int<true, Spec.radix, 1, -1>(f, l, value));
                 return {id, (long long)value};
@@ -643,7 +651,7 @@ namespace boost { namespace parser {
             case token_parsed_type::unsigned_int: {
                 unsigned int value;
                 report_error(
-                    wrapper<decltype(value)>{},
+                    type_wrapper<decltype(value)>{},
                     Spec.radix,
                     numeric::parse_int<false, Spec.radix, 1, -1>(f, l, value));
                 return {id, (long long)value};
@@ -651,7 +659,7 @@ namespace boost { namespace parser {
             case token_parsed_type::long_: {
                 long value;
                 report_error(
-                    wrapper<decltype(value)>{},
+                    type_wrapper<decltype(value)>{},
                     Spec.radix,
                     numeric::parse_int<true, Spec.radix, 1, -1>(f, l, value));
                 return {id, (long long)value};
@@ -659,7 +667,7 @@ namespace boost { namespace parser {
             case token_parsed_type::unsigned_long: {
                 unsigned long value;
                 report_error(
-                    wrapper<decltype(value)>{},
+                    type_wrapper<decltype(value)>{},
                     Spec.radix,
                     numeric::parse_int<false, Spec.radix, 1, -1>(f, l, value));
                 return {id, (long long)value};
@@ -667,7 +675,7 @@ namespace boost { namespace parser {
             case token_parsed_type::long_long: {
                 long long value;
                 report_error(
-                    wrapper<decltype(value)>{},
+                    type_wrapper<decltype(value)>{},
                     Spec.radix,
                     numeric::parse_int<true, Spec.radix, 1, -1>(f, l, value));
                 return {id, (long long)value};
@@ -675,7 +683,7 @@ namespace boost { namespace parser {
             case token_parsed_type::unsigned_long_long: {
                 unsigned long long value;
                 report_error(
-                    wrapper<decltype(value)>{},
+                    type_wrapper<decltype(value)>{},
                     Spec.radix,
                     numeric::parse_int<false, Spec.radix, 1, -1>(f, l, value));
                 return {id, (long long)value};
@@ -683,7 +691,7 @@ namespace boost { namespace parser {
             case token_parsed_type::wchar_t_: {
                 unsigned int value;
                 report_error(
-                    wrapper<wchar_t>{},
+                    type_wrapper<wchar_t>{},
                     Spec.radix,
                     numeric::parse_int<false, Spec.radix, 1, -1>(f, l, value));
                 return {id, (long long)value};
@@ -691,7 +699,7 @@ namespace boost { namespace parser {
             case token_parsed_type::char8_t_: {
                 unsigned int value;
                 report_error(
-                    wrapper<char8_t>{},
+                    type_wrapper<char8_t>{},
                     Spec.radix,
                     numeric::parse_int<false, Spec.radix, 1, -1>(f, l, value));
                 return {id, (long long)value};
@@ -699,7 +707,7 @@ namespace boost { namespace parser {
             case token_parsed_type::char16_t_: {
                 unsigned int value;
                 report_error(
-                    wrapper<char16_t>{},
+                    type_wrapper<char16_t>{},
                     Spec.radix,
                     numeric::parse_int<false, Spec.radix, 1, -1>(f, l, value));
                 return {id, (long long)value};
@@ -707,7 +715,7 @@ namespace boost { namespace parser {
             case token_parsed_type::char32_t_: {
                 unsigned int value;
                 report_error(
-                    wrapper<char32_t>{},
+                    type_wrapper<char32_t>{},
                     Spec.radix,
                     numeric::parse_int<false, Spec.radix, 1, -1>(f, l, value));
                 return {id, (long long)value};
@@ -716,7 +724,7 @@ namespace boost { namespace parser {
             case token_parsed_type::float_: {
                 float value;
                 report_error(
-                    wrapper<decltype(value)>{},
+                    type_wrapper<decltype(value)>{},
                     0,
                     numeric::parse_real(f, l, value));
                 return {id, (long double)value};
@@ -724,7 +732,7 @@ namespace boost { namespace parser {
             case token_parsed_type::double_: {
                 double value;
                 report_error(
-                    wrapper<decltype(value)>{},
+                    type_wrapper<decltype(value)>{},
                     0,
                     numeric::parse_real(f, l, value));
                 return {id, (long double)value};
@@ -732,7 +740,7 @@ namespace boost { namespace parser {
             case token_parsed_type::long_double: {
                 long double value;
                 report_error(
-                    wrapper<decltype(value)>{},
+                    type_wrapper<decltype(value)>{},
                     0,
                     numeric::parse_real(f, l, value));
                 return {id, value};
@@ -1013,5 +1021,7 @@ namespace boost { namespace parser {
         to_tokens = detail::to_tokens_impl{};
 
 }}
+
+#include <boost/parser/token_parser.hpp>
 
 #endif

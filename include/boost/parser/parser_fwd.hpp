@@ -428,6 +428,10 @@ namespace boost { namespace parser {
     template<typename T>
     struct float_parser;
 
+    /** TODO */
+    template<typename AttributeType = void>
+    struct token_parser;
+
     /** Applies at most one of the parsers in `OrParser`.  If `switch_value_`
         matches one or more of the values in the parsers in `OrParser`, the
         first such parser is applied, and the success or failure and attribute

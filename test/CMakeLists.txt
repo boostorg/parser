@@ -48,6 +48,8 @@ add_test(NAME parser_api COMMAND parser_api)
 
 add_executable(
     compile_tests
+    compile_include_lexer_parser.cpp
+    compile_include_parser_lexer.cpp
     compile_tests_main.cpp
     compile_attribute.cpp
     compile_seq_attribute.cpp
@@ -56,7 +58,7 @@ add_executable(
     compile_all_t.cpp
 )
 set_property(TARGET compile_tests PROPERTY CXX_STANDARD ${CXX_STD})
-target_link_libraries(compile_tests parser boost)
+target_link_libraries(compile_tests parser boost ctre_single_header)
 
 macro(add_test_executable name)
     add_executable(${name} ${name}.cpp)
@@ -102,6 +104,7 @@ add_test_executable(parser_or_permutations_2)
 if (CXX_STD GREATER_EQUAL 20)
     add_test_executable(lexer)
     add_test_executable(lexer_adobe_files)
+    add_test_executable(lexer_and_parser)
 endif()
 
 if (MSVC)

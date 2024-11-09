@@ -9424,4 +9424,6 @@ namespace boost { namespace parser {
     }
 }}
 
+#include <boost/parser/token_parser.hpp>
+
 #endif

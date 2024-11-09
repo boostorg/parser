@@ -11,9 +11,10 @@
 
 #include <boost/core/lightweight_test.hpp>
 
+#include "adobe_lexer.hpp"
+
 
 namespace bp = boost::parser;
-
 
 int main()
 {
@@ -21,7 +22,7 @@ int main()
     // the parse() API.
     {
         bp::token<char> tokens[1] = {};
-        bp::token_parser<int> p;
+        auto p = bp::token_spec<"12", 12, int>;
         auto first = std::begin(tokens);
         auto const last = std::end(tokens);
 
@@ -48,8 +49,21 @@ int main()
         auto const flags = bp::detail::flags::gen_attrs;
 
         std::optional<int> result =
-            p.call(first, last, context, bp::ws, flags, success);
+            p(first, last, context, bp::ws, flags, success);
         (void)result;
+    }
+
+    // Minimal tests of building parsers from token_parser and token_spec.
+    {
+        auto parser1 = true_false(true);
+        auto parser2 = true_false(false);
+        (void)parser1;
+        (void)parser2;
+    }
+    {
+        // TODO: identifier("foo") does not work!
+        auto parser1 = identifier >> '=' >> true_false >> ';';
+        (void)parser1;
     }
 
     // TODO    {

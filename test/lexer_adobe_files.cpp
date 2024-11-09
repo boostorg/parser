@@ -11,6 +11,7 @@
 #include <boost/parser/transcode_view.hpp>
 
 #include "ill_formed.hpp"
+#include "adobe_lexer.hpp"
 
 #include <boost/core/lightweight_test.hpp>
 #include <boost/container/small_vector.hpp>
@@ -20,86 +21,18 @@
 
 namespace bp = boost::parser;
 
-enum class adobe_tokens {
-    keyword_true_false,
-    keyword_empty,
-    identifier,
-    lead_comment,
-    trail_comment,
-    quoted_string,
-    number,
-    eq_op,
-    rel_op,
-    mul_op,
-    define,
-    or_,
-    and_
-};
-
 int main()
 {
     {
-        // Document that maximum munch does not appear to apply -- putting "<=="
-        // after "<|>|<=|>=" causes input "<==" to be tokenized as "<", "==".
-        auto const lexer =
-            bp::lexer<char, adobe_tokens> |
+        // TODO: Document that maximum munch does not appear to apply in CTRE
+        // regexes -- putting "<==" after "<|>|<=|>=" causes input "<==" to be
+        // tokenized as "<", "==".
 
-            bp::token_spec<
-                "true|false",
-                adobe_tokens::keyword_true_false,
-                bool> |
-            bp::token_spec<"empty", adobe_tokens::keyword_empty> |
-            bp::token_spec<"[a-zA-Z]\\w*", adobe_tokens::identifier> |
-            bp::token_spec<
-                "\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*\\/",
-                adobe_tokens::lead_comment> |
-            bp::token_spec<"\\/\\/.*$", adobe_tokens::trail_comment> |
-            bp::token_spec<
-                "\\\"[^\\\"]*\\\"|'[^']*'",
-                adobe_tokens::quoted_string> |
-            bp::token_spec<"\\d+(?:\\.\\d*)?", adobe_tokens::number, double> |
-            bp::token_spec<"==|!=", adobe_tokens::eq_op> |
-            bp::token_spec<"<==", adobe_tokens::define> |
-            bp::token_spec<"<|>|<=|>=", adobe_tokens::rel_op> |
-            bp::token_spec<"\\*|\\/|%", adobe_tokens::mul_op> |
-            bp::token_spec<"\\|\\|", adobe_tokens::or_> |
-            bp::token_spec<"&&", adobe_tokens::and_> |
-            bp::token_chars<
-                '=',
-                '+',
-                '-',
-                '!',
-                '?',
-                ':',
-                '.',
-                ',',
-                '(',
-                ')',
-                '[',
-                ']',
-                '{',
-                '}',
-                '@',
-                ';'>;
+        static_assert(decltype(adobe_lexer)::size() == 29 + 1);
+        static_assert(
+            std::same_as<decltype(adobe_lexer)::id_type, adobe_tokens>);
 
-#if 0
-        std::cout << "lexer.regex_str =\n"
-                  << (lexer.regex_str.content | bp::as_utf8) << "\n";
-        std::cout << "lexer.ws_str =\n"
-                  << (lexer.ws_str.content | bp::as_utf8) << "\n";
-        std::cout << "lexer::size()=" << lexer.size() << "\n";
-        constexpr auto combined =
-            bp::detail::wrap_escape_concat<lexer.regex_str, lexer.ws_str>();
-        std::cout << "lexer combined regex str =\n"
-                  << (combined.content | bp::as_utf8) << "\n";
-        std::cout << "lexer IDs =\n" << lexer.ids() << "\n";
-        std::cout << "lexer parse_specs =\n" << lexer.specs() << "\n";
-#endif
-
-        static_assert(decltype(lexer)::size() == 29 + 1);
-        static_assert(std::same_as<decltype(lexer)::id_type, adobe_tokens>);
-
-        // tokens_view from lexer
+        // tokens_view from adobe_lexer
         {
             char const input[] = R"(/*
     Copyright 2005-2007 Adobe Systems Incorporated
@@ -122,36 +55,19 @@ output:
 */)",
                     R"(
 
-)",
-                    R"(sheet)",
-                    R"( )",
-                    R"(alert_dialog)",
+)",    R"(sheet)",  R"( )",  R"(alert_dialog)",
                     R"(
-)",
-                    R"({)",
+)",    R"({)",
                     R"(
-)",
-                    R"(output)",
-                    R"(:)",
+)",    R"(output)", R"(:)",
                     R"(
-    )",
-                    R"(result)",
-                    R"( )",
-                    R"(<==)",
-                    R"( )",
-                    R"({)",
-                    R"( )",
-                    R"(dummy_value)",
-                    R"(:)",
-                    R"( )",
-                    R"(42)",
-                    R"( )",
-                    R"(})",
-                    R"(;)",
+    )",    R"(result)", R"( )",  R"(<==)",
+                    R"( )", R"({)",      R"( )",  R"(dummy_value)",
+                    R"(:)", R"( )",      R"(42)", R"( )",
+                    R"(})", R"(;)",
                     R"(
-)",
-                    R"(})"};
-                auto r = lexer.regex_range(input);
+)",    R"(})"};
+                auto r = adobe_lexer.regex_range(input);
                 int position = 0;
                 for (auto subrange : r) {
                     std::string_view sv = subrange;
@@ -186,7 +102,7 @@ output:
 
             // make a tokens_view
             {
-                auto r = bp::tokens_view(input, lexer);
+                auto r = bp::tokens_view(input, adobe_lexer);
                 int position = 0;
                 for (auto tok : r) {
                     BOOST_TEST(tok == expected[position]);
@@ -198,7 +114,7 @@ output:
             // to_tokens range adaptor
             {
                 int position = 0;
-                for (auto tok: bp::to_tokens(input, lexer)) {
+                for (auto tok : bp::to_tokens(input, adobe_lexer)) {
                     BOOST_TEST(tok == expected[position]);
                     ++position;
                 }
@@ -207,7 +123,7 @@ output:
             {
                 std::string const input_str = input;
                 int position = 0;
-                for (auto tok: bp::to_tokens(input_str, lexer)) {
+                for (auto tok : bp::to_tokens(input_str, adobe_lexer)) {
                     BOOST_TEST(tok == expected[position]);
                     ++position;
                 }
@@ -215,7 +131,8 @@ output:
             }
             {
                 int position = 0;
-                for (auto tok : std::string(input) | bp::to_tokens(lexer)) {
+                for (auto tok :
+                     std::string(input) | bp::to_tokens(adobe_lexer)) {
                     BOOST_TEST(tok == expected[position]);
                     ++position;
                 }
@@ -226,7 +143,8 @@ output:
             {
                 std::vector<bp::token<char>> cache;
                 int position = 0;
-                for (auto tok : bp::to_tokens(input, lexer, std::ref(cache))) {
+                for (auto tok :
+                     bp::to_tokens(input, adobe_lexer, std::ref(cache))) {
                     BOOST_TEST(tok == expected[position]);
                     ++position;
                 }
@@ -235,7 +153,8 @@ output:
             {
                 boost::container::small_vector<bp::token<char>, 10> cache;
                 int position = 0;
-                for (auto tok : input | bp::to_tokens(lexer, std::ref(cache))) {
+                for (auto tok :
+                     input | bp::to_tokens(adobe_lexer, std::ref(cache))) {
                     BOOST_TEST(tok == expected[position]);
                     ++position;
                 }
@@ -831,7 +750,7 @@ logic:
 
                 int position = 0;
                 for (auto tok :
-                     std::string(large_input) | bp::to_tokens(lexer)) {
+                     std::string(large_input) | bp::to_tokens(adobe_lexer)) {
                     BOOST_TEST(tok == expected[position]);
                     if (tok != expected[position]) {
                         std::cout << "At pos=" << position << ": got " << tok
@@ -841,7 +760,7 @@ logic:
                 }
                 BOOST_TEST(position == (int)std::size(expected));
             }
-       }
+        }
     }
 
     return boost::report_errors();

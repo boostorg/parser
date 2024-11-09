@@ -13,6 +13,7 @@
     "In order to work, the Boost.Parser lexer requires C++20 and CTRE's ctre-unicode.hpp single-header file in the #include path.  CTRE can be found at https://github.com/hanickadot/compile-time-regular-expressions .  The required header is at https://raw.githubusercontent.com/hanickadot/compile-time-regular-expressions/refs/heads/main/single-header/ctre-unicode.hpp ."
 #endif
 
+#include <boost/parser/parser_fwd.hpp>
 #include <boost/parser/concepts.hpp>
 #include <boost/parser/detail/debug_assert.hpp>
 #include <boost/parser/detail/hl.hpp>
@@ -45,8 +46,6 @@ std::ostream & operator<<(std::ostream & os, std::array<T, N> const & arr)
 #endif
 
 namespace boost { namespace parser {
-
-    struct none;
 
     namespace detail {
         enum class token_kind { no_value, string_view, long_long, long_double };
@@ -281,7 +280,7 @@ namespace boost { namespace parser {
             constexpr auto base = TokenSpec::base;
             if constexpr (TokenSpec::is_character_token) {
                 return parse_spec{token_parsed_type::character, base};
-            } else if constexpr (std::is_same_v<value_t, none>) {
+            } else if constexpr (std::is_same_v<value_t, string_view_tag>) {
                 return parse_spec{token_parsed_type::string_view, base};
             } else if constexpr (std::is_same_v<value_t, bool>) {
                 return parse_spec{token_parsed_type::bool_, base};
@@ -321,11 +320,15 @@ namespace boost { namespace parser {
                 return parse_spec{token_parsed_type::long_double, base};
             } else {
                 static_assert(
-                    !std::is_same_v<value_t, value_t>,
+                    !std::is_same_v<TokenSpec, TokenSpec>,
                     "The only valid types for the 'Value' template parameter "
-                    "to 'lexer_token_spec' are 'none', integral types, and "
-                    "floating-point types.");
+                    "to 'token_spec' are 'string_view_tag', integral types, "
+                    "and floating-point types.");
             }
+#if defined(__cpp_lib_unreachable)
+            std::unreachable();
+            return parse_spec{token_parsed_type::string_view, base};
+#endif
         }
 
         template<char Ch, auto... Chs>
@@ -417,11 +420,7 @@ namespace boost { namespace parser {
     }
 
     /** TODO */
-    template<
-        ctll::fixed_string Regex,
-        auto ID,
-        typename ValueType = none,
-        int Base = 10>
+    template<ctll::fixed_string Regex, auto ID, typename ValueType, int Base>
     struct token_spec_t
     {
         using id_type = decltype(ID);
@@ -438,25 +437,7 @@ namespace boost { namespace parser {
         static constexpr id_type id = ID;
         static constexpr int base = Base < 0 ? 10 : Base;
         static constexpr bool is_character_token = Base < 0;
-
-        /** TODO */
-        template<typename ID2>
-        constexpr auto operator()(ID2 id) const noexcept;
-
-        /** TODO */
-        template<typename ID2, typename Value>
-        constexpr auto operator()(ID2 id, Value value) const noexcept;
-
-        // implementations in token_parser.hpp
     };
-
-    /** TODO */
-    template<
-        ctll::fixed_string Regex,
-        auto ID,
-        typename ValueType = none,
-        int Base = 10>
-    constexpr auto token_spec = token_spec_t<Regex, ID, ValueType, Base>{};
 
     // TODO: Document that this takes a pack of char -- and nothing else.  Also
     // note that for anything more complicated, including a short UTF-8 sequence
@@ -489,33 +470,20 @@ namespace boost { namespace parser {
         static constexpr auto ids() { return IDs.as_array(); }
         static constexpr auto specs() { return Specs.as_array(); }
 
+        // implementation in token_parser.hpp
         template<
             ctll::fixed_string RegexStr2,
             auto ID2,
             typename ValueType,
             int Base>
-        auto operator|(token_spec_t<RegexStr2, ID2, ValueType, Base> rhs) const
-        {
-            static_assert(
-                std::same_as<ID, decltype(ID2)>,
-                "All id_types must be the same for all token_specs.");
-            constexpr auto new_regex =
-                detail::wrap_escape_concat<regex_str, RegexStr2>();
-            constexpr auto new_ids = IDs.template append<(int)ID2>();
-            constexpr auto new_specs =
-                Specs
-                    .template append<detail::parse_spec_for<decltype(rhs)>()>();
-            return lexer_t<
-                CharType,
-                ID,
-                WsStr,
-                new_regex,
-                new_ids,
-                new_specs>{};
-        }
+        constexpr auto operator|(
+            parser_interface<token_parser<
+                token_spec_t<RegexStr2, ID2, ValueType, Base>>> const & rhs)
+            const;
 
         template<auto Ch, auto... Chs>
-        auto operator|(detail::token_chars_spec<Ch, Chs...> rhs) const
+        constexpr auto
+        operator|(detail::token_chars_spec<Ch, Chs...> const & rhs) const
         {
             constexpr auto new_regex =
                 detail::wrap_escape_concat<regex_str, Ch, Chs...>();

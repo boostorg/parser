@@ -154,10 +154,8 @@ namespace boost { namespace parser {
         struct upper_case_chars
         {};
 
-        struct any_token
+        struct any_token_value
         {
-            bool matches_id(int) const { return true; }
-
             template<typename T>
             bool matches_value(T) const
             {
@@ -445,15 +443,14 @@ namespace boost { namespace parser {
     template<typename T>
     struct float_parser;
 
-    /** A tag type used to stand in for any specialization of
-        `boost::parser::token<>`. */
-    struct token_tag
+    /** A tag type used to represent a value type that is any specialization
+        of `std::basic_string_view`.  Which specialization is used depends on
+        the input. */
+    struct string_view_tag
     {};
 
     /** TODO */
-    template<
-        typename AttributeType = token_tag,
-        typename Expected = detail::any_token>
+    template<typename TokenSpec, typename Expected = detail::nope>
     struct token_parser;
 
     /** Applies at most one of the parsers in `OrParser`.  If `switch_value_`

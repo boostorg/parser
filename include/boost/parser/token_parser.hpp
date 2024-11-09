@@ -42,12 +42,43 @@ namespace boost { namespace parser {
                     "integral values (including charater types).");
             }
         }
+
+        struct token_with_id
+        {
+            explicit token_with_id(int id) : id_(id) {}
+
+            bool matches(int id) const { return id == id_; }
+
+            template<typename T>
+            bool matches_value(T) const
+            {
+                return true;
+            }
+
+            int id_;
+        };
+
+        template<typename T>
+        struct token_with_id_and_value
+        {
+            explicit token_with_id_and_value(int id, T value) :
+                id_(id), value_(value)
+            {}
+
+            bool matches(int id) const { return id == id_; }
+            bool matches_value(T value) const { return value == value_; }
+
+            int id_;
+            T value_;
+        };
     }
 
 #ifndef BOOST_PARSER_DOXYGEN
 
     // TODO: Needs a printer.
-    template<typename AttributeType>
+    // TODO: Constrain the AttributeType to something that detail::token_as()
+    // can handle.
+    template<typename AttributeType, typename Expected>
     struct token_parser
     {
         using attribute_type = std::conditional_t<
@@ -55,7 +86,13 @@ namespace boost { namespace parser {
             detail::nope,
             AttributeType>;
 
-        constexpr token_parser() {}
+        using expected_value_type = std::conditional_t<
+            std::is_same_v<attribute_type, token_tag>,
+            detail::nope,
+            attribute_type>;
+
+        constexpr token_parser() = default;
+        constexpr token_parser(Expected expected) : expected_(expected) {}
 
         template<
             typename Iter,
@@ -103,22 +140,68 @@ namespace boost { namespace parser {
                 success = false;
                 return;
             }
+
             value_type const x = *first;
-            // TODO: Test for equality with some expectation, if any.
-            auto opt_attr = detail::token_as<attribute_type>(x);
-            if (!opt_attr) {
+            if (!expected_.matches_id(x.id())) {
                 success = false;
                 return;
             }
-            detail::assign(retval, *opt_attr);
+
+            if constexpr (std::same_as<AttributeType, token_tag>) {
+                detail::assign(retval, x);
+            } else {
+                auto opt_attr = detail::token_as<attribute_type>(x);
+                if (!opt_attr || !expected_.matches_value(*opt_attr)) {
+                    success = false;
+                    return;
+                }
+                detail::assign(retval, *opt_attr);
+            }
+
             ++first;
         }
+
+        // TODO: token_spec_t needs these same operator() overloads, each of
+        // which will return a token_parser.
+
+        // TODO: Constrain both ID params below only to accept type
+        // convertible to int.
+
+        /** TODO */
+        template<typename ID>
+        constexpr auto operator()(ID id) const noexcept
+        {
+            BOOST_PARSER_ASSERT(
+                (detail::is_nope_v<Expected> &&
+                 "If you're seeing this, you tried to chain calls on tok or "
+                 "tok_t, like 'tok(id1)(id2)'.  Quit it!'"));
+            return parser_interface(detail::token_with_id((int)id));
+        }
+
+        /** TODO */
+        template<typename ID>
+        constexpr auto
+        operator()(ID id, expected_value_type value) const noexcept
+        {
+            BOOST_PARSER_ASSERT(
+                (detail::is_nope_v<Expected> &&
+                 "If you're seeing this, you tried to chain calls on tok or "
+                 "tok_t, like 'tok(id1)(id2)'.  Quit it!'"));
+            return parser_interface(
+                detail::token_with_id_and_value((int)id, value));
+        }
+
+        Expected expected_;
     };
 
 #endif
 
     /** TODO */
-    constexpr parser_interface<token_parser<detail::nope>> tok;
+    constexpr parser_interface<token_parser<>> tok;
+
+    /** TODO */
+    template<typename AttributeType>
+    constexpr parser_interface<token_parser<AttributeType>> tok_t;
 
 }}
 

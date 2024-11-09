@@ -141,12 +141,6 @@ namespace boost { namespace parser {
     }
 
     /** TODO */
-    inline constexpr int ws_id = -1000000;
-
-    /** TODO */
-    inline constexpr int character_id = -2000000;
-
-    /** TODO */
     inline constexpr ctll::fixed_string no_ws = "";
 
     /** TODO */
@@ -247,22 +241,6 @@ namespace boost { namespace parser {
         int id_ : 24;
         detail::token_kind kind_ : 8;
     };
-
-#if BOOST_PARSER_DOXYGEN
-
-    /** TODO */
-    template<typename T>
-    constexpr bool is_token_v = detail::foo;
-
-#else
-
-    template<typename T>
-    constexpr bool is_token_v = false;
-
-    template<typename CharType>
-    constexpr bool is_token_v<token<CharType>> = true;
-
-#endif
 
 #if defined(BOOST_PARSER_TESTING)
     template<typename CharType>

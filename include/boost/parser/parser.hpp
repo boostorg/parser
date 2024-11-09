@@ -2755,7 +2755,23 @@ namespace boost { namespace parser {
         };
     }
 
-#ifndef BOOST_PARSER_DOXYGEN
+
+#if BOOST_PARSER_DOXYGEN
+
+    /** TODO */
+    template<typename T>
+    constexpr bool is_token_v = detail::foo;
+
+#else
+
+    template<typename CharType>
+    struct token;
+
+    template<typename T>
+    constexpr bool is_token_v = false;
+
+    template<typename CharType>
+    constexpr bool is_token_v<token<CharType>> = true;
 
     // This constraint is only here to allow the alternate-call semantic
     // action metaprogramming logic to function on MSVC.
@@ -6573,11 +6589,29 @@ namespace boost { namespace parser {
                 success = false;
                 return;
             }
-            attribute_type<decltype(*first)> const x = *first;
-            if (detail::unequal(context, x, expected_)) {
-                success = false;
-                return;
+
+            using attribute_t = attribute_type<decltype(*first)>;
+            attribute_t x = 0;
+
+            if constexpr (is_token_v<std::decay_t<decltype(*first)>>) {
+                if (first->id() != character_id || !first->has_long_long()) {
+                    success = false;
+                    return;
+                }
+                char32_t c = (char32_t)first->has_long_long();
+                if (detail::unequal(context, c, expected_)) {
+                    success = false;
+                    return;
+                }
+                x = (attribute_t)c;
+            } else {
+                x = *first;
+                if (detail::unequal(context, x, expected_)) {
+                    success = false;
+                    return;
+                }
             }
+
             detail::assign(retval, x);
             ++first;
         }

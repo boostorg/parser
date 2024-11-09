@@ -476,10 +476,10 @@ namespace boost { namespace parser {
             auto ID2,
             typename ValueType,
             int Base>
-        constexpr auto operator|(
-            parser_interface<token_parser<
-                token_spec_t<RegexStr2, ID2, ValueType, Base>>> const & rhs)
-            const;
+        constexpr auto
+        operator|(parser_interface<token_parser<
+                      token_spec_t<RegexStr2, ID2, ValueType, Base>,
+                      detail::nope>> const &) const;
 
         template<auto Ch, auto... Chs>
         constexpr auto

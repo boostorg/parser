@@ -11,6 +11,8 @@
 #include <boost/parser/concepts.hpp>
 #include <boost/parser/error_handling.hpp>
 
+#include <algorithm>
+
 
 namespace boost { namespace parser {
 
@@ -42,9 +44,23 @@ namespace boost { namespace parser {
         template<typename T>
         struct token_with_value
         {
-            explicit token_with_value(T value) : value_(std::move(value)) {}
-            bool matches(T const & value) const { return value == value_; }
+            explicit token_with_value(T value) : value_(value) {}
+            bool matches(T value) const { return value == value_; }
             T value_;
+        };
+
+        template<typename Subrange>
+        struct token_with_string_view
+        {
+            explicit token_with_string_view(Subrange value) : value_(value) {}
+
+            template<typename CharType>
+            bool matches(std::basic_string_view<CharType> value) const
+            {
+                return std::ranges::equal(value, value_);
+            }
+
+            Subrange value_;
         };
     }
 
@@ -149,6 +165,27 @@ namespace boost { namespace parser {
                 detail::token_with_value(std::move(value))));
         }
 
+        template<parsable_range_like R>
+        constexpr auto operator()(R && r) const noexcept
+        {
+            BOOST_PARSER_ASSERT(
+                ((!std::is_rvalue_reference_v<R &&> ||
+                  !detail::is_range<detail::remove_cv_ref_t<R>>) &&
+                 "It looks like you tried to pass an rvalue range to "
+                 "token_spec().  Don't do that, or you'll end up with dangling "
+                 "references."));
+            BOOST_PARSER_ASSERT(
+                (detail::is_nope_v<Expected> &&
+                 "If you're seeing this, you tried to chain calls on "
+                 "token_spec, like 'token_spec(char-set)(char-set)'.  Quit "
+                 "it!'"));
+            auto expected =
+                detail::token_with_string_view{BOOST_PARSER_SUBRANGE(
+                    std::ranges::begin(r), std::ranges::end(r))};
+            return parser_interface(
+                token_parser<token_spec, decltype(expected)>(expected));
+        }
+
         Expected expected_;
     };
 
@@ -161,7 +198,7 @@ namespace boost { namespace parser {
         typename ValueType = string_view_tag,
         int Base = 10>
     constexpr parser_interface token_spec{
-        token_parser<token_spec_t<Regex, ID, ValueType, Base>>()};
+        token_parser<token_spec_t<Regex, ID, ValueType, Base>, detail::nope>()};
 
 #ifndef BOOST_PARSER_DOXYGEN
 
@@ -180,7 +217,8 @@ namespace boost { namespace parser {
     constexpr auto
     lexer_t<CharType, ID, WsStr, RegexStr, IDs, Specs>::operator|(
         parser_interface<token_parser<
-            token_spec_t<RegexStr2, ID2, ValueType, Base>>> const &) const
+            token_spec_t<RegexStr2, ID2, ValueType, Base>,
+            detail::nope>> const &) const
     {
         static_assert(
             std::same_as<ID, decltype(ID2)>,

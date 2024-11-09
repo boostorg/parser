@@ -61,9 +61,8 @@ int main()
         (void)parser2;
     }
     {
-        // TODO: identifier("foo") does not work!
-        auto parser1 = identifier >> '=' >> true_false >> ';';
-        (void)parser1;
+        auto parser = identifier("foo") >> '=' >> true_false >> ';';
+        (void)parser;
     }
 
     // TODO    {

@@ -18,11 +18,7 @@ namespace boost { namespace parser {
         template<typename AttributeType, typename CharType>
         std::optional<AttributeType> token_as(token<CharType> tok)
         {
-            if constexpr (std::same_as<AttributeType, nope>) {
-                return nope{};
-            } else if constexpr (std::same_as<
-                                     AttributeType,
-                                     std::basic_string_view<CharType>>) {
+            if constexpr (std::same_as<AttributeType, string_view_tag>) {
                 if (tok.has_string_view())
                     return tok.get_string_view();
                 return std::nullopt;
@@ -43,32 +39,11 @@ namespace boost { namespace parser {
             }
         }
 
-        struct token_with_id
-        {
-            explicit token_with_id(int id) : id_(id) {}
-
-            bool matches(int id) const { return id == id_; }
-
-            template<typename T>
-            bool matches_value(T) const
-            {
-                return true;
-            }
-
-            int id_;
-        };
-
         template<typename T>
-        struct token_with_id_and_value
+        struct token_with_value
         {
-            explicit token_with_id_and_value(int id, T value) :
-                id_(id), value_(value)
-            {}
-
-            bool matches(int id) const { return id == id_; }
-            bool matches_value(T value) const { return value == value_; }
-
-            int id_;
+            explicit token_with_value(T value) : value_(std::move(value)) {}
+            bool matches(T const & value) const { return value == value_; }
             T value_;
         };
     }
@@ -78,18 +53,15 @@ namespace boost { namespace parser {
     // TODO: Needs a printer.
     // TODO: Constrain the AttributeType to something that detail::token_as()
     // can handle.
-    template<typename AttributeType, typename Expected>
+    template<typename TokenSpec, typename Expected>
     struct token_parser
     {
-        using attribute_type = std::conditional_t<
-            std::is_same_v<AttributeType, void>,
-            detail::nope,
-            AttributeType>;
+        using token_spec = TokenSpec;
 
-        using expected_value_type = std::conditional_t<
-            std::is_same_v<attribute_type, token_tag>,
-            detail::nope,
-            attribute_type>;
+        using attribute_type = std::conditional_t<
+            std::is_same_v<typename token_spec::value_type, none>,
+            string_view_tag,
+            typename token_spec::value_type>;
 
         constexpr token_parser() = default;
         constexpr token_parser(Expected expected) : expected_(expected) {}
@@ -142,96 +114,87 @@ namespace boost { namespace parser {
             }
 
             value_type const x = *first;
-            if (!expected_.matches_id(x.id())) {
+            if (x.id() != token_spec::id) {
                 success = false;
                 return;
             }
 
-            if constexpr (std::same_as<AttributeType, token_tag>) {
-                detail::assign(retval, x);
-            } else {
+            constexpr bool use_expected = !std::same_as<Expected, detail::nope>;
+            if (use_expected || detail::gen_attrs(flags)) {
                 auto opt_attr = detail::token_as<attribute_type>(x);
-                if (!opt_attr || !expected_.matches_value(*opt_attr)) {
-                    success = false;
-                    return;
+                if constexpr (use_expected) {
+                    if (!opt_attr || !expected_.matches_value(*opt_attr)) {
+                        success = false;
+                        return;
+                    }
                 }
-                detail::assign(retval, *opt_attr);
+                if (detail::gen_attrs(flags))
+                    detail::assign(retval, *opt_attr);
             }
 
             ++first;
         }
 
-        // TODO: Constrain all ID params below (incl. the ones from
-        // token_spec_t) only to accept type convertible to int.
-
         /** TODO */
-        template<typename ID>
-        constexpr auto operator()(ID id) const noexcept
+        constexpr auto operator()(attribute_type value) const noexcept
         {
             BOOST_PARSER_ASSERT(
                 (detail::is_nope_v<Expected> &&
-                 "If you're seeing this, you tried to chain calls on tok, "
-                 "tok_t, or one of your token_spec_t's, like 'tok(id1)(id2)'.  "
-                 "Quit it!'"));
-            return parser_interface(
-                token_parser<AttributeType, detail::token_with_id>(
-                    detail::token_with_id((int)id)));
-        }
-
-        /** TODO */
-        template<typename ID>
-        constexpr auto
-        operator()(ID id, expected_value_type value) const noexcept
-        {
-            BOOST_PARSER_ASSERT(
-                (detail::is_nope_v<Expected> &&
-                 "If you're seeing this, you tried to chain calls on tok, "
-                 "tok_t, or one of your token_spec_t's, like 'tok(id1)(id2)'.  "
-                 "Quit it!'"));
-            return parser_interface(
-                token_parser<
-                    AttributeType,
-                    detail::token_with_id_and_value<expected_value_type>>(
-                    detail::token_with_id_and_value((int)id, value)));
+                 "If you're seeing this, you tried to chain calls on one of "
+                 "your token_spec's, like 'my_token_spec(id1)(id2)'.  Quit "
+                 "it!'"));
+            return parser_interface(token_parser<
+                                    TokenSpec,
+                                    detail::token_with_value<attribute_type>>(
+                detail::token_with_value(std::move(value))));
         }
 
         Expected expected_;
     };
 
-    template<ctll::fixed_string Regex, auto ID, typename ValueType, int Base>
-    template<typename ID2>
-    constexpr auto
-    token_spec_t<Regex, ID, ValueType, Base>::operator()(ID2 id) const noexcept
-    {
-        using attribute_type = std::
-            conditional_t<std::same_as<ValueType, none>, token_tag, ValueType>;
-        return parser_interface(
-            token_parser<attribute_type, detail::token_with_id>(
-                detail::token_with_id((int)id)));
-    }
+#endif
 
-    template<ctll::fixed_string Regex, auto ID, typename ValueType, int Base>
-    template<typename ID2, typename Value>
-    constexpr auto token_spec_t<Regex, ID, ValueType, Base>::operator()(
-        ID2 id, Value value) const noexcept
+    /** TODO */
+    template<
+        ctll::fixed_string Regex,
+        auto ID,
+        typename ValueType = string_view_tag,
+        int Base = 10>
+    constexpr parser_interface token_spec{
+        token_parser<token_spec_t<Regex, ID, ValueType, Base>>()};
+
+#ifndef BOOST_PARSER_DOXYGEN
+
+    template<
+        typename CharType,
+        typename ID,
+        ctll::fixed_string WsStr,
+        ctll::fixed_string RegexStr,
+        detail::nttp_array IDs,
+        detail::nttp_array Specs>
+    template<
+        ctll::fixed_string RegexStr2,
+        auto ID2,
+        typename ValueType,
+        int Base>
+    constexpr auto
+    lexer_t<CharType, ID, WsStr, RegexStr, IDs, Specs>::operator|(
+        parser_interface<token_parser<
+            token_spec_t<RegexStr2, ID2, ValueType, Base>>> const &) const
     {
-        using attribute_type = std::
-            conditional_t<std::same_as<ValueType, none>, token_tag, ValueType>;
-        return parser_interface(token_parser<
-                                attribute_type,
-                                detail::token_with_id_and_value<Value>>(
-            detail::token_with_id_and_value((int)id, value)));
+        static_assert(
+            std::same_as<ID, decltype(ID2)>,
+            "All id_types must be the same for all token_specs.");
+        constexpr auto new_regex =
+            detail::wrap_escape_concat<regex_str, RegexStr2>();
+        constexpr auto new_ids = IDs.template append<(int)ID2>();
+        constexpr auto new_specs = Specs.template append<detail::parse_spec_for<
+            token_spec_t<RegexStr2, ID2, ValueType, Base>>()>();
+        return lexer_t<CharType, ID, WsStr, new_regex, new_ids, new_specs>{};
     }
 
 
 #endif
-
-    /** TODO */
-    constexpr parser_interface<token_parser<>> tok;
-
-    /** TODO */
-    template<typename AttributeType>
-    constexpr parser_interface<token_parser<AttributeType>> tok_t;
 
 }}
 

@@ -7,6 +7,7 @@
  */
 #define BOOST_PARSER_TESTING
 #include <boost/parser/lexer.hpp>
+#include <boost/parser/parser.hpp>
 
 #include <boost/parser/transcode_view.hpp>
 
@@ -28,67 +29,78 @@ int main()
     {
         auto const token_spec = bp::token_spec<"foo", 12>;
 
-        const bp::token_spec_t<"foo", 12, bp::none, 10> token_spec_explicit;
-        static_assert(
-            std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
+        bp::token_spec_t<"foo", 12, bp::string_view_tag, 10>
+            token_spec_explicit;
+        static_assert(std::same_as<
+                      decltype(token_spec.parser_)::token_spec,
+                      decltype(token_spec_explicit)>);
     }
     {
         auto const token_spec = bp::token_spec<"foo", my_tokens::foo>;
 
-        const bp::token_spec_t<"foo", my_tokens::foo, bp::none, 10>
+        bp::token_spec_t<"foo", my_tokens::foo, bp::string_view_tag, 10>
             token_spec_explicit;
-        static_assert(
-            std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
+        static_assert(std::same_as<
+                      decltype(token_spec.parser_)::token_spec,
+                      decltype(token_spec_explicit)>);
     }
     {
         auto const token_spec = bp::token_spec<"bar", my_tokens::bar>;
 
-        const bp::token_spec_t<"bar", my_tokens::bar, bp::none, 10>
+        bp::token_spec_t<"bar", my_tokens::bar, bp::string_view_tag, 10>
             token_spec_explicit;
-        static_assert(
-            std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
+        static_assert(std::same_as<
+                      decltype(token_spec.parser_)::token_spec,
+                      decltype(token_spec_explicit)>);
     }
     {
         auto const token_spec = bp::token_spec<"foo", 12, int, 2>;
 
-        const bp::token_spec_t<"foo", 12, int, 2> token_spec_explicit;
-        static_assert(
-            std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
+        bp::token_spec_t<"foo", 12, int, 2> token_spec_explicit;
+        static_assert(std::same_as<
+                      decltype(token_spec.parser_)::token_spec,
+                      decltype(token_spec_explicit)>);
     }
     {
         auto const token_spec = bp::token_spec<"foo", 12>;
 
-        const bp::token_spec_t<"foo", 12, bp::none, 10> token_spec_explicit;
-        static_assert(
-            std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
+        bp::token_spec_t<"foo", 12, bp::string_view_tag, 10>
+            token_spec_explicit;
+        static_assert(std::same_as<
+                      decltype(token_spec.parser_)::token_spec,
+                      decltype(token_spec_explicit)>);
     }
     {
         auto const token_spec = bp::token_spec<"foo", 12, unsigned int, 8>;
 
-        const bp::token_spec_t<"foo", 12, unsigned int, 8> token_spec_explicit;
-        static_assert(
-            std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
+        bp::token_spec_t<"foo", 12, unsigned int, 8> token_spec_explicit;
+        static_assert(std::same_as<
+                      decltype(token_spec.parser_)::token_spec,
+                      decltype(token_spec_explicit)>);
     }
     {
         auto const token_spec = bp::token_spec<"foo", 12, short>;
 
-        const bp::token_spec_t<"foo", 12, short, 10> token_spec_explicit;
-        static_assert(
-            std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
+        bp::token_spec_t<"foo", 12, short, 10> token_spec_explicit;
+        static_assert(std::same_as<
+                      decltype(token_spec.parser_)::token_spec,
+                      decltype(token_spec_explicit)>);
     }
     {
         auto const token_spec = bp::token_spec<"foo", 12, float>;
 
-        const bp::token_spec_t<"foo", 12, float, 10> token_spec_explicit;
-        static_assert(
-            std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
+        bp::token_spec_t<"foo", 12, float, 10> token_spec_explicit;
+        static_assert(std::same_as<
+                      decltype(token_spec.parser_)::token_spec,
+                      decltype(token_spec_explicit)>);
     }
     {
         auto const token_spec = bp::token_spec<"foo", 12, double>;
 
-        const bp::token_spec_t<"foo", 12, double, 10> token_spec_explicit;
-        static_assert(
-            std::same_as<decltype(token_spec), decltype(token_spec_explicit)>);
+        bp::token_spec_t<"foo", 12, double, 10> token_spec_explicit;
+        static_assert(std::same_as<
+                      decltype(token_spec.parser_)::token_spec,
+                      decltype(token_spec_explicit)>);
     }
 
     // making lexers

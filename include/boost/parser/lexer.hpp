@@ -438,6 +438,16 @@ namespace boost { namespace parser {
         static constexpr id_type id = ID;
         static constexpr int base = Base < 0 ? 10 : Base;
         static constexpr bool is_character_token = Base < 0;
+
+        /** TODO */
+        template<typename ID2>
+        constexpr auto operator()(ID2 id) const noexcept;
+
+        /** TODO */
+        template<typename ID2, typename Value>
+        constexpr auto operator()(ID2 id, Value value) const noexcept;
+
+        // implementations in token_parser.hpp
     };
 
     /** TODO */

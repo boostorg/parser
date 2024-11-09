@@ -161,11 +161,8 @@ namespace boost { namespace parser {
             ++first;
         }
 
-        // TODO: token_spec_t needs these same operator() overloads, each of
-        // which will return a token_parser.
-
-        // TODO: Constrain both ID params below only to accept type
-        // convertible to int.
+        // TODO: Constrain all ID params below (incl. the ones from
+        // token_spec_t) only to accept type convertible to int.
 
         /** TODO */
         template<typename ID>
@@ -173,9 +170,12 @@ namespace boost { namespace parser {
         {
             BOOST_PARSER_ASSERT(
                 (detail::is_nope_v<Expected> &&
-                 "If you're seeing this, you tried to chain calls on tok or "
-                 "tok_t, like 'tok(id1)(id2)'.  Quit it!'"));
-            return parser_interface(detail::token_with_id((int)id));
+                 "If you're seeing this, you tried to chain calls on tok, "
+                 "tok_t, or one of your token_spec_t's, like 'tok(id1)(id2)'.  "
+                 "Quit it!'"));
+            return parser_interface(
+                token_parser<AttributeType, detail::token_with_id>(
+                    detail::token_with_id((int)id)));
         }
 
         /** TODO */
@@ -185,14 +185,44 @@ namespace boost { namespace parser {
         {
             BOOST_PARSER_ASSERT(
                 (detail::is_nope_v<Expected> &&
-                 "If you're seeing this, you tried to chain calls on tok or "
-                 "tok_t, like 'tok(id1)(id2)'.  Quit it!'"));
+                 "If you're seeing this, you tried to chain calls on tok, "
+                 "tok_t, or one of your token_spec_t's, like 'tok(id1)(id2)'.  "
+                 "Quit it!'"));
             return parser_interface(
-                detail::token_with_id_and_value((int)id, value));
+                token_parser<
+                    AttributeType,
+                    detail::token_with_id_and_value<expected_value_type>>(
+                    detail::token_with_id_and_value((int)id, value)));
         }
 
         Expected expected_;
     };
+
+    template<ctll::fixed_string Regex, auto ID, typename ValueType, int Base>
+    template<typename ID2>
+    constexpr auto
+    token_spec_t<Regex, ID, ValueType, Base>::operator()(ID2 id) const noexcept
+    {
+        using attribute_type = std::
+            conditional_t<std::same_as<ValueType, none>, token_tag, ValueType>;
+        return parser_interface(
+            token_parser<attribute_type, detail::token_with_id>(
+                detail::token_with_id((int)id)));
+    }
+
+    template<ctll::fixed_string Regex, auto ID, typename ValueType, int Base>
+    template<typename ID2, typename Value>
+    constexpr auto token_spec_t<Regex, ID, ValueType, Base>::operator()(
+        ID2 id, Value value) const noexcept
+    {
+        using attribute_type = std::
+            conditional_t<std::same_as<ValueType, none>, token_tag, ValueType>;
+        return parser_interface(token_parser<
+                                attribute_type,
+                                detail::token_with_id_and_value<Value>>(
+            detail::token_with_id_and_value((int)id, value)));
+    }
+
 
 #endif
 

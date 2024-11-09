@@ -450,7 +450,7 @@ namespace boost { namespace parser {
     {};
 
     /** TODO */
-    template<typename TokenSpec, typename Expected = detail::nope>
+    template<typename TokenSpec, typename Expected>
     struct token_parser;
 
     /** Applies at most one of the parsers in `OrParser`.  If `switch_value_`

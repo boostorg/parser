@@ -753,7 +753,7 @@ namespace boost { namespace parser {
         typename TokenCache = std::vector<typename Lexer::token_type>>
         requires std::ranges::view<V>
     struct tokens_view
-        : public std::ranges::view_interface<tokens_view<V, Lexer>>
+        : public std::ranges::view_interface<tokens_view<V, Lexer, TokenCache>>
     {
     private:
         template<bool>
@@ -934,8 +934,17 @@ namespace boost { namespace parser {
                 return token_offset_ == rhs.token_offset_;
             }
 
-            auto range_begin() const { std::ranges::begin(parent_->base_); }
-            auto range_end() const { std::ranges::end(parent_->base_); }
+            auto range_begin() const
+            {
+                return std::ranges::begin(parent_->base_);
+            }
+            auto range_end() const { return std::ranges::end(parent_->base_); }
+
+            using base_type = detail::stl_interfaces::proxy_iterator_interface<
+                iterator<Const>,
+                std::forward_iterator_tag,
+                token_type>;
+            using base_type::operator++;
         };
 
         template<bool Const>

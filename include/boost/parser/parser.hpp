@@ -2611,6 +2611,12 @@ namespace boost { namespace parser {
             }
         }
 
+        template<typename I, typename S>
+        constexpr auto make_input_subrange(I first, S last) noexcept
+        {
+            return BOOST_PARSER_SUBRANGE(first, last) | detail::text::as_utf32;
+        }
+
         template<typename R>
         constexpr auto make_input_subrange(R && r) noexcept
         {
@@ -8687,8 +8693,7 @@ namespace boost { namespace parser {
                            first, last, parser, parser.error_handler_, attr);
             }
         } else {
-            auto r =
-                BOOST_PARSER_SUBRANGE(first, last) | detail::text::as_utf32;
+            auto r = detail::make_input_subrange(first, last);
             auto f = r.begin();
             auto const l = r.end();
             auto _ = detail::scoped_base_assign(first, f);
@@ -8806,8 +8811,7 @@ namespace boost { namespace parser {
                     first, last, parser, parser.error_handler_);
             }
         } else {
-            auto r =
-                BOOST_PARSER_SUBRANGE(first, last) | detail::text::as_utf32;
+            auto r = detail::make_input_subrange(first, last);
             auto f = r.begin();
             auto const l = r.end();
             auto _ = detail::scoped_base_assign(first, f);
@@ -8930,8 +8934,7 @@ namespace boost { namespace parser {
                            attr);
             }
         } else {
-            auto r =
-                BOOST_PARSER_SUBRANGE(first, last) | detail::text::as_utf32;
+            auto r = detail::make_input_subrange(first, last);
             auto f = r.begin();
             auto const l = r.end();
             auto _ = detail::scoped_base_assign(first, f);
@@ -9050,8 +9053,7 @@ namespace boost { namespace parser {
                     first, last, parser, skip, parser.error_handler_);
             }
         } else {
-            auto r =
-                BOOST_PARSER_SUBRANGE(first, last) | detail::text::as_utf32;
+            auto r = detail::make_input_subrange(first, last);
             auto f = r.begin();
             auto const l = r.end();
             auto _ = detail::scoped_base_assign(first, f);
@@ -9164,8 +9166,7 @@ namespace boost { namespace parser {
                     first, last, parser, parser.error_handler_, callbacks);
             }
         } else {
-            auto r =
-                BOOST_PARSER_SUBRANGE(first, last) | detail::text::as_utf32;
+            auto r = detail::make_input_subrange(first, last);
             auto f = r.begin();
             auto const l = r.end();
             auto _ = detail::scoped_base_assign(first, f);
@@ -9296,8 +9297,7 @@ namespace boost { namespace parser {
                     callbacks);
             }
         } else {
-            auto r =
-                BOOST_PARSER_SUBRANGE(first, last) | detail::text::as_utf32;
+            auto r = detail::make_input_subrange(first, last);
             auto f = r.begin();
             auto const l = r.end();
             auto _ = detail::scoped_base_assign(first, f);

@@ -24,10 +24,13 @@ namespace boost { namespace parser {
     template<typename Iter>
     struct parse_error : std::runtime_error
     {
-        parse_error(Iter it, std::string const & msg) :
-            runtime_error(msg), iter(it)
+        parse_error(Iter it, std::string msg) :
+            runtime_error(""), message(msg), iter(it)
         {}
 
+        char const * what() const noexcept override { return message.c_str(); }
+
+        std::string message;
         Iter iter;
     };
 

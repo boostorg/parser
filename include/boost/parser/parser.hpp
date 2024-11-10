@@ -2329,7 +2329,7 @@ namespace boost { namespace parser {
                 auto const underlying_first = e.iter.range_begin();
                 auto const underlying_curr = e.iter->underlying_position();
                 auto const underlying_last = e.iter.range_end();
-                parse_error underlying_error{underlying_curr, e.what()};
+                parse_error underlying_error{underlying_curr, e.message()};
                 return error_handler(
                            underlying_first,
                            underlying_last,

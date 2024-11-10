@@ -49,7 +49,6 @@ add_test(NAME parser_api COMMAND parser_api)
 add_executable(
     compile_tests
     compile_include_lexer_parser.cpp
-    compile_include_parser_lexer.cpp
     compile_tests_main.cpp
     compile_attribute.cpp
     compile_seq_attribute.cpp

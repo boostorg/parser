@@ -6,8 +6,8 @@
  *   http://www.boost.org/LICENSE_1_0.txt)
  */
 
-#include <boost/parser/parser.hpp>
 #include <boost/parser/lexer.hpp>
+#include <boost/parser/parser.hpp>
 
 #include <boost/core/lightweight_test.hpp>
 

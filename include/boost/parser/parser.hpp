@@ -324,6 +324,25 @@ namespace boost { namespace parser {
     };
 #endif
 
+#ifdef BOOST_PARSER_DOXYGEN
+
+    /** TODO */
+    template<typename T>
+    constexpr bool is_token_v = detail::foo;
+
+#else
+
+    template<typename CharType>
+    struct token;
+
+    template<typename T>
+    constexpr bool is_token_v = false;
+
+    template<typename CharType>
+    constexpr bool is_token_v<token<CharType>> = true;
+
+#endif
+
     namespace detail {
         // Follows boost/mpl/print.hpp.
 #if defined(_MSC_VER)
@@ -2614,7 +2633,13 @@ namespace boost { namespace parser {
         template<typename I, typename S>
         constexpr auto make_input_subrange(I first, S last) noexcept
         {
-            return BOOST_PARSER_SUBRANGE(first, last) | detail::text::as_utf32;
+            using value_type = iter_value_t<I>;
+            if constexpr (is_token_v<value_type>) {
+                return BOOST_PARSER_SUBRANGE(first, last);
+            } else {
+                return BOOST_PARSER_SUBRANGE(first, last) |
+                       detail::text::as_utf32;
+            }
         }
 
         template<typename R>
@@ -2622,7 +2647,9 @@ namespace boost { namespace parser {
         {
             using r_t = remove_cv_ref_t<R>;
             using value_type = range_value_t<r_t>;
-            if constexpr (text::detail::is_bounded_array_v<r_t>) {
+            if constexpr (is_token_v<value_type>) {
+                return (R &&)r;
+            } else if constexpr (text::detail::is_bounded_array_v<r_t>) {
                 if constexpr (std::is_same_v<value_type, char>) {
                     auto first = detail::text::detail::begin(r);
                     auto last = detail::text::detail::end(r);
@@ -2849,22 +2876,7 @@ namespace boost { namespace parser {
     }
 
 
-#if BOOST_PARSER_DOXYGEN
-
-    /** TODO */
-    template<typename T>
-    constexpr bool is_token_v = detail::foo;
-
-#else
-
-    template<typename CharType>
-    struct token;
-
-    template<typename T>
-    constexpr bool is_token_v = false;
-
-    template<typename CharType>
-    constexpr bool is_token_v<token<CharType>> = true;
+#ifndef BOOST_PARSER_DOXYGEN
 
     // This constraint is only here to allow the alternate-call semantic
     // action metaprogramming logic to function on MSVC.

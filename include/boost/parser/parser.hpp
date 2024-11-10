@@ -2615,35 +2615,26 @@ namespace boost { namespace parser {
         constexpr auto make_input_subrange(R && r) noexcept
         {
             using r_t = remove_cv_ref_t<R>;
-            if constexpr (std::is_pointer_v<r_t>) {
-                using value_type = iter_value_t<r_t>;
+            using value_type = range_value_t<r_t>;
+            if constexpr (text::detail::is_bounded_array_v<r_t>) {
                 if constexpr (std::is_same_v<value_type, char>) {
-                    return BOOST_PARSER_SUBRANGE(r, text::null_sentinel);
+                    auto first = detail::text::detail::begin(r);
+                    auto last = detail::text::detail::end(r);
+                    if (first != last && !*std::prev(last))
+                        --last;
+                    return BOOST_PARSER_SUBRANGE(first, last);
                 } else {
                     return r | text::as_utf32;
                 }
             } else {
-                using value_type = range_value_t<r_t>;
-                if constexpr (text::detail::is_bounded_array_v<r_t>) {
-                    if constexpr (std::is_same_v<value_type, char>) {
-                        auto first = detail::text::detail::begin(r);
-                        auto last = detail::text::detail::end(r);
-                        if (first != last && !*std::prev(last))
-                            --last;
-                        return BOOST_PARSER_SUBRANGE(first, last);
-                    } else {
-                        return r | text::as_utf32;
-                    }
+                if constexpr (
+                    std::is_same_v<value_type, char> &&
+                    !is_utf8_view<r_t>::value) {
+                    return BOOST_PARSER_SUBRANGE(
+                        detail::text::detail::begin(r),
+                        detail::text::detail::end(r));
                 } else {
-                    if constexpr (
-                        std::is_same_v<value_type, char> &&
-                        !is_utf8_view<r_t>::value) {
-                        return BOOST_PARSER_SUBRANGE(
-                            detail::text::detail::begin(r),
-                            detail::text::detail::end(r));
-                    } else {
-                        return r | text::as_utf32;
-                    }
+                    return r | text::as_utf32;
                 }
             }
         }

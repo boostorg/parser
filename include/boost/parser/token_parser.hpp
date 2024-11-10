@@ -4,8 +4,11 @@
 // accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 #ifndef BOOST_PARSER_TOKEN_PARSER_HPP
-#if defined(BOOST_PARSER_PARSER_HPP) && defined(BOOST_PARSER_LEXER_HPP)
 #define BOOST_PARSER_TOKEN_PARSER_HPP
+
+#if !defined(BOOST_PARSER_PARSER_HPP) || !defined(BOOST_PARSER_LEXER_HPP)
+#error "token_parser.hpp must be included after lexer.hpp and parser.hpp."
+#endif
 
 #include <boost/parser/parser_fwd.hpp>
 #include <boost/parser/concepts.hpp>
@@ -236,5 +239,4 @@ namespace boost { namespace parser {
 
 }}
 
-#endif
 #endif

@@ -13,6 +13,10 @@
     "In order to work, the Boost.Parser lexer requires C++20 and CTRE's ctre-unicode.hpp single-header file in the #include path.  CTRE can be found at https://github.com/hanickadot/compile-time-regular-expressions .  The required header is at https://raw.githubusercontent.com/hanickadot/compile-time-regular-expressions/refs/heads/main/single-header/ctre-unicode.hpp ."
 #endif
 
+#if defined(BOOST_PARSER_PARSER_HPP)
+#error "lexer.hpp must be included before parser.hpp."
+#endif
+
 #include <boost/parser/parser_fwd.hpp>
 #include <boost/parser/concepts.hpp>
 #include <boost/parser/detail/debug_assert.hpp>
@@ -976,7 +980,5 @@ namespace boost { namespace parser {
         to_tokens = detail::to_tokens_impl{};
 
 }}
-
-#include <boost/parser/token_parser.hpp>
 
 #endif

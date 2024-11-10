@@ -8626,6 +8626,9 @@ namespace boost { namespace parser {
 
 }}
 
+#if defined(BOOST_PARSER_LEXER_HPP)
+#include <boost/parser/token_parser.hpp>
+#endif
 #include <boost/parser/detail/printing_impl.hpp>
 
 namespace boost { namespace parser {
@@ -9553,7 +9556,5 @@ namespace boost { namespace parser {
         }
     }
 }}
-
-#include <boost/parser/token_parser.hpp>
 
 #endif

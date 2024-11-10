@@ -59,6 +59,12 @@
     also defined. */
 #    define BOOST_PARSER_TRACE_TO_VS_OUTPUT
 
+/** When lexing is enabled, each token contains its position within the
+    underlying range.  To save a bit of space, an `unsiged int` is used for
+    this.  If you parse input sequences longer than 2^32-1 characters, define
+    `BOOST_PARSER_TOKEN_POSITION_TYPE` to be a larger integral type. */
+#    define BOOST_PARSER_TOKEN_POSITION_TYPE unsigned int
+
 #else
 
 #    ifdef BOOST_PARSER_NO_RUNTIME_ASSERTIONS
@@ -101,6 +107,10 @@
 
 #if !defined(BOOST_PARSER_MAX_AGGREGATE_SIZE)
 #    define BOOST_PARSER_MAX_AGGREGATE_SIZE 25
+#endif
+
+#if !defined(BOOST_PARSER_TOKEN_POSITION_TYPE)
+#    define BOOST_PARSER_TOKEN_POSITION_TYPE unsigned int
 #endif
 
 // VS2019 and VS2017 need conditional constexpr in some places, even in C++17 mode.

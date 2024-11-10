@@ -315,9 +315,9 @@ int main()
 
         using tok_t = bp::token<char>;
         tok_t const expected[] = {
-            tok_t((int)my_tokens::foo, "foo"),
-            tok_t(bp::character_id, (long long)'='),
-            tok_t((int)my_tokens::bar, "bar")};
+            tok_t((int)my_tokens::foo, 0, "foo"),
+            tok_t(bp::character_id, 0, (long long)'='),
+            tok_t((int)my_tokens::bar, 0, "bar")};
 
         int position = 0;
 
@@ -360,9 +360,9 @@ int main()
         std::string s = "foo = bar";
         using tok_t = bp::token<char>;
         tok_t const expected[] = {
-            tok_t((int)my_tokens::foo, "foo"),
-            tok_t(bp::character_id, (long long)'='),
-            tok_t((int)my_tokens::bar, "bar")};
+            tok_t((int)my_tokens::foo, 0, "foo"),
+            tok_t(bp::character_id, 0, (long long)'='),
+            tok_t((int)my_tokens::bar, 0, "bar")};
 
         auto const lexer8 = bp::lexer<char8_t, my_tokens> |
                             bp::token_spec<"foo", my_tokens::foo> |
@@ -373,9 +373,9 @@ int main()
         std::u8string u8s = u8"foo = bar";
         using tok8_t = bp::token<char8_t>;
         tok8_t const expected8[] = {
-            tok8_t((int)my_tokens::foo, u8"foo"),
-            tok8_t(bp::character_id, (long long)'='),
-            tok8_t((int)my_tokens::bar, u8"bar")};
+            tok8_t((int)my_tokens::foo, 0, u8"foo"),
+            tok8_t(bp::character_id, 0, (long long)'='),
+            tok8_t((int)my_tokens::bar, 0, u8"bar")};
 
         auto const lexer16 = bp::lexer<char16_t, my_tokens> |
                              bp::token_spec<"foo", my_tokens::foo> |
@@ -386,9 +386,9 @@ int main()
         std::u16string u16s = u"foo = bar";
         using tok16_t = bp::token<char16_t>;
         tok16_t const expected16[] = {
-            tok16_t((int)my_tokens::foo, u"foo"),
-            tok16_t(bp::character_id, (long long)'='),
-            tok16_t((int)my_tokens::bar, u"bar")};
+            tok16_t((int)my_tokens::foo, 0, u"foo"),
+            tok16_t(bp::character_id, 0, (long long)'='),
+            tok16_t((int)my_tokens::bar, 0, u"bar")};
 
         auto const lexer32 = bp::lexer<char32_t, my_tokens> |
                              bp::token_spec<"foo", my_tokens::foo> |
@@ -399,9 +399,9 @@ int main()
         std::u32string u32s = U"foo = bar";
         using tok32_t = bp::token<char32_t>;
         tok32_t const expected32[] = {
-            tok32_t((int)my_tokens::foo, U"foo"),
-            tok32_t(bp::character_id, (long long)'='),
-            tok32_t((int)my_tokens::bar, U"bar")};
+            tok32_t((int)my_tokens::foo, 0, U"foo"),
+            tok32_t(bp::character_id, 0, (long long)'='),
+            tok32_t((int)my_tokens::bar, 0, U"bar")};
 
 
         int position = 0;
@@ -458,9 +458,9 @@ int main()
         std::string s = "foo=bar";
         using tok_t = bp::token<char>;
         tok_t const expected[] = {
-            tok_t((int)my_tokens::foo, "foo"),
-            tok_t(bp::character_id, (long long)'='),
-            tok_t((int)my_tokens::bar, "bar")};
+            tok_t((int)my_tokens::foo, 0, "foo"),
+            tok_t(bp::character_id, 0, (long long)'='),
+            tok_t((int)my_tokens::bar, 0, "bar")};
 
         int position = 0;
         for (auto tok : s | bp::to_tokens(lexer)) {
@@ -482,11 +482,11 @@ int main()
         std::string s = "foo = bar";
         using tok_t = bp::token<char>;
         tok_t const expected[] = {
-            tok_t((int)my_tokens::foo, "foo"),
-            tok_t((int)my_tokens::ws, " "),
-            tok_t(bp::character_id, (long long)'='),
-            tok_t((int)my_tokens::ws, " "),
-            tok_t((int)my_tokens::bar, "bar")};
+            tok_t((int)my_tokens::foo, 0, "foo"),
+            tok_t((int)my_tokens::ws, 0, " "),
+            tok_t(bp::character_id, 0, (long long)'='),
+            tok_t((int)my_tokens::ws, 0, " "),
+            tok_t((int)my_tokens::bar, 0, "bar")};
 
         int position = 0;
         for (auto tok : s | bp::to_tokens(lexer)) {

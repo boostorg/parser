@@ -2273,7 +2273,12 @@ namespace boost { namespace parser {
             scoped_base_assign(BaseIter & base, Iter & it) :
                 base_(base), it_(it)
             {}
-            ~scoped_base_assign() { base_ = it_.base(); }
+            ~scoped_base_assign()
+            {
+                if constexpr (!std::is_same_v<BaseIter, Iter>) {
+                    base_ = it_.base();
+                }
+            }
 
             BaseIter & base_;
             Iter & it_;
@@ -2309,6 +2314,31 @@ namespace boost { namespace parser {
 
             pending_symbol_table_operations_t & pending_ops_;
         };
+
+        template<typename I>
+        constexpr bool is_token_iter_v = is_token_v<iter_value_t<I>>;
+
+        template<typename Iter, typename Sentinel, typename ErrorHandler>
+        bool handle_parse_exception(
+            ErrorHandler const & error_handler,
+            Iter initial_first,
+            Sentinel last,
+            parse_error<Iter> const & e)
+        {
+            if constexpr (is_token_iter_v<Iter>) {
+                auto const underlying_first = e.iter.range_begin();
+                auto const underlying_curr = e.iter->underlying_position();
+                auto const underlying_last = e.iter.range_end();
+                parse_error underlying_error{underlying_curr, e.what()};
+                return error_handler(
+                           underlying_first,
+                           underlying_last,
+                           underlying_error) == error_handler_result::rethrow;
+            } else {
+                return error_handler(initial_first, last, e) ==
+                       error_handler_result::rethrow;
+            }
+        }
 
         template<
             bool Debug,
@@ -2356,8 +2386,8 @@ namespace boost { namespace parser {
                     detail::final_trace(context, flags, attr);
                 return success;
             } catch (parse_error<Iter> const & e) {
-                if (error_handler(initial_first, last, e) ==
-                    error_handler_result::rethrow) {
+                if (detail::handle_parse_exception(
+                        error_handler, initial_first, last, e)) {
                     throw;
                 }
                 return false;
@@ -2410,8 +2440,8 @@ namespace boost { namespace parser {
                     detail::final_trace(context, flags, nope{});
                 return detail::make_parse_result(attr_, success);
             } catch (parse_error<Iter> const & e) {
-                if (error_handler(initial_first, last, e) ==
-                    error_handler_result::rethrow) {
+                if (detail::handle_parse_exception(
+                        error_handler, initial_first, last, e)) {
                     throw;
                 }
                 attr_t attr_{};
@@ -2465,8 +2495,8 @@ namespace boost { namespace parser {
                     detail::final_trace(context, flags, nope{});
                 return success;
             } catch (parse_error<Iter> const & e) {
-                if (error_handler(initial_first, last, e) ==
-                    error_handler_result::rethrow) {
+                if (detail::handle_parse_exception(
+                        error_handler, initial_first, last, e)) {
                     throw;
                 }
                 return false;
@@ -2516,8 +2546,8 @@ namespace boost { namespace parser {
                     detail::final_trace(context, flags, attr);
                 return success;
             } catch (parse_error<Iter> const & e) {
-                if (error_handler(initial_first, last, e) ==
-                    error_handler_result::rethrow) {
+                if (detail::handle_parse_exception(
+                        error_handler, initial_first, last, e)) {
                     throw;
                 }
                 return false;
@@ -2569,8 +2599,8 @@ namespace boost { namespace parser {
                     detail::final_trace(context, flags, nope{});
                 return detail::make_parse_result(attr_, success);
             } catch (parse_error<Iter> const & e) {
-                if (error_handler(initial_first, last, e) ==
-                    error_handler_result::rethrow) {
+                if (detail::handle_parse_exception(
+                        error_handler, initial_first, last, e)) {
                     throw;
                 }
                 attr_t attr_{};
@@ -2622,8 +2652,8 @@ namespace boost { namespace parser {
                     detail::final_trace(context, flags, nope{});
                 return success;
             } catch (parse_error<Iter> const & e) {
-                if (error_handler(initial_first, last, e) ==
-                    error_handler_result::rethrow) {
+                if (detail::handle_parse_exception(
+                        error_handler, initial_first, last, e)) {
                     throw;
                 }
                 return false;
@@ -2633,8 +2663,7 @@ namespace boost { namespace parser {
         template<typename I, typename S>
         constexpr auto make_input_subrange(I first, S last) noexcept
         {
-            using value_type = iter_value_t<I>;
-            if constexpr (is_token_v<value_type>) {
+            if constexpr (is_token_iter_v<I>) {
                 return BOOST_PARSER_SUBRANGE(first, last);
             } else {
                 return BOOST_PARSER_SUBRANGE(first, last) |

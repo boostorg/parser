@@ -151,27 +151,47 @@ namespace boost { namespace parser {
     {
         using char_type = CharType;
         using string_view = std::basic_string_view<CharType>;
+        using position_type = BOOST_PARSER_TOKEN_POSITION_TYPE;
 
         constexpr token() :
-            value_(0ll), id_(), kind_(detail::token_kind::string_view)
+            value_(0ll),
+            underlying_position_(),
+            id_(),
+            kind_(detail::token_kind::string_view)
         {}
-        constexpr token(int id, string_view value) :
-            value_(0ll), id_(id), kind_(detail::token_kind::string_view)
+        constexpr token(
+            int id, position_type underlying_position, string_view value) :
+            value_(0ll),
+            underlying_position_(),
+            id_(id),
+            kind_(detail::token_kind::string_view)
         {
             value_.sv_ = value;
         }
-        constexpr token(int id, long long value) :
-            value_(0ll), id_(id), kind_(detail::token_kind::long_long)
+        constexpr token(
+            int id, position_type underlying_position, long long value) :
+            value_(0ll),
+            underlying_position_(underlying_position),
+            id_(id),
+            kind_(detail::token_kind::long_long)
         {
             value_.ll_ = value;
         }
-        constexpr token(int id, long double value) :
-            value_(0ll), id_(id), kind_(detail::token_kind::long_double)
+        constexpr token(
+            int id, position_type underlying_position, long double value) :
+            value_(0ll),
+            underlying_position_(underlying_position),
+            id_(id),
+            kind_(detail::token_kind::long_double)
         {
             value_.d_ = value;
         }
 
         constexpr int id() const { return id_; }
+        constexpr position_type underlying_position() const
+        {
+            return underlying_position_;
+        }
 
         constexpr bool has_string_view() const
         {
@@ -238,6 +258,7 @@ namespace boost { namespace parser {
             long double d_;
             string_view sv_;
         } value_;
+        position_type underlying_position_ = 0;
         // TODO: Document the 22-bit size limitation on id_ (values must be
         // positive).
         int id_ : 24;
@@ -539,8 +560,10 @@ namespace boost { namespace parser {
         };
 
         template<parse_spec Spec, typename CharType>
-        token<CharType>
-        make_token(int id, std::basic_string_view<CharType> ctre_token)
+        token<CharType> make_token(
+            int id,
+            std::basic_string_view<CharType> ctre_token,
+            BOOST_PARSER_TOKEN_POSITION_TYPE underlying_position)
         {
             auto f = ctre_token.data();
             auto const l = f + ctre_token.size();
@@ -553,16 +576,20 @@ namespace boost { namespace parser {
 
             switch (Spec.type) {
             case token_parsed_type::character:
-                return {character_id, (long long)ctre_token[0]};
+                return {
+                    character_id,
+                    underlying_position,
+                    (long long)ctre_token[0]};
 
-            case token_parsed_type::string_view: return {id, ctre_token};
+            case token_parsed_type::string_view:
+                return {id, underlying_position, ctre_token};
 
             case token_parsed_type::bool_:
                 using namespace std::literals;
                 if (std::ranges::equal(ctre_token, "true"sv)) {
-                    return {id, 1ll};
+                    return {id, underlying_position, 1ll};
                 } else if (std::ranges::equal(ctre_token, "false"sv)) {
-                    return {id, 0ll};
+                    return {id, underlying_position, 0ll};
                 } else {
                     // TODO: report error.
                 }
@@ -573,7 +600,7 @@ namespace boost { namespace parser {
                     type_wrapper<decltype(value)>{},
                     Spec.radix,
                     numeric::parse_int<true, Spec.radix, 1, -1>(f, l, value));
-                return {id, (long long)value};
+                return {id, underlying_position, (long long)value};
             }
             case token_parsed_type::unsigned_char: {
                 unsigned char value;
@@ -581,7 +608,7 @@ namespace boost { namespace parser {
                     type_wrapper<decltype(value)>{},
                     Spec.radix,
                     numeric::parse_int<false, Spec.radix, 1, -1>(f, l, value));
-                return {id, (long long)value};
+                return {id, underlying_position, (long long)value};
             }
             case token_parsed_type::short_: {
                 short value;
@@ -589,7 +616,7 @@ namespace boost { namespace parser {
                     type_wrapper<decltype(value)>{},
                     Spec.radix,
                     numeric::parse_int<true, Spec.radix, 1, -1>(f, l, value));
-                return {id, (long long)value};
+                return {id, underlying_position, (long long)value};
             }
             case token_parsed_type::unsigned_short: {
                 unsigned short value;
@@ -597,7 +624,7 @@ namespace boost { namespace parser {
                     type_wrapper<decltype(value)>{},
                     Spec.radix,
                     numeric::parse_int<false, Spec.radix, 1, -1>(f, l, value));
-                return {id, (long long)value};
+                return {id, underlying_position, (long long)value};
             }
             case token_parsed_type::int_: {
                 int value;
@@ -605,7 +632,7 @@ namespace boost { namespace parser {
                     type_wrapper<decltype(value)>{},
                     Spec.radix,
                     numeric::parse_int<true, Spec.radix, 1, -1>(f, l, value));
-                return {id, (long long)value};
+                return {id, underlying_position, (long long)value};
             }
             case token_parsed_type::unsigned_int: {
                 unsigned int value;
@@ -613,7 +640,7 @@ namespace boost { namespace parser {
                     type_wrapper<decltype(value)>{},
                     Spec.radix,
                     numeric::parse_int<false, Spec.radix, 1, -1>(f, l, value));
-                return {id, (long long)value};
+                return {id, underlying_position, (long long)value};
             }
             case token_parsed_type::long_: {
                 long value;
@@ -621,7 +648,7 @@ namespace boost { namespace parser {
                     type_wrapper<decltype(value)>{},
                     Spec.radix,
                     numeric::parse_int<true, Spec.radix, 1, -1>(f, l, value));
-                return {id, (long long)value};
+                return {id, underlying_position, (long long)value};
             }
             case token_parsed_type::unsigned_long: {
                 unsigned long value;
@@ -629,7 +656,7 @@ namespace boost { namespace parser {
                     type_wrapper<decltype(value)>{},
                     Spec.radix,
                     numeric::parse_int<false, Spec.radix, 1, -1>(f, l, value));
-                return {id, (long long)value};
+                return {id, underlying_position, (long long)value};
             }
             case token_parsed_type::long_long: {
                 long long value;
@@ -637,7 +664,7 @@ namespace boost { namespace parser {
                     type_wrapper<decltype(value)>{},
                     Spec.radix,
                     numeric::parse_int<true, Spec.radix, 1, -1>(f, l, value));
-                return {id, (long long)value};
+                return {id, underlying_position, (long long)value};
             }
             case token_parsed_type::unsigned_long_long: {
                 unsigned long long value;
@@ -645,7 +672,7 @@ namespace boost { namespace parser {
                     type_wrapper<decltype(value)>{},
                     Spec.radix,
                     numeric::parse_int<false, Spec.radix, 1, -1>(f, l, value));
-                return {id, (long long)value};
+                return {id, underlying_position, (long long)value};
             }
             case token_parsed_type::wchar_t_: {
                 unsigned int value;
@@ -653,7 +680,7 @@ namespace boost { namespace parser {
                     type_wrapper<wchar_t>{},
                     Spec.radix,
                     numeric::parse_int<false, Spec.radix, 1, -1>(f, l, value));
-                return {id, (long long)value};
+                return {id, underlying_position, (long long)value};
             }
             case token_parsed_type::char8_t_: {
                 unsigned int value;
@@ -661,7 +688,7 @@ namespace boost { namespace parser {
                     type_wrapper<char8_t>{},
                     Spec.radix,
                     numeric::parse_int<false, Spec.radix, 1, -1>(f, l, value));
-                return {id, (long long)value};
+                return {id, underlying_position, (long long)value};
             }
             case token_parsed_type::char16_t_: {
                 unsigned int value;
@@ -669,7 +696,7 @@ namespace boost { namespace parser {
                     type_wrapper<char16_t>{},
                     Spec.radix,
                     numeric::parse_int<false, Spec.radix, 1, -1>(f, l, value));
-                return {id, (long long)value};
+                return {id, underlying_position, (long long)value};
             }
             case token_parsed_type::char32_t_: {
                 unsigned int value;
@@ -677,7 +704,7 @@ namespace boost { namespace parser {
                     type_wrapper<char32_t>{},
                     Spec.radix,
                     numeric::parse_int<false, Spec.radix, 1, -1>(f, l, value));
-                return {id, (long long)value};
+                return {id, underlying_position, (long long)value};
             }
 
             case token_parsed_type::float_: {
@@ -686,7 +713,7 @@ namespace boost { namespace parser {
                     type_wrapper<decltype(value)>{},
                     0,
                     numeric::parse_real(f, l, value));
-                return {id, (long double)value};
+                return {id, underlying_position, (long double)value};
             }
             case token_parsed_type::double_: {
                 double value;
@@ -694,7 +721,7 @@ namespace boost { namespace parser {
                     type_wrapper<decltype(value)>{},
                     0,
                     numeric::parse_real(f, l, value));
-                return {id, (long double)value};
+                return {id, underlying_position, (long double)value};
             }
             case token_parsed_type::long_double: {
                 long double value;
@@ -702,14 +729,14 @@ namespace boost { namespace parser {
                     type_wrapper<decltype(value)>{},
                     0,
                     numeric::parse_real(f, l, value));
-                return {id, value};
+                return {id, underlying_position, value};
             }
             case token_parsed_type::ws:
             default:
 #if defined(__cpp_lib_unreachable)
                 std::unreachable();
 #endif
-                return {id, 0ll};
+                return {id, underlying_position, 0ll};
             }
         }
     }
@@ -721,7 +748,7 @@ namespace boost { namespace parser {
 
     /** TODO */
     template<
-        std::ranges::forward_range V,
+        std::ranges::contiguous_range V,
         typename Lexer,
         typename TokenCache = std::vector<typename Lexer::token_type>>
         requires std::ranges::view<V>
@@ -754,7 +781,7 @@ namespace boost { namespace parser {
             lexer_(std::move(lexer)),
             tokens_(owned_cache_)
         {
-            latest_ = base_.begin();
+            latest_ = std::ranges::begin(base_);
         }
         constexpr explicit tokens_view(
             V base,
@@ -764,7 +791,7 @@ namespace boost { namespace parser {
             lexer_(std::move(lexer)),
             tokens_(external_cache.get())
         {
-            latest_ = base_.begin();
+            latest_ = std::ranges::begin(base_);
         }
 
         constexpr V base() const &
@@ -830,7 +857,7 @@ namespace boost { namespace parser {
                 parent_->tokens_.reserve(new_size);
 
                 auto r = std::ranges::subrange(
-                    parent_->latest_, parent_->base_.end());
+                    parent_->latest_, std::ranges::end(parent_->base_));
                 auto ctre_range = Lexer::regex_range(r);
                 auto ctre_first = ctre_range.begin();
                 auto const ctre_last = ctre_range.end();
@@ -864,7 +891,11 @@ namespace boost { namespace parser {
                                 constexpr detail::parse_spec parse_spec =
                                     parent_->lexer_.specs()[i.value];
                                 parent_->tokens_.push_back(
-                                    detail::make_token<parse_spec>(id, sv));
+                                    detail::make_token<parse_spec>(
+                                        id,
+                                        sv,
+                                        ctre_first.current -
+                                            ctre_first.orig_begin));
                                 return sv;
                             } else {
                                 return state;
@@ -902,6 +933,9 @@ namespace boost { namespace parser {
                 BOOST_PARSER_DEBUG_ASSERT(parent_ == rhs.parent_);
                 return token_offset_ == rhs.token_offset_;
             }
+
+            auto range_begin() const { std::ranges::begin(parent_->base_); }
+            auto range_end() const { std::ranges::end(parent_->base_); }
         };
 
         template<bool Const>
@@ -936,7 +970,7 @@ namespace boost { namespace parser {
                 if (x.token_offset_ != x.parent_->tokens_.size())
                     return false;
                 auto r = std::ranges::subrange(
-                    x.parent_->latest_, x.parent_->base_.end());
+                    x.parent_->latest_, std::ranges::end(x.parent_->base_));
                 auto ctre_range = Lexer::regex_range(r);
                 return !ctre_range.begin().current_match;
             }

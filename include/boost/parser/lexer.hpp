@@ -17,7 +17,6 @@
 #include <boost/parser/concepts.hpp>
 #include <boost/parser/detail/debug_assert.hpp>
 #include <boost/parser/detail/hl.hpp>
-#include <boost/parser/detail/make_input_subrange.hpp> // TODO: Now moot.
 #include <boost/parser/detail/numeric.hpp>
 
 #include <ctre-unicode.hpp>

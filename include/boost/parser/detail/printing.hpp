@@ -355,6 +355,13 @@ namespace boost { namespace parser { namespace detail {
         std::ostream & os,
         int components = 0);
 
+    template<typename Context, typename TokenSpec, typename Expected>
+    void print_parser(
+        Context const & context,
+        token_parser<TokenSpec, Expected> const & parser,
+        std::ostream & os,
+        int components = 0);
+
     enum { trace_indent_factor = 2 };
 
     inline void trace_indent(std::ostream & os, int indent)

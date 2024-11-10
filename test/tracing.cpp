@@ -26,6 +26,17 @@ struct globals_t
 
 globals_t const globals;
 
+enum class unprintable_tokens { foo, bar };
+enum class printable_tokens { foo, bar };
+std::ostream & operator<<(std::ostream & os, printable_tokens tok)
+{
+    switch (tok) {
+    case printable_tokens::foo: os << "foo"; break;
+    case printable_tokens::bar: os << "bar"; break;
+    }
+    return os;
+}
+
 auto i = [](auto & ctx) { return _globals(ctx).i; };
 auto i2 = [](auto & ctx) { return _globals(ctx).i2; };
 auto u = [](auto & ctx) { return _globals(ctx).u; };

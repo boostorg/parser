@@ -942,6 +942,41 @@ namespace boost { namespace parser { namespace detail {
             context, parser.or_parser_, os, components);
     }
 
+#if defined(BOOST_PARSER_TOKEN_PARSER_HPP)
+
+    // TODO: Needs testing.
+    template<typename Context, typename TokenSpec, typename Expected>
+    void print_parser(
+        Context const & context,
+        token_parser<TokenSpec, Expected> const & parser,
+        std::ostream & os,
+        int components)
+    {
+        os << "tok<";
+        if constexpr (requires { os << TokenSpec::id; }) {
+            os << TokenSpec::id;
+        } else {
+            os << (int)TokenSpec::id;
+        }
+        os << '>';
+        if constexpr (requires { parser.expected_.value_; }) {
+            os << '(';
+            if constexpr (std::ranges::range<
+                              decltype(parser.expected_.value_)>) {
+                os << '"';
+                for (auto c : parser.expected_.value_ | text::as_utf8) {
+                    detail::print_char(os, c);
+                }
+                os << '"';
+            } else {
+                detail::print(os, parser.expected_.value_);
+            }
+            os << ')';
+        }
+    }
+
+#endif
+
 }}}
 
 #endif

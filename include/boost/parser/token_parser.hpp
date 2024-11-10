@@ -69,7 +69,6 @@ namespace boost { namespace parser {
 
 #ifndef BOOST_PARSER_DOXYGEN
 
-    // TODO: Needs a printer.
     // TODO: Constrain the AttributeType to something that detail::token_as()
     // can handle.
     template<typename TokenSpec, typename Expected>

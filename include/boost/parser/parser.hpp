@@ -2483,57 +2483,7 @@ namespace boost { namespace parser {
 
         template<
             bool Debug,
-            typename Iter,
-            typename Sentinel,
-            typename Parser,
-            typename SkipParser,
             typename Attr,
-            typename ErrorHandler>
-        bool skip_parse_impl(
-            Iter & first,
-            Sentinel last,
-            Parser const & parser,
-            SkipParser const & skip,
-            ErrorHandler const & error_handler,
-            Attr & attr)
-        {
-            auto const initial_first = first;
-            bool success = true;
-            int trace_indent = 0;
-            detail::symbol_table_tries_t symbol_table_tries;
-            pending_symbol_table_operations_t pending_symbol_table_operations;
-            scoped_apply_pending_symbol_table_operations apply_pending(
-                pending_symbol_table_operations);
-            auto context = detail::make_context<Debug, false>(
-                first,
-                last,
-                success,
-                trace_indent,
-                error_handler,
-                parser.globals_,
-                symbol_table_tries,
-                pending_symbol_table_operations);
-            auto const flags =
-                Debug ? detail::enable_trace(detail::default_flags())
-                      : detail::default_flags();
-            detail::skip(first, last, skip, flags);
-            try {
-                parser(first, last, context, skip, flags, success, attr);
-                detail::skip(first, last, skip, flags);
-                if (Debug)
-                    detail::final_trace(context, flags, attr);
-                return success;
-            } catch (parse_error<Iter> const & e) {
-                if (detail::handle_parse_exception(
-                        error_handler, initial_first, last, e)) {
-                    throw;
-                }
-                return false;
-            }
-        }
-
-        template<
-            bool Debug,
             typename Iter,
             typename Sentinel,
             typename Parser,
@@ -2544,8 +2494,11 @@ namespace boost { namespace parser {
             Sentinel last,
             Parser const & parser,
             SkipParser const & skip,
-            ErrorHandler const & error_handler)
+            ErrorHandler const & error_handler,
+            Attr attr)
         {
+            constexpr bool have_skipper =
+                !std::is_same_v<SkipParser, detail::null_parser>;
             auto const initial_first = first;
             bool success = true;
             int trace_indent = 0;
@@ -2562,27 +2515,40 @@ namespace boost { namespace parser {
                 parser.globals_,
                 symbol_table_tries,
                 pending_symbol_table_operations);
-            auto const flags =
-                Debug ? detail::enable_trace(detail::default_flags())
-                      : detail::default_flags();
-            detail::skip(first, last, skip, flags);
+            auto const flags = detail::initial_flags<have_skipper, Debug>();
+            if constexpr (have_skipper)
+                detail::skip(first, last, skip, flags);
             using attr_t = typename detail::attribute_impl<
                 BOOST_PARSER_SUBRANGE<std::remove_const_t<Iter>, Sentinel>,
                 Parser>::type;
             try {
-                attr_t attr_ =
-                    parser(first, last, context, skip, flags, success);
-                detail::skip(first, last, skip, flags);
-                if (Debug)
-                    detail::final_trace(context, flags, nope{});
-                return detail::make_parse_result(attr_, success);
+                if constexpr (std::is_reference_v<Attr>) {
+                    parser(first, last, context, skip, flags, success, attr);
+                    if constexpr (have_skipper)
+                        detail::skip(first, last, skip, flags);
+                    if (Debug)
+                        detail::final_trace(context, flags, attr);
+                    return success;
+                } else {
+                    attr_t attr_ =
+                        parser(first, last, context, skip, flags, success);
+                    if constexpr (have_skipper)
+                        detail::skip(first, last, skip, flags);
+                    if (Debug)
+                        detail::final_trace(context, flags, nope{});
+                    return detail::make_parse_result(attr_, success);
+                }
             } catch (parse_error<Iter> const & e) {
                 if (detail::handle_parse_exception(
                         error_handler, initial_first, last, e)) {
                     throw;
                 }
-                attr_t attr_{};
-                return detail::make_parse_result(attr_, false);
+                if constexpr (std::is_reference_v<Attr>) {
+                    return false;
+                } else {
+                    attr_t attr_{};
+                    return detail::make_parse_result(attr_, false);
+                }
             }
         }
 
@@ -8884,7 +8850,7 @@ namespace boost { namespace parser {
                 "fill in attr above, using the attribute generated by parser. "
                 "However, parser does not generate an attribute.");
             if (trace_mode == trace::on) {
-                return reset = detail::skip_parse_impl<true>(
+                return reset = detail::skip_parse_impl<true, Attr &>(
                            first,
                            last,
                            parser,
@@ -8892,7 +8858,7 @@ namespace boost { namespace parser {
                            parser.error_handler_,
                            attr);
             } else {
-                return reset = detail::skip_parse_impl<false>(
+                return reset = detail::skip_parse_impl<false, Attr &>(
                            first,
                            last,
                            parser,
@@ -8911,10 +8877,10 @@ namespace boost { namespace parser {
                 "fill in attr above, using the attribute generated by parser. "
                 "However, parser does not generate an attribute.");
             if (trace_mode == trace::on) {
-                return reset = detail::skip_parse_impl<true>(
+                return reset = detail::skip_parse_impl<true, Attr &>(
                            f, l, parser, skip, parser.error_handler_, attr);
             } else {
-                return reset = detail::skip_parse_impl<false>(
+                return reset = detail::skip_parse_impl<false, Attr &>(
                            f, l, parser, skip, parser.error_handler_, attr);
             }
         }
@@ -9014,10 +8980,20 @@ namespace boost { namespace parser {
         if constexpr (!detail::is_char8_iter_v<I>) {
             if (trace_mode == trace::on) {
                 return detail::skip_parse_impl<true>(
-                    first, last, parser, skip, parser.error_handler_);
+                    first,
+                    last,
+                    parser,
+                    skip,
+                    parser.error_handler_,
+                    detail::nope{});
             } else {
                 return detail::skip_parse_impl<false>(
-                    first, last, parser, skip, parser.error_handler_);
+                    first,
+                    last,
+                    parser,
+                    skip,
+                    parser.error_handler_,
+                    detail::nope{});
             }
         } else {
             auto r = detail::make_input_subrange(first, last);
@@ -9026,10 +9002,10 @@ namespace boost { namespace parser {
             auto _ = detail::scoped_base_assign(first, f);
             if (trace_mode == trace::on) {
                 return detail::skip_parse_impl<true>(
-                    f, l, parser, skip, parser.error_handler_);
+                    f, l, parser, skip, parser.error_handler_, detail::nope{});
             } else {
                 return detail::skip_parse_impl<false>(
-                    f, l, parser, skip, parser.error_handler_);
+                    f, l, parser, skip, parser.error_handler_, detail::nope{});
             }
         }
     }

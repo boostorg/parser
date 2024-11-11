@@ -65,6 +65,13 @@ int main()
         (void)parser;
     }
 
+    // Minimal tests of using a lexer and parser together.
+    {
+        auto parser = identifier("foo") >> '=' >> true_false >> ';';
+        auto r = "some input" | bp::to_tokens(adobe_lexer);
+        // TODO auto result = bp::parse(r, parser);
+    }
+
     // TODO    {
     // TODO        std::string str = "a";
     // TODO        BOOST_TEST(parse(str, char_));

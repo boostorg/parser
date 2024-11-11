@@ -12,6 +12,8 @@
 
 #if defined(BOOST_PARSER_DOXYGEN) || BOOST_PARSER_USE_CONCEPTS
 
+#include <boost/parser/lexer_fwd.hpp>
+
 #include <ranges>
 
 
@@ -33,8 +35,9 @@ namespace boost { namespace parser {
     //[ parsable_range_like_concept
     //[ parsable_range_concept
     template<typename T>
-    concept parsable_range = std::ranges::forward_range<T> &&
-        code_unit<std::ranges::range_value_t<T>>;
+    concept parsable_range = (std::ranges::forward_range<T> &&
+                              code_unit<std::ranges::range_value_t<T>>) ||
+                             detail::is_tokens_view_v<T>;
     //]
 
     template<typename T>

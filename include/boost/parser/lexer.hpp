@@ -17,6 +17,7 @@
 #error "lexer.hpp must be included before parser.hpp."
 #endif
 
+#include <boost/parser/lexer_fwd.hpp>
 #include <boost/parser/parser_fwd.hpp>
 #include <boost/parser/concepts.hpp>
 #include <boost/parser/detail/debug_assert.hpp>
@@ -750,7 +751,7 @@ namespace boost { namespace parser {
     template<
         std::ranges::contiguous_range V,
         typename Lexer,
-        typename TokenCache = std::vector<typename Lexer::token_type>>
+        typename TokenCache>
         requires std::ranges::view<V>
     struct tokens_view
         : public std::ranges::view_interface<tokens_view<V, Lexer, TokenCache>>

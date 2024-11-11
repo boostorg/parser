@@ -2339,9 +2339,10 @@ namespace boost { namespace parser {
         {
             if constexpr (is_token_iter_v<Iter>) {
                 auto const underlying_first = e.iter.range_begin();
-                auto const underlying_curr = e.iter->underlying_position();
                 auto const underlying_last = e.iter.range_end();
-                parse_error underlying_error{underlying_curr, e.message()};
+                parse_error underlying_error(
+                    underlying_first + (*e.iter).underlying_position(),
+                    e.message);
                 return error_handler(
                            underlying_first,
                            underlying_last,
@@ -6494,11 +6495,21 @@ namespace boost { namespace parser {
         constexpr char_parser() {}
         constexpr char_parser(Expected expected) : expected_(expected) {}
 
-        template<typename T>
-        using attribute_type = std::conditional_t<
-            std::is_same_v<AttributeType, void>,
-            std::decay_t<T>,
-            AttributeType>;
+        template<typename Iter>
+        static constexpr auto attribute_type_()
+        {
+            if constexpr (!std::is_same_v<AttributeType, void>) {
+                return detail::wrapper<AttributeType>{};
+            } else if constexpr (is_token_v<detail::iter_value_t<Iter>>) {
+                return detail::wrapper<
+                    typename detail::iter_value_t<Iter>::char_type>{};
+            } else {
+                return detail::wrapper<detail::iter_value_t<Iter>>{};
+            }
+        }
+
+        template<typename Iter>
+        using attribute_type = typename decltype(attribute_type_<Iter>())::type;
 
         template<
             typename Iter,
@@ -6511,9 +6522,9 @@ namespace boost { namespace parser {
             Context const & context,
             SkipParser const & skip,
             detail::flags flags,
-            bool & success) const -> attribute_type<decltype(*first)>
+            bool & success) const -> attribute_type<Iter>
         {
-            attribute_type<decltype(*first)> retval{};
+            attribute_type<Iter> retval{};
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -6541,29 +6552,30 @@ namespace boost { namespace parser {
                 return;
             }
 
-            using attribute_t = attribute_type<decltype(*first)>;
-            attribute_t x = 0;
-
-            if constexpr (is_token_v<std::decay_t<decltype(*first)>>) {
-                if (first->id() != character_id || !first->has_long_long()) {
+            if constexpr (is_token_v<detail::iter_value_t<Iter>>) {
+                using value_type = detail::iter_value_t<Iter>;
+                using attribute_t = typename value_type::char_type;
+                if ((*first).id() != character_id ||
+                    !(*first).has_long_long()) {
                     success = false;
                     return;
                 }
-                char32_t c = (char32_t)first->has_long_long();
+                char32_t c = (char32_t)(*first).get_long_long();
                 if (detail::unequal(context, c, expected_)) {
                     success = false;
                     return;
                 }
-                x = (attribute_t)c;
+                detail::assign(retval, (attribute_t)c);
             } else {
+                using attribute_t = attribute_type<Iter>;
+                attribute_t x = 0;
                 x = *first;
                 if (detail::unequal(context, x, expected_)) {
                     success = false;
                     return;
                 }
+                detail::assign(retval, x);
             }
-
-            detail::assign(retval, x);
             ++first;
         }
 

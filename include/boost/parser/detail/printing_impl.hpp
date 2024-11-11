@@ -977,6 +977,60 @@ namespace boost { namespace parser { namespace detail {
 
 #endif
 
+    template<
+        bool DoTrace,
+        typename Iter,
+        typename Sentinel,
+        typename Context,
+        typename Attribute>
+    scoped_trace_t<DoTrace, Iter, Sentinel, Context, Attribute>::scoped_trace_t(
+        std::ostream & os,
+        Iter & first,
+        Sentinel last,
+        Context const & context,
+        flags f,
+        Attribute const & attr,
+        std::string name) :
+        os_(os),
+        initial_first_(first),
+        first_(first),
+        last_(last),
+        context_(context),
+        flags_(f),
+        attr_(attr),
+        name_(std::move(name))
+    {
+        if (!detail::do_trace(flags_))
+            return;
+        if constexpr (is_token_iter_v<Iter>) {
+            auto const initial_first = first_.range_begin();
+            auto const first = initial_first + (*first_).underlying_position();
+            auto const last = first_.range_end();
+            detail::trace_prefix(os, first, last, context_, name_);
+        } else {
+            detail::trace_prefix(os, first_, last_, context_, name_);
+        }
+    }
+
+    template<
+        bool DoTrace,
+        typename Iter,
+        typename Sentinel,
+        typename Context,
+        typename Attribute>
+    scoped_trace_t<DoTrace, Iter, Sentinel, Context, Attribute>::
+        ~scoped_trace_t()
+    {
+        if constexpr (is_token_iter_v<Iter>) {
+            auto const initial_first = first_.range_begin();
+            auto const first = initial_first + (*first_).underlying_position();
+            auto const last = first_.range_end();
+            impl(initial_first, first, last);
+        } else {
+            impl(initial_first_, first_, last_);
+        }
+    }
+
 }}}
 
 #endif

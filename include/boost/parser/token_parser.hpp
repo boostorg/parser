@@ -23,11 +23,7 @@ namespace boost { namespace parser {
         template<typename AttributeType, typename CharType>
         std::optional<AttributeType> token_as(token<CharType> tok)
         {
-            if constexpr (std::same_as<AttributeType, string_view_tag>) {
-                if (tok.has_string_view())
-                    return tok.get_string_view();
-                return std::nullopt;
-            } else if constexpr (std::is_floating_point_v<AttributeType>) {
+            if constexpr (std::is_floating_point_v<AttributeType>) {
                 if (tok.has_long_double())
                     return tok.get_long_double();
                 return std::nullopt;
@@ -36,11 +32,9 @@ namespace boost { namespace parser {
                     return AttributeType(tok.get_long_long());
                 return std::nullopt;
             } else {
-                static_assert(
-                    !std::same_as<CharType, CharType>,
-                    "The only attribute types that can be pulled out of a "
-                    "token are no-attribute, floating-point values, or "
-                    "integral values (including charater types).");
+                if (tok.has_string_view())
+                    return tok.get_string_view();
+                return std::nullopt;
             }
         }
 
@@ -76,9 +70,11 @@ namespace boost { namespace parser {
     {
         using token_spec = TokenSpec;
 
+        template<typename Iter>
         using attribute_type = std::conditional_t<
-            std::is_same_v<typename token_spec::value_type, none>,
-            string_view_tag,
+            std::same_as<typename token_spec::value_type, string_view_tag>,
+            std::basic_string_view<
+                typename detail::iter_value_t<Iter>::char_type>,
             typename token_spec::value_type>;
 
         constexpr token_parser() = default;
@@ -95,9 +91,9 @@ namespace boost { namespace parser {
             Context const & context,
             SkipParser const & skip,
             detail::flags flags,
-            bool & success) const -> attribute_type
+            bool & success) const -> attribute_type<Iter>
         {
-            attribute_type retval;
+            attribute_type<Iter> retval;
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -132,16 +128,16 @@ namespace boost { namespace parser {
             }
 
             value_type const x = *first;
-            if (x.id() != token_spec::id) {
+            if (x.id() != (int)token_spec::id) {
                 success = false;
                 return;
             }
 
             constexpr bool use_expected = !std::same_as<Expected, detail::nope>;
             if (use_expected || detail::gen_attrs(flags)) {
-                auto opt_attr = detail::token_as<attribute_type>(x);
+                auto opt_attr = detail::token_as<attribute_type<Iter>>(x);
                 if constexpr (use_expected) {
-                    if (!opt_attr || !expected_.matches_value(*opt_attr)) {
+                    if (!opt_attr || !expected_.matches(*opt_attr)) {
                         success = false;
                         return;
                     }
@@ -154,17 +150,18 @@ namespace boost { namespace parser {
         }
 
         /** TODO */
-        constexpr auto operator()(attribute_type value) const noexcept
+        template<typename T>
+            requires std::is_integral_v<T> || std::is_floating_point_v<T>
+        constexpr auto operator()(T value) const noexcept
         {
             BOOST_PARSER_ASSERT(
                 (detail::is_nope_v<Expected> &&
                  "If you're seeing this, you tried to chain calls on one of "
                  "your token_spec's, like 'my_token_spec(id1)(id2)'.  Quit "
                  "it!'"));
-            return parser_interface(token_parser<
-                                    TokenSpec,
-                                    detail::token_with_value<attribute_type>>(
-                detail::token_with_value(std::move(value))));
+            return parser_interface(
+                token_parser<TokenSpec, detail::token_with_value<T>>(
+                    detail::token_with_value(std::move(value))));
         }
 
         template<parsable_range_like R>

@@ -6,6 +6,7 @@
  *   http://www.boost.org/LICENSE_1_0.txt)
  */
 
+#define BOOST_PARSER_TESTING
 #include <boost/parser/lexer.hpp>
 #include <boost/parser/parser.hpp>
 
@@ -69,14 +70,17 @@ int main()
     {
         auto parser = identifier("foo") >> '=' >> true_false >> ';';
         auto r = "some input" | bp::to_tokens(adobe_lexer);
-        // TODO auto result = bp::parse(r, parser);
+        auto result = bp::parse(r, parser);
+        BOOST_TEST(!result);
     }
-
-    // TODO    {
-    // TODO        std::string str = "a";
-    // TODO        BOOST_TEST(parse(str, char_));
-    // TODO        BOOST_TEST(!parse(str, char_('b')));
-    // TODO    }
+    {
+        auto parser = identifier >> '=' >> true_false >> ';';
+        auto r = "foo = false;" | bp::to_tokens(adobe_lexer);
+        auto result = bp::parse(r, parser);
+        BOOST_TEST(result);
+        BOOST_TEST(std::get<0>(*result) == "foo");
+        BOOST_TEST(std::get<1>(*result) == false);
+    }
 
     return boost::report_errors();
 }

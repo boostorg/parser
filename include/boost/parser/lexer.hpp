@@ -895,8 +895,9 @@ namespace boost { namespace parser {
                                     detail::make_token<parse_spec>(
                                         id,
                                         sv,
-                                        ctre_first.current -
-                                            ctre_first.orig_begin));
+                                        (ctre_first.current -
+                                         ctre_first.orig_begin) -
+                                            sv.size()));
                                 return sv;
                             } else {
                                 return state;

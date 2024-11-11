@@ -8619,6 +8619,54 @@ namespace boost { namespace parser {
                 }
             }
         }
+
+        template<
+            typename I,
+            typename S,
+            typename Parser,
+            typename SkipParser,
+            typename Callbacks>
+        auto callback_prefix_parse_impl(
+            I & first,
+            S last,
+            Parser const & parser,
+            SkipParser const & skip,
+            Callbacks const & callbacks,
+            trace trace_mode)
+        {
+            // TODO: shouldn't this be detail::is_char_iter_v<I> instead?
+            if constexpr (!detail::is_char8_iter_v<I>) {
+                if (trace_mode == trace::on) {
+                    return detail::callback_parse_impl<true>(
+                        first,
+                        last,
+                        parser,
+                        skip,
+                        parser.error_handler_,
+                        callbacks);
+                } else {
+                    return detail::callback_parse_impl<false>(
+                        first,
+                        last,
+                        parser,
+                        skip,
+                        parser.error_handler_,
+                        callbacks);
+                }
+            } else {
+                auto r = detail::make_input_subrange(first, last);
+                auto f = r.begin();
+                auto const l = r.end();
+                auto _ = detail::scoped_base_assign(first, f);
+                if (trace_mode == trace::on) {
+                    return detail::callback_parse_impl<true>(
+                        f, l, parser, skip, parser.error_handler_, callbacks);
+                } else {
+                    return detail::callback_parse_impl<false>(
+                        f, l, parser, skip, parser.error_handler_, callbacks);
+                }
+            }
+        }
     }
 
     // Parse API.
@@ -9056,47 +9104,8 @@ namespace boost { namespace parser {
         Callbacks const & callbacks,
         trace trace_mode = trace::off)
     {
-        if constexpr (!detail::is_char8_iter_v<I>) {
-            if (trace_mode == trace::on) {
-                return detail::callback_parse_impl<true>(
-                    first,
-                    last,
-                    parser,
-                    detail::null_parser{},
-                    parser.error_handler_,
-                    callbacks);
-            } else {
-                return detail::callback_parse_impl<false>(
-                    first,
-                    last,
-                    parser,
-                    detail::null_parser{},
-                    parser.error_handler_,
-                    callbacks);
-            }
-        } else {
-            auto r = detail::make_input_subrange(first, last);
-            auto f = r.begin();
-            auto const l = r.end();
-            auto _ = detail::scoped_base_assign(first, f);
-            if (trace_mode == trace::on) {
-                return detail::callback_parse_impl<true>(
-                    f,
-                    l,
-                    parser,
-                    detail::null_parser{},
-                    parser.error_handler_,
-                    callbacks);
-            } else {
-                return detail::callback_parse_impl<false>(
-                    f,
-                    l,
-                    parser,
-                    detail::null_parser{},
-                    parser.error_handler_,
-                    callbacks);
-            }
-        }
+        return detail::callback_prefix_parse_impl(
+            first, last, parser, detail::null_parser{}, callbacks, trace_mode);
     }
 
     /** Parses `r` using `parser`, and returns whether the parse was
@@ -9153,7 +9162,13 @@ namespace boost { namespace parser {
         return detail::if_full_parse(
             first,
             last,
-            parser::callback_prefix_parse(first, last, parser, callbacks));
+            detail::callback_prefix_parse_impl(
+                first,
+                last,
+                parser,
+                detail::null_parser{},
+                callbacks,
+                trace_mode));
     }
 
     /** Parses `[first, last)` using `parser`, skipping all input recognized
@@ -9197,37 +9212,8 @@ namespace boost { namespace parser {
         Callbacks const & callbacks,
         trace trace_mode = trace::off)
     {
-        if constexpr (!detail::is_char8_iter_v<I>) {
-            if (trace_mode == trace::on) {
-                return detail::callback_parse_impl<true>(
-                    first,
-                    last,
-                    parser,
-                    skip,
-                    parser.error_handler_,
-                    callbacks);
-            } else {
-                return detail::callback_parse_impl<false>(
-                    first,
-                    last,
-                    parser,
-                    skip,
-                    parser.error_handler_,
-                    callbacks);
-            }
-        } else {
-            auto r = detail::make_input_subrange(first, last);
-            auto f = r.begin();
-            auto const l = r.end();
-            auto _ = detail::scoped_base_assign(first, f);
-            if (trace_mode == trace::on) {
-                return detail::callback_parse_impl<true>(
-                    f, l, parser, skip, parser.error_handler_, callbacks);
-            } else {
-                return detail::callback_parse_impl<false>(
-                    f, l, parser, skip, parser.error_handler_, callbacks);
-            }
-        }
+        return detail::callback_prefix_parse_impl(
+            first, last, parser, skip, callbacks, trace_mode);
     }
 
     /** Parses `r` using `parser`, skipping all input recognized by `skip`
@@ -9288,7 +9274,7 @@ namespace boost { namespace parser {
         return detail::if_full_parse(
             first,
             last,
-            parser::callback_prefix_parse(
+            detail::callback_prefix_parse_impl(
                 first, last, parser, skip, callbacks, trace_mode));
     }
 

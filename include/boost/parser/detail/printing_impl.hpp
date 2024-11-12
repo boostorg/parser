@@ -944,7 +944,6 @@ namespace boost { namespace parser { namespace detail {
 
 #if defined(BOOST_PARSER_TOKEN_PARSER_HPP)
 
-    // TODO: Needs testing.
     template<typename Context, typename TokenSpec, typename Expected>
     void print_parser(
         Context const & context,
@@ -952,26 +951,38 @@ namespace boost { namespace parser { namespace detail {
         std::ostream & os,
         int components)
     {
-        os << "tok<";
-        if constexpr (requires { os << TokenSpec::id; }) {
-            os << TokenSpec::id;
-        } else {
-            os << (int)TokenSpec::id;
-        }
-        os << '>';
-        if constexpr (requires { parser.expected_.value_; }) {
-            os << '(';
-            if constexpr (std::ranges::range<
-                              decltype(parser.expected_.value_)>) {
-                os << '"';
-                for (auto c : parser.expected_.value_ | text::as_utf8) {
-                    detail::print_char(os, c);
+        constexpr bool do_print_value = requires { parser.expected_.value_; };
+
+        auto print_value = [&] {
+            if constexpr (do_print_value) {
+                if constexpr (std::ranges::range<
+                                  decltype(parser.expected_.value_)>) {
+                    os << '"';
+                    for (auto c : parser.expected_.value_ | text::as_utf8) {
+                        detail::print_char(os, c);
+                    }
+                    os << '"';
+                } else {
+                    detail::print(os, parser.expected_.value_);
                 }
-                os << '"';
-            } else {
-                detail::print(os, parser.expected_.value_);
             }
-            os << ')';
+        };
+
+        if constexpr (requires {
+                          os << TokenSpec::id;
+                      } && std::is_enum_v<typename TokenSpec::id_type>) {
+            if constexpr (do_print_value) {
+                print_value();
+            } else {
+                os << TokenSpec::id;
+            }
+        } else {
+            os << "tok<" << (int)TokenSpec::id << '>';
+            if constexpr (do_print_value) {
+                os << '(';
+                print_value();
+                os << ')';
+            }
         }
     }
 

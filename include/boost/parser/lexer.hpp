@@ -808,6 +808,14 @@ namespace boost { namespace parser {
             tokens_.erase(tokens_.begin(), tokens_.begin() + erasure);
             base_token_offset_ += erasure;
         }
+        // TODO: Plumb a pointer to this view into the parse context, and call
+        // clear_tokens_before from seq_parser after each expectation point.
+
+        // TODO: Document that the token cache will grow without bound if the
+        // parser contains no sequence points.
+
+        // TODO: Document the point above in the doc section that talks about
+        // the importance of sequence points.
 
         V base_ = V();
         Lexer lexer_;

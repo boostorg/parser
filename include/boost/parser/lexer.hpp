@@ -52,7 +52,7 @@ std::ostream & operator<<(std::ostream & os, std::array<T, N> const & arr)
 namespace boost { namespace parser {
 
     namespace detail {
-        enum class token_kind { no_value, string_view, long_long, long_double };
+        enum class token_kind { string_view, long_long, long_double };
 
         enum class token_parsed_type {
             ws,
@@ -226,12 +226,7 @@ namespace boost { namespace parser {
 
         constexpr bool operator==(token const & rhs) const
         {
-            if (id_ != rhs.id_ || (kind_ != rhs.kind_ &&
-                                   rhs.kind_ != detail::token_kind::no_value)) {
-                return false;
-            }
             switch (rhs.kind_) {
-            case detail::token_kind::no_value: return true;
             case detail::token_kind::string_view:
                 return get_string_view() == rhs.get_string_view();
             case detail::token_kind::long_long:
@@ -244,12 +239,6 @@ namespace boost { namespace parser {
 #endif
                 return false;
             }
-        }
-
-        constexpr bool operator==(char32_t rhs) const
-        {
-            return id() == character_id && has_long_long() &&
-                   get_long_long() == rhs;
         }
 
     private:

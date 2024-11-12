@@ -74,6 +74,10 @@ int main()
         BOOST_TEST(!result);
     }
     {
+        // TODO: Document the idiom that you should use enumerations for the
+        // ID type, and that the enumeration should be stream-insertable, with
+        // a user-friendly name for each enumerator.  This is to make error
+        // messages better than "expected tok<0> here:".
         auto parser = identifier >> '=' >> true_false >> ';';
         auto r = "foo = false;" | bp::to_tokens(adobe_lexer);
         auto result = bp::parse(r, parser);

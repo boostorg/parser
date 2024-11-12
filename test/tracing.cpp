@@ -6,6 +6,10 @@
  *   http://www.boost.org/LICENSE_1_0.txt)
  */
 
+#include <boost/parser/config.hpp>
+#if BOOST_PARSER_USE_CONCEPTS
+#include <boost/parser/lexer.hpp>
+#endif
 #include <boost/parser/parser.hpp>
 
 
@@ -495,4 +499,64 @@ int main()
 
     PARSE_CHAR32(float_);
     PARSE_CHAR32(double_);
+
+#if BOOST_PARSER_USE_CONCEPTS
+    {
+        std::cout << "\n\n"
+                  << "----------------------------------------\n"
+                  << "| unprintable_foo (token_spec)          |\n"
+                  << "----------------------------------------\n";
+
+        constexpr auto unprintable_foo =
+            token_spec<"\\w\\w\\w", unprintable_tokens::foo>;
+        constexpr auto unprintable_lexer =
+            lexer<char, unprintable_tokens> | unprintable_foo;
+
+        std::cout << "token_spec<\"\\w\\w\\w\", unprintable_tokens::foo>:\n";
+        parse(str | to_tokens(unprintable_lexer), unprintable_foo, trace::on);
+
+        std::cout
+            << "token_spec<\"\\w\\w\\w\", unprintable_tokens::foo>(\"foo\"):\n";
+        parse(
+            str | to_tokens(unprintable_lexer),
+            unprintable_foo("foo"),
+            trace::on);
+    }
+
+    {
+        std::cout << "\n\n"
+                  << "----------------------------------------\n"
+                  << "| printable_foo (token_spec)            |\n"
+                  << "----------------------------------------\n";
+
+        constexpr auto printable_foo =
+            token_spec<"\\w\\w\\w", printable_tokens::foo>;
+        constexpr auto printable_lexer =
+            lexer<char, printable_tokens> | printable_foo;
+
+        std::cout << "token_spec<\"\\w\\w\\w\", printable_tokens::foo>:\n";
+        parse(str | to_tokens(printable_lexer), printable_foo, trace::on);
+
+        std::cout
+            << "token_spec<\"\\w\\w\\w\", printable_tokens::foo>(\"bar\"):\n";
+        parse(
+            str | to_tokens(printable_lexer), printable_foo("bar"), trace::on);
+    }
+
+    {
+        std::cout << "\n\n"
+                  << "----------------------------------------\n"
+                  << "| int_foo (token_spec)                  |\n"
+                  << "----------------------------------------\n";
+
+        constexpr auto int_foo = token_spec<"\\w\\w\\w", 42, int>;
+        constexpr auto int_lexer = lexer<char, int> | int_foo;
+
+        std::cout << "token_spec<\"\\w\\w\\w\", 42, int>:\n";
+        parse(str | to_tokens(int_lexer), int_foo, trace::on);
+
+        std::cout << "token_spec<\"\\w\\w\\w\", 42, int>(13):\n";
+        parse(str | to_tokens(int_lexer), int_foo(13), trace::on);
+    }
+#endif
 }

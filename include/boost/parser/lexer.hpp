@@ -26,9 +26,11 @@
 
 #include <ctre-unicode.hpp>
 
+#include <climits>
 #if defined(BOOST_PARSER_TESTING)
 #include <iostream>
 #endif
+#include <sstream>
 #include <string_view>
 #include <type_traits>
 #include <vector>
@@ -549,19 +551,33 @@ namespace boost { namespace parser {
             using type = T;
         };
 
-        template<parse_spec Spec, typename CharType>
+        template<parse_spec Spec, typename CharType, typename TokenIter>
         token<CharType> make_token(
             int id,
             std::basic_string_view<CharType> ctre_token,
-            BOOST_PARSER_TOKEN_POSITION_TYPE underlying_position)
+            BOOST_PARSER_TOKEN_POSITION_TYPE underlying_position,
+            TokenIter it)
         {
             auto f = ctre_token.data();
             auto const l = f + ctre_token.size();
 
             // radix==0 indicates a real number was parsed.
-            auto report_error = [](auto type, int radix, bool success) {
-                if (!success)
-                    ; // TODO: report error.
+            auto report_error = [it](auto type, int radix, bool success) {
+                if (!success) {
+                    using unwrapped_type = typename decltype(type)::type;
+                    std::ostringstream oss;
+                    auto const bytes = sizeof(unwrapped_type);
+                    oss << (bytes * CHAR_BIT) << "-bit";
+                    if (!radix) {
+                        oss << " floating-point number";
+                    } else {
+                        if (radix != 10)
+                            oss << ", base-" << radix;
+                        oss << (std::is_signed_v<unwrapped_type> ? " " : " un");
+                        oss << "signed integer";
+                    }
+                    throw lex_error<TokenIter>(it, oss.str());
+                }
             };
 
             switch (Spec.type) {
@@ -581,7 +597,7 @@ namespace boost { namespace parser {
                 } else if (std::ranges::equal(ctre_token, "false"sv)) {
                     return {id, underlying_position, 0ll};
                 } else {
-                    // TODO: report error.
+                    throw lex_error<TokenIter>(it, "'true' or 'false'");
                 }
 
             case token_parsed_type::signed_char: {
@@ -845,6 +861,10 @@ namespace boost { namespace parser {
 
             static constexpr size_t initial_tokens_cache_size = 64;
 
+            iterator(Parent * parent, size_t token_offset) :
+                parent_(parent), token_offset_(token_offset)
+            {}
+
             void fill_cache()
             {
                 using string_view = typename Lexer::string_view;
@@ -878,23 +898,24 @@ namespace boost { namespace parser {
                     ++i;
 
                     detail::hl::fold_n<Lexer::size()>(
-                        string_view{}, [&](auto state, auto i) {
-                            if constexpr (!i.value) {
+                        string_view{}, [&](auto state, auto ci) {
+                            if constexpr (!ci.value) {
                                 return state;
                             }
-                            if (parse_results.template get<i.value>()) {
+                            if (parse_results.template get<ci.value>()) {
                                 string_view const sv =
-                                    parse_results.template get<i.value>();
-                                int const id = parent_->lexer_.ids()[i.value];
+                                    parse_results.template get<ci.value>();
+                                int const id = parent_->lexer_.ids()[ci.value];
                                 constexpr detail::parse_spec parse_spec =
-                                    parent_->lexer_.specs()[i.value];
+                                    parent_->lexer_.specs()[ci.value];
                                 parent_->tokens_.push_back(
                                     detail::make_token<parse_spec>(
                                         id,
                                         sv,
                                         (ctre_first.current -
                                          ctre_first.orig_begin) -
-                                            sv.size()));
+                                            sv.size(),
+                                        iterator(parent_, i)));
                                 return sv;
                             } else {
                                 return state;

@@ -8,7 +8,6 @@
 
 #include <boost/parser/parser_fwd.hpp>
 #include <boost/parser/concepts.hpp>
-#include <boost/parser/error_handling.hpp>
 #include <boost/parser/tuple.hpp>
 #include <boost/parser/detail/hl.hpp>
 #include <boost/parser/detail/numeric.hpp>
@@ -2330,29 +2329,6 @@ namespace boost { namespace parser {
         template<typename I>
         constexpr bool is_token_iter_v = is_token_v<iter_value_t<I>>;
 
-        template<typename Iter, typename Sentinel, typename ErrorHandler>
-        bool handle_parse_exception(
-            ErrorHandler const & error_handler,
-            Iter initial_first,
-            Sentinel last,
-            parse_error<Iter> const & e)
-        {
-            if constexpr (is_token_iter_v<Iter>) {
-                auto const underlying_first = e.iter.range_begin();
-                auto const underlying_last = e.iter.range_end();
-                parse_error underlying_error(
-                    underlying_first + (*e.iter).underlying_position(),
-                    e.message);
-                return error_handler(
-                           underlying_first,
-                           underlying_last,
-                           underlying_error) == error_handler_result::rethrow;
-            } else {
-                return error_handler(initial_first, last, e) ==
-                       error_handler_result::rethrow;
-            }
-        }
-
         template<
             bool Debug,
             typename Attr,
@@ -2411,8 +2387,19 @@ namespace boost { namespace parser {
                     return detail::make_parse_result(attr_, success);
                 }
             } catch (parse_error<Iter> const & e) {
-                if (detail::handle_parse_exception(
-                        error_handler, initial_first, last, e)) {
+                if (error_handler(initial_first, last, e) ==
+                    error_handler_result::rethrow) {
+                    throw;
+                }
+                if constexpr (std::is_reference_v<Attr>) {
+                    return false;
+                } else {
+                    attr_t attr_{};
+                    return detail::make_parse_result(attr_, false);
+                }
+            } catch (lex_error<Iter> const & e) {
+                if (error_handler(initial_first, last, e) ==
+                    error_handler_result::rethrow) {
                     throw;
                 }
                 if constexpr (std::is_reference_v<Attr>) {
@@ -2470,8 +2457,14 @@ namespace boost { namespace parser {
                     detail::final_trace(context, flags, nope{});
                 return success;
             } catch (parse_error<Iter> const & e) {
-                if (detail::handle_parse_exception(
-                        error_handler, initial_first, last, e)) {
+                if (error_handler(initial_first, last, e) ==
+                    error_handler_result::rethrow) {
+                    throw;
+                }
+                return false;
+            } catch (lex_error<Iter> const & e) {
+                if (error_handler(initial_first, last, e) ==
+                    error_handler_result::rethrow) {
                     throw;
                 }
                 return false;
@@ -8497,6 +8490,7 @@ namespace boost { namespace parser {
 #include <boost/parser/token_parser.hpp>
 #endif
 #include <boost/parser/detail/printing_impl.hpp>
+#include <boost/parser/error_handling.hpp>
 
 namespace boost { namespace parser {
 

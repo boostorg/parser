@@ -496,6 +496,77 @@ int main()
         BOOST_TEST(position == (int)std::size(expected));
     }
 
+    // lexing errors
+    {
+        // TODO: Document that a lexing error is a programming error, not an
+        // input error.
+        using namespace std::literals;
+
+        auto const lexer = bp::lexer<char, int> |
+                           bp::token_spec<"foo", 0, float> |
+                           bp::token_spec<"bar", 1, int> |
+                           bp::token_spec<"baz", 2, unsigned short> |
+                           bp::token_spec<"quux", 3, int, 8> |
+                           bp::token_spec<"next", 4, unsigned long long, 16>;
+
+        bool caught_exception = false;
+
+        caught_exception = false;
+        try {
+            for (auto tok : "foo" | bp::to_tokens(lexer)) {
+                (void)tok;
+            }
+        } catch (std::exception const & e) {
+            BOOST_TEST(e.what() == "32-bit floating-point number"sv);
+            caught_exception = true;
+        }
+        BOOST_TEST(caught_exception);
+
+        caught_exception = false;
+        try {
+            for (auto tok : "bar" | bp::to_tokens(lexer)) {
+                (void)tok;
+            }
+        } catch (std::exception const & e) {
+            BOOST_TEST(e.what() == "32-bit signed integer"sv);
+            caught_exception = true;
+        }
+        BOOST_TEST(caught_exception);
+
+        caught_exception = false;
+        try {
+            for (auto tok : "baz" | bp::to_tokens(lexer)) {
+                (void)tok;
+            }
+        } catch (std::exception const & e) {
+            BOOST_TEST(e.what() == "16-bit unsigned integer"sv);
+            caught_exception = true;
+        }
+        BOOST_TEST(caught_exception);
+
+        caught_exception = false;
+        try {
+            for (auto tok : "quux" | bp::to_tokens(lexer)) {
+                (void)tok;
+            }
+        } catch (std::exception const & e) {
+            BOOST_TEST(e.what() == "32-bit, base-8 signed integer"sv);
+            caught_exception = true;
+        }
+        BOOST_TEST(caught_exception);
+
+        caught_exception = false;
+        try {
+            for (auto tok : "next" | bp::to_tokens(lexer)) {
+                (void)tok;
+            }
+        } catch (std::exception const & e) {
+            BOOST_TEST(e.what() == "64-bit, base-16 unsigned integer"sv);
+            caught_exception = true;
+        }
+        BOOST_TEST(caught_exception);
+    }
+
     // TODO: Document the limitation of CTRE that the input must be a
     // continguous_range, so that string_views can be formed.
 

@@ -73,13 +73,16 @@ namespace boost { namespace parser {
     std::ostream & write_formatted_message(
         std::ostream & os,
         std::string_view filename,
-        Iter first,
-        Iter it,
-        Sentinel last,
+        Iter first_,
+        Iter it_,
+        Sentinel last_,
         std::string_view message,
         int64_t preferred_max_line_length,
         int64_t max_after_caret)
     {
+        auto [first, it, last] =
+            parser::normalize_iterators(first_, it_, last_);
+
         if (!filename.empty())
             os << filename << ':';
         auto const position = parser::find_line_position(first, it);
@@ -118,13 +121,15 @@ namespace boost { namespace parser {
     std::ostream & write_formatted_message(
         std::ostream & os,
         std::wstring_view filename,
-        Iter first,
-        Iter it,
-        Sentinel last,
+        Iter first_,
+        Iter it_,
+        Sentinel last_,
         std::string_view message,
         int64_t preferred_max_line_length,
         int64_t max_after_caret)
     {
+        auto [first, it, last] =
+            parser::normalize_iterators(first_, it_, last_);
         auto const r = filename | parser::detail::text::as_utf8;
         std::string s(r.begin(), r.end());
         return parser::write_formatted_message(
@@ -139,23 +144,26 @@ namespace boost { namespace parser {
     }
 #endif
 
-    template<typename Iter, typename Sentinel>
+    template<typename Iter, typename Sentinel, template<class> class Exception>
     std::ostream & write_formatted_expectation_failure_error_message(
         std::ostream & os,
         std::string_view filename,
-        Iter first,
-        Sentinel last,
-        parse_error<Iter> const & e,
+        Iter first_,
+        Sentinel last_,
+        Exception<Iter> const & e,
         int64_t preferred_max_line_length,
         int64_t max_after_caret)
     {
         std::string message = "error: Expected ";
         message += e.what();
+        // TODO: Document that this gracelfully handles token iterators, and
+        // document the other parts of the API that do or do not.
+        auto [first, it, last] = parser::normalize_iterators(first_, e, last_);
         return parser::write_formatted_message(
             os,
             filename,
             first,
-            e.iter,
+            it,
             last,
             message,
             preferred_max_line_length,
@@ -163,13 +171,13 @@ namespace boost { namespace parser {
     }
 
 #if defined(_MSC_VER)
-    template<typename Iter, typename Sentinel>
+    template<typename Iter, typename Sentinel, template<class> class Exception>
     std::ostream & write_formatted_expectation_failure_error_message(
         std::ostream & os,
         std::wstring_view filename,
         Iter first,
         Sentinel last,
-        parse_error<Iter> const & e,
+        Exception<Iter> const & e,
         int64_t preferred_max_line_length,
         int64_t max_after_caret)
     {
@@ -179,6 +187,41 @@ namespace boost { namespace parser {
             os, s, first, last, e, preferred_max_line_length, max_after_caret);
     }
 #endif
+
+    namespace detail {
+        template<typename I, typename S>
+        auto normalize_iterators_impl(I first, I it, S last)
+        {
+            if constexpr (detail::is_token_iter_v<I>) {
+                auto const underlying_first = it.range_begin();
+                auto const underlying_it =
+                    underlying_first + (*it).underlying_position();
+                auto const underlying_last = it.range_end();
+                return std::tuple(
+                    underlying_first, underlying_it, underlying_last);
+            } else {
+                return std::tuple(first, it, last);
+            }
+        }
+    }
+
+    template<typename I, typename S>
+    auto normalize_iterators(I first, I it, S last)
+    {
+        return detail::normalize_iterators_impl(first, it, last);
+    }
+
+    template<typename I, typename S>
+    auto normalize_iterators(I first, parse_error<I> e, S last)
+    {
+        return detail::normalize_iterators_impl(first, e.iter, last);
+    }
+
+    template<typename I, typename S>
+    auto normalize_iterators(I first, lex_error<I> e, S last)
+    {
+        return detail::normalize_iterators_impl(first, e.iter, last);
+    }
 
     /** An error handler that allows users to supply callbacks to handle the
         reporting of warnings and errors.  The reporting of errors and/or
@@ -211,9 +254,13 @@ namespace boost { namespace parser {
             filename_.assign(r.begin(), r.end());
         }
 #endif
-        template<typename Iter, typename Sentinel>
+        template<
+            typename Iter,
+            typename Sentinel,
+            template<class>
+            class Exception>
         error_handler_result
-        operator()(Iter first, Sentinel last, parse_error<Iter> const & e) const
+        operator()(Iter first, Sentinel last, Exception<Iter> const & e) const
         {
             if (error_) {
                 std::stringstream ss;
@@ -224,6 +271,10 @@ namespace boost { namespace parser {
             return error_handler_result::fail;
         }
 
+        // TODO: Add term 'token parsing' to glossary at start of docs.
+
+        // TODO: Add a test that exercises this function when doing token
+        // parsing.
         template<typename Context, typename Iter>
         void diagnose(
             diagnostic_kind kind,
@@ -260,13 +311,15 @@ namespace boost { namespace parser {
         std::string filename_;
     };
 
-    /** An error handler that just re-throws any exception generated by the
-        parse. */
     struct rethrow_error_handler
     {
-        template<typename Iter, typename Sentinel>
+        template<
+            typename Iter,
+            typename Sentinel,
+            template<class>
+            class Exception>
         error_handler_result
-        operator()(Iter first, Sentinel last, parse_error<Iter> const & e) const
+        operator()(Iter first, Sentinel last, Exception<Iter> const & e) const
         {
             return error_handler_result::rethrow;
         }
@@ -288,8 +341,6 @@ namespace boost { namespace parser {
     };
 
 #if defined(_MSC_VER) || defined(BOOST_PARSER_DOXYGEN)
-    /** An error handler that prints to the Visual Studio debugger via calls
-        to `OutputDebugString()`. */
     struct vs_output_error_handler : stream_error_handler
     {
         vs_output_error_handler() :
@@ -309,9 +360,9 @@ namespace boost { namespace parser {
 
     // implementations
 
-    template<typename Iter, typename Sentinel>
+    template<typename Iter, typename Sentinel, template<class> class Exception>
     error_handler_result default_error_handler::operator()(
-        Iter first, Sentinel last, parse_error<Iter> const & e) const
+        Iter first, Sentinel last, Exception<Iter> const & e) const
     {
         parser::write_formatted_expectation_failure_error_message(
             std::cerr, "", first, last, e);
@@ -343,9 +394,9 @@ namespace boost { namespace parser {
         diagnose(kind, message, context, parser::_where(context).begin());
     }
 
-    template<typename Iter, typename Sentinel>
+    template<typename Iter, typename Sentinel, template<class> class Exception>
     error_handler_result stream_error_handler::operator()(
-        Iter first, Sentinel last, parse_error<Iter> const & e) const
+        Iter first, Sentinel last, Exception<Iter> const & e) const
     {
         std::ostream * os = err_os_;
         if (!os)

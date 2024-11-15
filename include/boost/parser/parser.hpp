@@ -458,6 +458,7 @@ namespace boost { namespace parser {
             typename RuleTag = void,
             typename RuleLocals = nope,
             typename RuleParams = nope,
+            typename TokensView = nope,
             typename Where = nope>
         struct parse_context
         {
@@ -485,6 +486,7 @@ namespace boost { namespace parser {
             nope_or_pointer_t<RuleLocals> locals_{};
             nope_or_pointer_t<RuleParams, true> params_{};
             nope_or_pointer_t<Where, true> where_{};
+            nope_or_pointer_t<TokensView, true> tokens_view_{};
             int no_case_depth_ = 0;
 
             template<typename T>
@@ -516,7 +518,8 @@ namespace boost { namespace parser {
                 GlobalState & globals,
                 symbol_table_tries_t & symbol_table_tries,
                 pending_symbol_table_operations_t &
-                    pending_symbol_table_operations) :
+                    pending_symbol_table_operations,
+                TokensView const & tokens_view) :
                 first_(first),
                 last_(last),
                 pass_(std::addressof(success)),
@@ -525,7 +528,8 @@ namespace boost { namespace parser {
                 pending_symbol_table_operations_(
                     std::addressof(pending_symbol_table_operations)),
                 error_handler_(std::addressof(error_handler)),
-                globals_(nope_or_address(globals))
+                globals_(nope_or_address(globals)),
+                tokens_view_(nope_or_address(tokens_view))
             {}
 
             // With callbacks.
@@ -541,7 +545,8 @@ namespace boost { namespace parser {
                 GlobalState & globals,
                 symbol_table_tries_t & symbol_table_tries,
                 pending_symbol_table_operations_t &
-                    pending_symbol_table_operations) :
+                    pending_symbol_table_operations,
+                TokensView const & tokens_view) :
                 first_(first),
                 last_(last),
                 pass_(std::addressof(success)),
@@ -551,7 +556,8 @@ namespace boost { namespace parser {
                     std::addressof(pending_symbol_table_operations)),
                 error_handler_(std::addressof(error_handler)),
                 globals_(nope_or_address(globals)),
-                callbacks_(std::addressof(callbacks))
+                callbacks_(std::addressof(callbacks)),
+                tokens_view_(nope_or_address(tokens_view))
             {}
 
             // For making rule contexts.
@@ -577,7 +583,8 @@ namespace boost { namespace parser {
                     OldVal,
                     OldRuleTag,
                     OldRuleLocals,
-                    OldRuleParams> const & other,
+                    OldRuleParams,
+                    TokensView> const & other,
                 NewRuleTag * tag_ptr,
                 NewVal & value,
                 NewRuleLocals & locals,
@@ -593,6 +600,7 @@ namespace boost { namespace parser {
                 globals_(other.globals_),
                 callbacks_(other.callbacks_),
                 attr_(other.attr_),
+                tokens_view_(other.tokens_view_),
                 no_case_depth_(other.no_case_depth_)
             {
                 if constexpr (
@@ -624,6 +632,7 @@ namespace boost { namespace parser {
                     RuleTag,
                     RuleLocals,
                     RuleParams,
+                    TokensView,
                     OldWhere> const & other,
                 Attr & attr,
                 Where const & where) :
@@ -642,6 +651,7 @@ namespace boost { namespace parser {
                 locals_(other.locals_),
                 params_(other.params_),
                 where_(nope_or_address(where)),
+                tokens_view_(other.tokens_view_),
                 no_case_depth_(other.no_case_depth_)
             {}
         };
@@ -658,6 +668,7 @@ namespace boost { namespace parser {
             typename RuleTag,
             typename RuleLocals,
             typename RuleParams,
+            typename TokensView,
             typename Attr,
             typename Where,
             typename OldAttr>
@@ -674,7 +685,8 @@ namespace boost { namespace parser {
                 Val,
                 RuleTag,
                 RuleLocals,
-                RuleParams> const & context,
+                RuleParams,
+                TokensView> const & context,
             Attr & attr,
             Where const & where)
         {
@@ -691,6 +703,7 @@ namespace boost { namespace parser {
                 RuleTag,
                 RuleLocals,
                 RuleParams,
+                TokensView,
                 Where>;
             return result_type(context, attr, where);
         }
@@ -708,6 +721,7 @@ namespace boost { namespace parser {
             typename RuleTag,
             typename RuleLocals,
             typename RuleParams,
+            typename TokensView,
             typename NewVal,
             typename NewRuleTag,
             typename NewRuleLocals,
@@ -725,7 +739,8 @@ namespace boost { namespace parser {
                 Val,
                 RuleTag,
                 RuleLocals,
-                RuleParams> const & context,
+                RuleParams,
+                TokensView> const & context,
             NewRuleTag * tag_ptr,
             NewVal & value,
             NewRuleLocals & locals,
@@ -780,7 +795,8 @@ namespace boost { namespace parser {
                 error_handler,
                 n,
                 symbol_table_tries,
-                pending_symbol_table_operations);
+                pending_symbol_table_operations,
+                nope{});
         }
 
         template<
@@ -789,7 +805,8 @@ namespace boost { namespace parser {
             typename Iter,
             typename Sentinel,
             typename ErrorHandler,
-            typename GlobalState>
+            typename GlobalState,
+            typename TokensView>
         auto make_context(
             Iter first,
             Sentinel last,
@@ -798,8 +815,8 @@ namespace boost { namespace parser {
             ErrorHandler const & error_handler,
             GlobalState & globals,
             symbol_table_tries_t & symbol_table_tries,
-            pending_symbol_table_operations_t &
-                pending_symbol_table_operations) noexcept
+            pending_symbol_table_operations_t & pending_symbol_table_operations,
+            TokensView const & tokens_view) noexcept
         {
             return parse_context(
                 std::bool_constant<DoTrace>{},
@@ -811,7 +828,8 @@ namespace boost { namespace parser {
                 error_handler,
                 globals,
                 symbol_table_tries,
-                pending_symbol_table_operations);
+                pending_symbol_table_operations,
+                tokens_view);
         }
 
         template<
@@ -844,7 +862,8 @@ namespace boost { namespace parser {
                 callbacks,
                 n,
                 symbol_table_tries,
-                pending_symbol_table_operations);
+                pending_symbol_table_operations,
+                nope{});
         }
 
         template<
@@ -854,7 +873,8 @@ namespace boost { namespace parser {
             typename Sentinel,
             typename ErrorHandler,
             typename Callbacks,
-            typename GlobalState>
+            typename GlobalState,
+            typename TokensView>
         auto make_context(
             Iter first,
             Sentinel last,
@@ -864,8 +884,8 @@ namespace boost { namespace parser {
             Callbacks const & callbacks,
             GlobalState & globals,
             symbol_table_tries_t & symbol_table_tries,
-            pending_symbol_table_operations_t &
-                pending_symbol_table_operations) noexcept
+            pending_symbol_table_operations_t & pending_symbol_table_operations,
+            TokensView const & tokens_view) noexcept
         {
             return parse_context(
                 std::bool_constant<DoTrace>{},
@@ -878,7 +898,8 @@ namespace boost { namespace parser {
                 callbacks,
                 globals,
                 symbol_table_tries,
-                pending_symbol_table_operations);
+                pending_symbol_table_operations,
+                tokens_view);
         }
 
 
@@ -974,6 +995,12 @@ namespace boost { namespace parser {
         decltype(auto) _callbacks(Context const & context)
         {
             return *context.callbacks_;
+        }
+
+        template<typename Context>
+        decltype(auto) _tokens_view(Context const & context)
+        {
+            return *context.tokens_view_;
         }
 
 
@@ -2336,14 +2363,16 @@ namespace boost { namespace parser {
             typename Sentinel,
             typename Parser,
             typename SkipParser,
-            typename ErrorHandler>
+            typename ErrorHandler,
+            typename TokensView>
         auto parse_impl(
             Iter & first,
             Sentinel last,
             Parser const & parser,
             SkipParser const & skip,
             ErrorHandler const & error_handler,
-            Attr attr)
+            Attr attr,
+            TokensView const & tokens_view)
         {
             constexpr bool have_skipper =
                 !std::is_same_v<SkipParser, detail::null_parser>;
@@ -2362,12 +2391,16 @@ namespace boost { namespace parser {
                 error_handler,
                 parser.globals_,
                 symbol_table_tries,
-                pending_symbol_table_operations);
+                pending_symbol_table_operations,
+                tokens_view);
             auto const flags = detail::initial_flags<have_skipper, Debug>();
             if constexpr (have_skipper)
                 detail::skip(first, last, skip, flags);
             using attr_t = typename detail::attribute_impl<
-                BOOST_PARSER_SUBRANGE<std::remove_const_t<Iter>, Sentinel>,
+                std::conditional_t<
+                    is_nope_v<TokensView>,
+                    BOOST_PARSER_SUBRANGE<std::remove_const_t<Iter>, Sentinel>,
+                    TokensView const>,
                 Parser>::type;
             try {
                 if constexpr (std::is_reference_v<Attr>) {
@@ -2418,14 +2451,16 @@ namespace boost { namespace parser {
             typename Parser,
             typename SkipParser,
             typename ErrorHandler,
-            typename Callbacks>
+            typename Callbacks,
+            typename TokensView>
         auto callback_parse_impl(
             Iter & first,
             Sentinel last,
             Parser const & parser,
             SkipParser const & skip,
             ErrorHandler const & error_handler,
-            Callbacks const & callbacks)
+            Callbacks const & callbacks,
+            TokensView const & tokens_view)
         {
             constexpr bool have_skipper =
                 !std::is_same_v<SkipParser, detail::null_parser>;
@@ -2445,7 +2480,8 @@ namespace boost { namespace parser {
                 callbacks,
                 parser.globals_,
                 symbol_table_tries,
-                pending_symbol_table_operations);
+                pending_symbol_table_operations,
+                tokens_view);
             auto const flags = detail::initial_flags<have_skipper, Debug>();
             if constexpr (have_skipper)
                 detail::skip(first, last, skip, flags);
@@ -4206,6 +4242,12 @@ namespace boost { namespace parser {
                     decltype(merge_kind_t_)::kind == merge_kind::group;
                 bool const can_backtrack =
                     parser::get(parser_index_merged_and_backtrack, 3_c);
+
+                if (!can_backtrack) {
+                    if constexpr (detail::is_token_iter_v<Iter>) {
+                        _tokens_view(context).clear_tokens_before(first);
+                    }
+                }
 
                 if (!detail::gen_attrs(flags)) {
                     parser.call(first, last, context, skip, flags, success);
@@ -8525,14 +8567,16 @@ namespace boost { namespace parser {
             typename I,
             typename S,
             typename Parser,
-            typename SkipParser>
+            typename SkipParser,
+            typename TokensView>
         auto prefix_parse_impl(
             I & first,
             S last,
             Parser const & parser,
             SkipParser const & skip,
             Attr attr,
-            trace trace_mode)
+            trace trace_mode,
+            TokensView const & tokens_view)
         {
             // TODO: shouldn't this be detail::is_char_iter_v<I> instead?
             if constexpr (!detail::is_char8_iter_v<I>) {
@@ -8552,7 +8596,8 @@ namespace boost { namespace parser {
                                 parser,
                                 skip,
                                 parser.error_handler_,
-                                attr));
+                                attr,
+                                tokens_view));
                     } else {
                         return !!(
                             reset = detail::parse_impl<false, Attr &>(
@@ -8561,7 +8606,8 @@ namespace boost { namespace parser {
                                 parser,
                                 skip,
                                 parser.error_handler_,
-                                attr));
+                                attr,
+                                tokens_view));
                     }
                 } else {
                     if (trace_mode == trace::on) {
@@ -8571,7 +8617,8 @@ namespace boost { namespace parser {
                             parser,
                             skip,
                             parser.error_handler_,
-                            attr);
+                            attr,
+                            tokens_view);
                     } else {
                         return detail::parse_impl<false>(
                             first,
@@ -8579,7 +8626,8 @@ namespace boost { namespace parser {
                             parser,
                             skip,
                             parser.error_handler_,
-                            attr);
+                            attr,
+                            tokens_view);
                     }
                 }
             } else {
@@ -8603,7 +8651,8 @@ namespace boost { namespace parser {
                                 parser,
                                 skip,
                                 parser.error_handler_,
-                                attr));
+                                attr,
+                                tokens_view));
                     } else {
                         return !!(
                             reset = detail::parse_impl<false, Attr &>(
@@ -8612,15 +8661,28 @@ namespace boost { namespace parser {
                                 parser,
                                 skip,
                                 parser.error_handler_,
-                                attr));
+                                attr,
+                                tokens_view));
                     }
                 } else {
                     if (trace_mode == trace::on) {
                         return detail::parse_impl<true>(
-                            f, l, parser, skip, parser.error_handler_, attr);
+                            f,
+                            l,
+                            parser,
+                            skip,
+                            parser.error_handler_,
+                            attr,
+                            tokens_view);
                     } else {
                         return detail::parse_impl<false>(
-                            f, l, parser, skip, parser.error_handler_, attr);
+                            f,
+                            l,
+                            parser,
+                            skip,
+                            parser.error_handler_,
+                            attr,
+                            tokens_view);
                     }
                 }
             }
@@ -8631,14 +8693,16 @@ namespace boost { namespace parser {
             typename S,
             typename Parser,
             typename SkipParser,
-            typename Callbacks>
+            typename Callbacks,
+            typename TokensView>
         auto callback_prefix_parse_impl(
             I & first,
             S last,
             Parser const & parser,
             SkipParser const & skip,
             Callbacks const & callbacks,
-            trace trace_mode)
+            trace trace_mode,
+            TokensView const & tokens_view)
         {
             // TODO: shouldn't this be detail::is_char_iter_v<I> instead?
             if constexpr (!detail::is_char8_iter_v<I>) {
@@ -8649,7 +8713,8 @@ namespace boost { namespace parser {
                         parser,
                         skip,
                         parser.error_handler_,
-                        callbacks);
+                        callbacks,
+                        tokens_view);
                 } else {
                     return detail::callback_parse_impl<false>(
                         first,
@@ -8657,7 +8722,8 @@ namespace boost { namespace parser {
                         parser,
                         skip,
                         parser.error_handler_,
-                        callbacks);
+                        callbacks,
+                        tokens_view);
                 }
             } else {
                 auto r = detail::make_input_subrange(first, last);
@@ -8666,11 +8732,33 @@ namespace boost { namespace parser {
                 auto _ = detail::scoped_base_assign(first, f);
                 if (trace_mode == trace::on) {
                     return detail::callback_parse_impl<true>(
-                        f, l, parser, skip, parser.error_handler_, callbacks);
+                        f,
+                        l,
+                        parser,
+                        skip,
+                        parser.error_handler_,
+                        callbacks,
+                        tokens_view);
                 } else {
                     return detail::callback_parse_impl<false>(
-                        f, l, parser, skip, parser.error_handler_, callbacks);
+                        f,
+                        l,
+                        parser,
+                        skip,
+                        parser.error_handler_,
+                        callbacks,
+                        tokens_view);
                 }
+            }
+        }
+
+        template<typename R>
+        decltype(auto) tokens_view_or_nope(R & r)
+        {
+            if constexpr (is_token_iter_v<iterator_t<R>>) {
+                return r;
+            } else {
+                return global_nope;
             }
         }
     }
@@ -8720,7 +8808,13 @@ namespace boost { namespace parser {
 #endif
     {
         return detail::prefix_parse_impl<Attr &>(
-            first, last, parser, detail::null_parser{}, attr, trace_mode);
+            first,
+            last,
+            parser,
+            detail::null_parser{},
+            attr,
+            trace_mode,
+            detail::nope{});
     }
 
     /** Parses `r` using `parser`, and returns whether the parse was
@@ -8785,7 +8879,8 @@ namespace boost { namespace parser {
                        parser,
                        detail::null_parser{},
                        attr,
-                       trace_mode));
+                       trace_mode,
+                       detail::tokens_view_or_nope(r)));
     }
 
     /** Parses `[first, last)` using `parser`.  Returns a `std::optional`
@@ -8825,7 +8920,8 @@ namespace boost { namespace parser {
             parser,
             detail::null_parser{},
             detail::nope{},
-            trace_mode);
+            trace_mode,
+            detail::nope{});
     }
 
     /** Parses `r` using `parser`.  Returns a `std::optional` containing the
@@ -8881,7 +8977,8 @@ namespace boost { namespace parser {
                 parser,
                 detail::null_parser{},
                 detail::nope{},
-                trace_mode));
+                trace_mode,
+                detail::tokens_view_or_nope(r)));
     }
 
     /** Parses `[first, last)` using `parser`, skipping all input recognized
@@ -8921,7 +9018,7 @@ namespace boost { namespace parser {
         trace trace_mode = trace::off)
     {
         return detail::prefix_parse_impl<Attr &>(
-            first, last, parser, skip, attr, trace_mode);
+            first, last, parser, skip, attr, trace_mode, detail::nope{});
     }
 
     /** Parses `r` using `parser`, skipping all input recognized by `skip`
@@ -8979,7 +9076,13 @@ namespace boost { namespace parser {
                    first,
                    last,
                    detail::prefix_parse_impl<Attr &>(
-                       first, last, parser, skip, attr, trace_mode));
+                       first,
+                       last,
+                       parser,
+                       skip,
+                       attr,
+                       trace_mode,
+                       detail::tokens_view_or_nope(r)));
     }
 
     /** Parses `[first, last)` using `parser`, skipping all input recognized
@@ -9016,7 +9119,13 @@ namespace boost { namespace parser {
         trace trace_mode = trace::off)
     {
         return detail::prefix_parse_impl(
-            first, last, parser, skip, detail::nope{}, trace_mode);
+            first,
+            last,
+            parser,
+            skip,
+            detail::nope{},
+            trace_mode,
+            detail::nope{});
     }
 
     /** Parses `r` using `parser`, skipping all input recognized by `skip`
@@ -9070,7 +9179,13 @@ namespace boost { namespace parser {
             first,
             last,
             detail::prefix_parse_impl(
-                first, last, parser, skip, detail::nope{}, trace_mode));
+                first,
+                last,
+                parser,
+                skip,
+                detail::nope{},
+                trace_mode,
+                detail::tokens_view_or_nope(r)));
     }
 
     /** Parses `[first, last)` using `parser`, and returns whether the parse
@@ -9111,7 +9226,13 @@ namespace boost { namespace parser {
         trace trace_mode = trace::off)
     {
         return detail::callback_prefix_parse_impl(
-            first, last, parser, detail::null_parser{}, callbacks, trace_mode);
+            first,
+            last,
+            parser,
+            detail::null_parser{},
+            callbacks,
+            trace_mode,
+            detail::nope{});
     }
 
     /** Parses `r` using `parser`, and returns whether the parse was
@@ -9174,7 +9295,8 @@ namespace boost { namespace parser {
                 parser,
                 detail::null_parser{},
                 callbacks,
-                trace_mode));
+                trace_mode,
+                detail::tokens_view_or_nope(r)));
     }
 
     /** Parses `[first, last)` using `parser`, skipping all input recognized
@@ -9219,7 +9341,7 @@ namespace boost { namespace parser {
         trace trace_mode = trace::off)
     {
         return detail::callback_prefix_parse_impl(
-            first, last, parser, skip, callbacks, trace_mode);
+            first, last, parser, skip, callbacks, trace_mode, detail::nope{});
     }
 
     /** Parses `r` using `parser`, skipping all input recognized by `skip`
@@ -9281,7 +9403,13 @@ namespace boost { namespace parser {
             first,
             last,
             detail::callback_prefix_parse_impl(
-                first, last, parser, skip, callbacks, trace_mode));
+                first,
+                last,
+                parser,
+                skip,
+                callbacks,
+                trace_mode,
+                detail::tokens_view_or_nope(r)));
     }
 
     namespace literals {
@@ -9357,7 +9485,8 @@ namespace boost { namespace parser {
                 std::declval<error_handler_type>(),
                 std::declval<global_state_type &>(),
                 std::declval<detail::symbol_table_tries_t &>(),
-                std::declval<detail::pending_symbol_table_operations_t &>()));
+                std::declval<detail::pending_symbol_table_operations_t &>(),
+                detail::tokens_view_or_nope(std::declval<R &>())));
             using type = decltype(std::declval<Parser>()(
                 std::declval<iterator &>(),
                 std::declval<sentinel>(),

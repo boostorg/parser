@@ -818,14 +818,18 @@ namespace boost { namespace parser {
     private:
         // Called during parse after reaching an expectation point.
         template<bool Const>
-        void clear_tokens_before(iterator<Const> it)
+        void clear_tokens_before(iterator<Const> it) const
         {
             size_t const erasure = it.token_offset_ - base_token_offset_;
             tokens_.erase(tokens_.begin(), tokens_.begin() + erasure);
             base_token_offset_ += erasure;
         }
-        // TODO: Plumb a pointer to this view into the parse context, and call
-        // clear_tokens_before from seq_parser after each expectation point.
+
+        template<
+            typename ParserTuple,
+            typename BacktrackingTuple,
+            typename CombiningGroups>
+        friend struct seq_parser;
 
         // TODO: Document that the token cache will grow without bound if the
         // parser contains no sequence points.
@@ -996,8 +1000,10 @@ namespace boost { namespace parser {
             template<bool OtherConst>
             bool equal_to(iterator<OtherConst> const & x) const
             {
-                if (x.token_offset_ != x.parent_->tokens_.size())
+                if (x.token_offset_ - x.parent_->base_token_offset_ !=
+                    x.parent_->tokens_.size()) {
                     return false;
+                }
                 auto r = std::ranges::subrange(
                     x.parent_->latest_, std::ranges::end(x.parent_->base_));
                 auto ctre_range = Lexer::regex_range(r);

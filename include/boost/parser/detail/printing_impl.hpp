@@ -942,6 +942,106 @@ namespace boost { namespace parser { namespace detail {
             context, parser.or_parser_, os, components);
     }
 
+#if defined(BOOST_PARSER_TOKEN_PARSER_HPP)
+
+    template<typename Context, typename TokenSpec, typename Expected>
+    void print_parser(
+        Context const & context,
+        token_parser<TokenSpec, Expected> const & parser,
+        std::ostream & os,
+        int components)
+    {
+        constexpr bool do_print_value = requires { parser.expected_.value_; };
+
+        auto print_value = [&] {
+            if constexpr (do_print_value) {
+                if constexpr (std::ranges::range<
+                                  decltype(parser.expected_.value_)>) {
+                    os << '"';
+                    for (auto c : parser.expected_.value_ | text::as_utf8) {
+                        detail::print_char(os, c);
+                    }
+                    os << '"';
+                } else {
+                    detail::print(os, parser.expected_.value_);
+                }
+            }
+        };
+
+        if constexpr (requires {
+                          os << TokenSpec::id;
+                      } && std::is_enum_v<typename TokenSpec::id_type>) {
+            if constexpr (do_print_value) {
+                print_value();
+            } else {
+                os << TokenSpec::id;
+            }
+        } else {
+            os << "tok<" << (int)TokenSpec::id << '>';
+            if constexpr (do_print_value) {
+                os << '(';
+                print_value();
+                os << ')';
+            }
+        }
+    }
+
+#endif
+
+    template<
+        bool DoTrace,
+        typename Iter,
+        typename Sentinel,
+        typename Context,
+        typename Attribute>
+    scoped_trace_t<DoTrace, Iter, Sentinel, Context, Attribute>::scoped_trace_t(
+        std::ostream & os,
+        Iter & first,
+        Sentinel last,
+        Context const & context,
+        flags f,
+        Attribute const & attr,
+        std::string name) :
+        os_(os),
+        initial_first_(first),
+        first_(first),
+        last_(last),
+        context_(context),
+        flags_(f),
+        attr_(attr),
+        name_(std::move(name))
+    {
+        if (!detail::do_trace(flags_))
+            return;
+        if constexpr (is_token_iter_v<Iter>) {
+            auto const initial_first = first_.range_begin();
+            auto const first = initial_first + (*first_).underlying_position();
+            auto const last = first_.range_end();
+            detail::trace_prefix(os, first, last, context_, name_);
+        } else {
+            detail::trace_prefix(os, first_, last_, context_, name_);
+        }
+    }
+
+    template<
+        bool DoTrace,
+        typename Iter,
+        typename Sentinel,
+        typename Context,
+        typename Attribute>
+    scoped_trace_t<DoTrace, Iter, Sentinel, Context, Attribute>::
+        ~scoped_trace_t()
+    {
+        if constexpr (is_token_iter_v<Iter>) {
+            auto const initial_first = first_.range_begin();
+            auto const first = initial_first + (*first_).underlying_position();
+            auto const last = first_.range_end();
+            impl(initial_first, first, last);
+        } else {
+            impl(initial_first_, first_, last_);
+        }
+    }
+
 }}}
 
 #endif

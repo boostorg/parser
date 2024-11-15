@@ -8,7 +8,6 @@
 
 #include <boost/parser/parser_fwd.hpp>
 #include <boost/parser/concepts.hpp>
-#include <boost/parser/error_handling.hpp>
 #include <boost/parser/tuple.hpp>
 #include <boost/parser/detail/hl.hpp>
 #include <boost/parser/detail/numeric.hpp>
@@ -324,6 +323,25 @@ namespace boost { namespace parser {
     };
 #endif
 
+#ifdef BOOST_PARSER_DOXYGEN
+
+    /** TODO */
+    template<typename T>
+    constexpr bool is_token_v = detail::foo;
+
+#else
+
+    template<typename CharType>
+    struct token;
+
+    template<typename T>
+    constexpr bool is_token_v = false;
+
+    template<typename CharType>
+    constexpr bool is_token_v<token<CharType>> = true;
+
+#endif
+
     namespace detail {
         // Follows boost/mpl/print.hpp.
 #if defined(_MSC_VER)
@@ -440,6 +458,7 @@ namespace boost { namespace parser {
             typename RuleTag = void,
             typename RuleLocals = nope,
             typename RuleParams = nope,
+            typename TokensView = nope,
             typename Where = nope>
         struct parse_context
         {
@@ -457,6 +476,8 @@ namespace boost { namespace parser {
             bool * pass_ = nullptr;
             int * trace_indent_ = nullptr;
             symbol_table_tries_t * symbol_table_tries_ = nullptr;
+            pending_symbol_table_operations_t *
+                pending_symbol_table_operations_ = nullptr;
             ErrorHandler const * error_handler_ = nullptr;
             nope_or_pointer_t<GlobalState> globals_{};
             nope_or_pointer_t<Callbacks, true> callbacks_{};
@@ -465,6 +486,7 @@ namespace boost { namespace parser {
             nope_or_pointer_t<RuleLocals> locals_{};
             nope_or_pointer_t<RuleParams, true> params_{};
             nope_or_pointer_t<Where, true> where_{};
+            nope_or_pointer_t<TokensView, true> tokens_view_{};
             int no_case_depth_ = 0;
 
             template<typename T>
@@ -494,14 +516,20 @@ namespace boost { namespace parser {
                 int & indent,
                 ErrorHandler const & error_handler,
                 GlobalState & globals,
-                symbol_table_tries_t & symbol_table_tries) :
+                symbol_table_tries_t & symbol_table_tries,
+                pending_symbol_table_operations_t &
+                    pending_symbol_table_operations,
+                TokensView const & tokens_view) :
                 first_(first),
                 last_(last),
                 pass_(std::addressof(success)),
                 trace_indent_(std::addressof(indent)),
                 symbol_table_tries_(std::addressof(symbol_table_tries)),
+                pending_symbol_table_operations_(
+                    std::addressof(pending_symbol_table_operations)),
                 error_handler_(std::addressof(error_handler)),
-                globals_(nope_or_address(globals))
+                globals_(nope_or_address(globals)),
+                tokens_view_(nope_or_address(tokens_view))
             {}
 
             // With callbacks.
@@ -515,15 +543,21 @@ namespace boost { namespace parser {
                 ErrorHandler const & error_handler,
                 Callbacks const & callbacks,
                 GlobalState & globals,
-                symbol_table_tries_t & symbol_table_tries) :
+                symbol_table_tries_t & symbol_table_tries,
+                pending_symbol_table_operations_t &
+                    pending_symbol_table_operations,
+                TokensView const & tokens_view) :
                 first_(first),
                 last_(last),
                 pass_(std::addressof(success)),
                 trace_indent_(std::addressof(indent)),
                 symbol_table_tries_(std::addressof(symbol_table_tries)),
+                pending_symbol_table_operations_(
+                    std::addressof(pending_symbol_table_operations)),
                 error_handler_(std::addressof(error_handler)),
                 globals_(nope_or_address(globals)),
-                callbacks_(std::addressof(callbacks))
+                callbacks_(std::addressof(callbacks)),
+                tokens_view_(nope_or_address(tokens_view))
             {}
 
             // For making rule contexts.
@@ -549,7 +583,8 @@ namespace boost { namespace parser {
                     OldVal,
                     OldRuleTag,
                     OldRuleLocals,
-                    OldRuleParams> const & other,
+                    OldRuleParams,
+                    TokensView> const & other,
                 NewRuleTag * tag_ptr,
                 NewVal & value,
                 NewRuleLocals & locals,
@@ -559,10 +594,13 @@ namespace boost { namespace parser {
                 pass_(other.pass_),
                 trace_indent_(other.trace_indent_),
                 symbol_table_tries_(other.symbol_table_tries_),
+                pending_symbol_table_operations_(
+                    other.pending_symbol_table_operations_),
                 error_handler_(other.error_handler_),
                 globals_(other.globals_),
                 callbacks_(other.callbacks_),
                 attr_(other.attr_),
+                tokens_view_(other.tokens_view_),
                 no_case_depth_(other.no_case_depth_)
             {
                 if constexpr (
@@ -594,6 +632,7 @@ namespace boost { namespace parser {
                     RuleTag,
                     RuleLocals,
                     RuleParams,
+                    TokensView,
                     OldWhere> const & other,
                 Attr & attr,
                 Where const & where) :
@@ -602,6 +641,8 @@ namespace boost { namespace parser {
                 pass_(other.pass_),
                 trace_indent_(other.trace_indent_),
                 symbol_table_tries_(other.symbol_table_tries_),
+                pending_symbol_table_operations_(
+                    other.pending_symbol_table_operations_),
                 error_handler_(other.error_handler_),
                 globals_(other.globals_),
                 callbacks_(other.callbacks_),
@@ -610,6 +651,7 @@ namespace boost { namespace parser {
                 locals_(other.locals_),
                 params_(other.params_),
                 where_(nope_or_address(where)),
+                tokens_view_(other.tokens_view_),
                 no_case_depth_(other.no_case_depth_)
             {}
         };
@@ -626,6 +668,7 @@ namespace boost { namespace parser {
             typename RuleTag,
             typename RuleLocals,
             typename RuleParams,
+            typename TokensView,
             typename Attr,
             typename Where,
             typename OldAttr>
@@ -642,7 +685,8 @@ namespace boost { namespace parser {
                 Val,
                 RuleTag,
                 RuleLocals,
-                RuleParams> const & context,
+                RuleParams,
+                TokensView> const & context,
             Attr & attr,
             Where const & where)
         {
@@ -659,6 +703,7 @@ namespace boost { namespace parser {
                 RuleTag,
                 RuleLocals,
                 RuleParams,
+                TokensView,
                 Where>;
             return result_type(context, attr, where);
         }
@@ -676,6 +721,7 @@ namespace boost { namespace parser {
             typename RuleTag,
             typename RuleLocals,
             typename RuleParams,
+            typename TokensView,
             typename NewVal,
             typename NewRuleTag,
             typename NewRuleLocals,
@@ -693,7 +739,8 @@ namespace boost { namespace parser {
                 Val,
                 RuleTag,
                 RuleLocals,
-                RuleParams> const & context,
+                RuleParams,
+                TokensView> const & context,
             NewRuleTag * tag_ptr,
             NewVal & value,
             NewRuleLocals & locals,
@@ -734,7 +781,9 @@ namespace boost { namespace parser {
             int & indent,
             ErrorHandler const & error_handler,
             nope & n,
-            symbol_table_tries_t & symbol_table_tries) noexcept
+            symbol_table_tries_t & symbol_table_tries,
+            pending_symbol_table_operations_t &
+                pending_symbol_table_operations) noexcept
         {
             return parse_context(
                 std::bool_constant<DoTrace>{},
@@ -745,7 +794,9 @@ namespace boost { namespace parser {
                 indent,
                 error_handler,
                 n,
-                symbol_table_tries);
+                symbol_table_tries,
+                pending_symbol_table_operations,
+                nope{});
         }
 
         template<
@@ -754,7 +805,8 @@ namespace boost { namespace parser {
             typename Iter,
             typename Sentinel,
             typename ErrorHandler,
-            typename GlobalState>
+            typename GlobalState,
+            typename TokensView>
         auto make_context(
             Iter first,
             Sentinel last,
@@ -762,7 +814,9 @@ namespace boost { namespace parser {
             int & indent,
             ErrorHandler const & error_handler,
             GlobalState & globals,
-            symbol_table_tries_t & symbol_table_tries) noexcept
+            symbol_table_tries_t & symbol_table_tries,
+            pending_symbol_table_operations_t & pending_symbol_table_operations,
+            TokensView const & tokens_view) noexcept
         {
             return parse_context(
                 std::bool_constant<DoTrace>{},
@@ -773,7 +827,9 @@ namespace boost { namespace parser {
                 indent,
                 error_handler,
                 globals,
-                symbol_table_tries);
+                symbol_table_tries,
+                pending_symbol_table_operations,
+                tokens_view);
         }
 
         template<
@@ -791,7 +847,9 @@ namespace boost { namespace parser {
             ErrorHandler const & error_handler,
             Callbacks const & callbacks,
             nope & n,
-            symbol_table_tries_t & symbol_table_tries) noexcept
+            symbol_table_tries_t & symbol_table_tries,
+            pending_symbol_table_operations_t &
+                pending_symbol_table_operations) noexcept
         {
             return parse_context(
                 std::bool_constant<DoTrace>{},
@@ -803,7 +861,9 @@ namespace boost { namespace parser {
                 error_handler,
                 callbacks,
                 n,
-                symbol_table_tries);
+                symbol_table_tries,
+                pending_symbol_table_operations,
+                nope{});
         }
 
         template<
@@ -813,7 +873,8 @@ namespace boost { namespace parser {
             typename Sentinel,
             typename ErrorHandler,
             typename Callbacks,
-            typename GlobalState>
+            typename GlobalState,
+            typename TokensView>
         auto make_context(
             Iter first,
             Sentinel last,
@@ -822,7 +883,9 @@ namespace boost { namespace parser {
             ErrorHandler const & error_handler,
             Callbacks const & callbacks,
             GlobalState & globals,
-            symbol_table_tries_t & symbol_table_tries) noexcept
+            symbol_table_tries_t & symbol_table_tries,
+            pending_symbol_table_operations_t & pending_symbol_table_operations,
+            TokensView const & tokens_view) noexcept
         {
             return parse_context(
                 std::bool_constant<DoTrace>{},
@@ -834,7 +897,9 @@ namespace boost { namespace parser {
                 error_handler,
                 callbacks,
                 globals,
-                symbol_table_tries);
+                symbol_table_tries,
+                pending_symbol_table_operations,
+                tokens_view);
         }
 
 
@@ -930,6 +995,12 @@ namespace boost { namespace parser {
         decltype(auto) _callbacks(Context const & context)
         {
             return *context.callbacks_;
+        }
+
+        template<typename Context>
+        decltype(auto) _tokens_view(Context const & context)
+        {
+            return *context.tokens_view_;
         }
 
 
@@ -1391,6 +1462,7 @@ namespace boost { namespace parser {
         void append(nope &, Iter first, Sentinel last, bool gen_attrs)
         {}
 
+        // TODO: Remove, if possible.
         constexpr inline flags default_flags()
         {
             return flags(
@@ -1438,6 +1510,17 @@ namespace boost { namespace parser {
         {
             return (uint32_t(f) & uint32_t(flags::in_apply_parser)) ==
                    uint32_t(flags::in_apply_parser);
+        }
+
+        template<bool UseSkip, bool DoTrace>
+        constexpr inline flags initial_flags()
+        {
+            flags retval = flags::gen_attrs;
+            if constexpr (UseSkip)
+                retval = detail::enable_skip(retval);
+            if constexpr (DoTrace)
+                retval = detail::enable_trace(retval);
+            return retval;
         }
 
         struct null_parser
@@ -1494,8 +1577,16 @@ namespace boost { namespace parser {
             rethrow_error_handler eh;
             nope n;
             symbol_table_tries_t symbol_table_tries;
+            pending_symbol_table_operations_t pending_symbol_table_operations;
             auto const context = detail::make_context<false, false>(
-                first, last, success, indent, eh, n, symbol_table_tries);
+                first,
+                last,
+                success,
+                indent,
+                eh,
+                n,
+                symbol_table_tries,
+                pending_symbol_table_operations);
             while (success) {
                 skip_(
                     first,
@@ -1629,7 +1720,7 @@ namespace boost { namespace parser {
                     initial_elements.begin(),
                     initial_elements.end(),
                     str,
-                    [&str](auto const & a, auto b) {
+                    [](auto const & a, auto b) {
                         return a.first < b;
                     });
             };
@@ -1667,7 +1758,7 @@ namespace boost { namespace parser {
             symbol_table_tries_t & symbol_table_tries =
                 *context.symbol_table_tries_;
 
-            auto & [any, has_case_folded, pending_ops] =
+            auto & [any, has_case_folded] =
                 symbol_table_tries[(void *)&sym_parser.ref()];
 
             bool const needs_case_folded = context.no_case_depth_;
@@ -1676,12 +1767,6 @@ namespace boost { namespace parser {
                 any = trie_t{};
                 has_case_folded = false;
                 trie_t & trie = *std::any_cast<trie_t>(&any);
-                if (pending_ops) {
-                    detail::apply_symbol_table_operations(
-                        sym_parser.initial_elements(),
-                        sym_parser.pending_operations());
-                    pending_ops = false;
-                }
                 for (auto const & e : sym_parser.initial_elements()) {
                     trie.insert(e.first | text::as_utf32, e.second);
                     if (needs_case_folded) {
@@ -1703,6 +1788,30 @@ namespace boost { namespace parser {
                 }
                 return result_type(trie, has_case_folded);
              }
+        }
+
+        template<typename Context, typename T>
+        decltype(auto) get_pending_symtab_ops(
+            Context const & context, symbol_parser<T> const & sym_parser)
+        {
+            void const * ptr = static_cast<void const *>(&sym_parser);
+            auto & entry = (*context.pending_symbol_table_operations_)[ptr];
+            std::vector<detail::symbol_table_operation<T>> * retval = nullptr;
+            if (entry.visit_) {
+                retval = std::any_cast<
+                    std::vector<detail::symbol_table_operation<T>>>(
+                    &entry.ops_);
+            } else {
+                entry.ops_ = std::vector<detail::symbol_table_operation<T>>{};
+                retval = std::any_cast<
+                    std::vector<detail::symbol_table_operation<T>>>(
+                    &entry.ops_);
+                entry.visit_ = [&sym_parser, ops_ptr = retval] {
+                    detail::apply_symbol_table_operations(
+                        sym_parser.initial_elements_, *ops_ptr);
+                };
+            }
+            return *retval;
         }
 
         template<>
@@ -2202,7 +2311,12 @@ namespace boost { namespace parser {
             scoped_base_assign(BaseIter & base, Iter & it) :
                 base_(base), it_(it)
             {}
-            ~scoped_base_assign() { base_ = it_.base(); }
+            ~scoped_base_assign()
+            {
+                if constexpr (!std::is_same_v<BaseIter, Iter>) {
+                    base_ = it_.base();
+                }
+            }
 
             BaseIter & base_;
             Iter & it_;
@@ -2222,227 +2336,53 @@ namespace boost { namespace parser {
         constexpr bool has_parsers_data_member_v =
             is_detected_v<has_parsers_data_member_expr, Parser>;
 
-        template<typename Context, typename Parser>
-        void visit_symbol_table_parsers_impl(
-            Context & context, Parser const & p);
+        struct scoped_apply_pending_symbol_table_operations
+        {
+            scoped_apply_pending_symbol_table_operations(
+                pending_symbol_table_operations_t & pending_ops) :
+                pending_ops_(pending_ops)
+            {}
 
-        template<typename Context, typename Parser>
-        void visit_symbol_table_parser(Context & context, Parser const & p)
-        {
-            if constexpr (has_parser_data_member_v<Parser>) {
-                detail::visit_symbol_table_parsers_impl(context, p.parser_);
-            }
-        }
-        template<typename Context, typename T>
-        void visit_symbol_table_parser(
-            Context & context, symbol_parser<T> const & p)
-        {
-            auto & [_, has_case_folded, pending_ops] =
-                (*context.symbol_table_tries_)[(void *)&p.ref()];
-            has_case_folded = false;
-            pending_ops = !p.pending_operations().empty();
-        }
-
-        template<typename Context, typename Parser>
-        void visit_symbol_table_parsers_impl(
-            Context & context, Parser const & p)
-        {
-            if constexpr (has_parsers_data_member_v<Parser>) {
-                auto visit = [&context](auto & parser) {
-                    detail::visit_symbol_table_parsers_impl(context, parser);
-                };
-                detail::hl::for_each(p.parsers_, visit);
-            } else {
-                detail::visit_symbol_table_parser(context, p);
-            }
-        }
-
-        template<
-            typename Context,
-            typename Parser,
-            typename GlobalState,
-            typename ErrorHandler>
-        void visit_symbol_table_parsers(
-            Context & context,
-            parser_interface<Parser, GlobalState, ErrorHandler> const & p)
-        {
-            detail::visit_symbol_table_parsers_impl(context, p.parser_);
-        }
-
-        template<
-            bool Debug,
-            typename Iter,
-            typename Sentinel,
-            typename Parser,
-            typename Attr,
-            typename ErrorHandler>
-        bool parse_impl(
-            Iter & first,
-            Sentinel last,
-            Parser const & parser,
-            ErrorHandler const & error_handler,
-            Attr & attr)
-        {
-            auto const initial_first = first;
-            bool success = true;
-            int trace_indent = 0;
-            detail::symbol_table_tries_t symbol_table_tries;
-            auto context = detail::make_context<Debug, false>(
-                first,
-                last,
-                success,
-                trace_indent,
-                error_handler,
-                parser.globals_,
-                symbol_table_tries);
-            detail::visit_symbol_table_parsers(context, parser);
-            auto const flags =
-                Debug ? detail::enable_trace(detail::flags::gen_attrs)
-                      : detail::flags::gen_attrs;
-            try {
-                parser(
-                    first,
-                    last,
-                    context,
-                    detail::null_parser{},
-                    flags,
-                    success,
-                    attr);
-                if (Debug)
-                    detail::final_trace(context, flags, attr);
-                return success;
-            } catch (parse_error<Iter> const & e) {
-                if (error_handler(initial_first, last, e) ==
-                    error_handler_result::rethrow) {
-                    throw;
+            ~scoped_apply_pending_symbol_table_operations()
+            {
+                for (auto & [_, entry] : pending_ops_) {
+                    entry.visit_();
                 }
-                return false;
             }
-        }
+
+            pending_symbol_table_operations_t & pending_ops_;
+        };
+
+        template<typename I>
+        constexpr bool is_token_iter_v = is_token_v<iter_value_t<I>>;
 
         template<
             bool Debug,
+            typename Attr,
             typename Iter,
             typename Sentinel,
             typename Parser,
-            typename ErrorHandler>
+            typename SkipParser,
+            typename ErrorHandler,
+            typename TokensView>
         auto parse_impl(
             Iter & first,
             Sentinel last,
             Parser const & parser,
-            ErrorHandler const & error_handler)
-        {
-            auto const initial_first = first;
-            bool success = true;
-            int trace_indent = 0;
-            detail::symbol_table_tries_t symbol_table_tries;
-            auto context = detail::make_context<Debug, false>(
-                first,
-                last,
-                success,
-                trace_indent,
-                error_handler,
-                parser.globals_,
-                symbol_table_tries);
-            detail::visit_symbol_table_parsers(context, parser);
-            auto const flags =
-                Debug ? detail::enable_trace(detail::flags::gen_attrs)
-                      : detail::flags::gen_attrs;
-            using attr_t = typename detail::attribute_impl<
-                BOOST_PARSER_SUBRANGE<std::remove_const_t<Iter>, Sentinel>,
-                Parser>::type;
-            try {
-                attr_t attr_ = parser(
-                    first,
-                    last,
-                    context,
-                    detail::null_parser{},
-                    flags,
-                    success);
-                if (Debug)
-                    detail::final_trace(context, flags, nope{});
-                return detail::make_parse_result(attr_, success);
-            } catch (parse_error<Iter> const & e) {
-                if (error_handler(initial_first, last, e) ==
-                    error_handler_result::rethrow) {
-                    throw;
-                }
-                attr_t attr_{};
-                return detail::make_parse_result(attr_, false);
-            }
-        }
-
-        template<
-            bool Debug,
-            typename Iter,
-            typename Sentinel,
-            typename Parser,
-            typename ErrorHandler,
-            typename Callbacks>
-        bool callback_parse_impl(
-            Iter & first,
-            Sentinel last,
-            Parser const & parser,
-            ErrorHandler const & error_handler,
-            Callbacks const & callbacks)
-        {
-            auto const initial_first = first;
-            bool success = true;
-            int trace_indent = 0;
-            detail::symbol_table_tries_t symbol_table_tries;
-            auto context = detail::make_context<Debug, true>(
-                first,
-                last,
-                success,
-                trace_indent,
-                error_handler,
-                callbacks,
-                parser.globals_,
-                symbol_table_tries);
-            detail::visit_symbol_table_parsers(context, parser);
-            auto const flags =
-                Debug ? detail::enable_trace(detail::flags::gen_attrs)
-                      : detail::flags::gen_attrs;
-            try {
-                parser(
-                    first,
-                    last,
-                    context,
-                    detail::null_parser{},
-                    flags,
-                    success);
-                if (Debug)
-                    detail::final_trace(context, flags, nope{});
-                return success;
-            } catch (parse_error<Iter> const & e) {
-                if (error_handler(initial_first, last, e) ==
-                    error_handler_result::rethrow) {
-                    throw;
-                }
-                return false;
-            }
-        }
-
-        template<
-            bool Debug,
-            typename Iter,
-            typename Sentinel,
-            typename Parser,
-            typename SkipParser,
-            typename Attr,
-            typename ErrorHandler>
-        bool skip_parse_impl(
-            Iter & first,
-            Sentinel last,
-            Parser const & parser,
             SkipParser const & skip,
             ErrorHandler const & error_handler,
-            Attr & attr)
+            Attr attr,
+            TokensView const & tokens_view)
         {
+            constexpr bool have_skipper =
+                !std::is_same_v<SkipParser, detail::null_parser>;
             auto const initial_first = first;
             bool success = true;
             int trace_indent = 0;
             detail::symbol_table_tries_t symbol_table_tries;
+            pending_symbol_table_operations_t pending_symbol_table_operations;
+            scoped_apply_pending_symbol_table_operations apply_pending(
+                pending_symbol_table_operations);
             auto context = detail::make_context<Debug, false>(
                 first,
                 last,
@@ -2450,75 +2390,57 @@ namespace boost { namespace parser {
                 trace_indent,
                 error_handler,
                 parser.globals_,
-                symbol_table_tries);
-            detail::visit_symbol_table_parsers(context, parser);
-            auto const flags =
-                Debug ? detail::enable_trace(detail::default_flags())
-                      : detail::default_flags();
-            detail::skip(first, last, skip, flags);
-            try {
-                parser(first, last, context, skip, flags, success, attr);
+                symbol_table_tries,
+                pending_symbol_table_operations,
+                tokens_view);
+            auto const flags = detail::initial_flags<have_skipper, Debug>();
+            if constexpr (have_skipper)
                 detail::skip(first, last, skip, flags);
-                if (Debug)
-                    detail::final_trace(context, flags, attr);
-                return success;
-            } catch (parse_error<Iter> const & e) {
-                if (error_handler(initial_first, last, e) ==
-                    error_handler_result::rethrow) {
-                    throw;
-                }
-                return false;
-            }
-        }
-
-        template<
-            bool Debug,
-            typename Iter,
-            typename Sentinel,
-            typename Parser,
-            typename SkipParser,
-            typename ErrorHandler>
-        auto skip_parse_impl(
-            Iter & first,
-            Sentinel last,
-            Parser const & parser,
-            SkipParser const & skip,
-            ErrorHandler const & error_handler)
-        {
-            auto const initial_first = first;
-            bool success = true;
-            int trace_indent = 0;
-            detail::symbol_table_tries_t symbol_table_tries;
-            auto context = detail::make_context<Debug, false>(
-                first,
-                last,
-                success,
-                trace_indent,
-                error_handler,
-                parser.globals_,
-                symbol_table_tries);
-            detail::visit_symbol_table_parsers(context, parser);
-            auto const flags =
-                Debug ? detail::enable_trace(detail::default_flags())
-                      : detail::default_flags();
-            detail::skip(first, last, skip, flags);
             using attr_t = typename detail::attribute_impl<
-                BOOST_PARSER_SUBRANGE<std::remove_const_t<Iter>, Sentinel>,
+                std::conditional_t<
+                    is_nope_v<TokensView>,
+                    BOOST_PARSER_SUBRANGE<std::remove_const_t<Iter>, Sentinel>,
+                    TokensView const>,
                 Parser>::type;
             try {
-                attr_t attr_ =
-                    parser(first, last, context, skip, flags, success);
-                detail::skip(first, last, skip, flags);
-                if (Debug)
-                    detail::final_trace(context, flags, nope{});
-                return detail::make_parse_result(attr_, success);
+                if constexpr (std::is_reference_v<Attr>) {
+                    parser(first, last, context, skip, flags, success, attr);
+                    if constexpr (have_skipper)
+                        detail::skip(first, last, skip, flags);
+                    if (Debug)
+                        detail::final_trace(context, flags, attr);
+                    return success;
+                } else {
+                    attr_t attr_ =
+                        parser(first, last, context, skip, flags, success);
+                    if constexpr (have_skipper)
+                        detail::skip(first, last, skip, flags);
+                    if (Debug)
+                        detail::final_trace(context, flags, nope{});
+                    return detail::make_parse_result(attr_, success);
+                }
             } catch (parse_error<Iter> const & e) {
                 if (error_handler(initial_first, last, e) ==
                     error_handler_result::rethrow) {
                     throw;
                 }
-                attr_t attr_{};
-                return detail::make_parse_result(attr_, false);
+                if constexpr (std::is_reference_v<Attr>) {
+                    return false;
+                } else {
+                    attr_t attr_{};
+                    return detail::make_parse_result(attr_, false);
+                }
+            } catch (lex_error<Iter> const & e) {
+                if (error_handler(initial_first, last, e) ==
+                    error_handler_result::rethrow) {
+                    throw;
+                }
+                if constexpr (std::is_reference_v<Attr>) {
+                    return false;
+                } else {
+                    attr_t attr_{};
+                    return detail::make_parse_result(attr_, false);
+                }
             }
         }
 
@@ -2529,19 +2451,26 @@ namespace boost { namespace parser {
             typename Parser,
             typename SkipParser,
             typename ErrorHandler,
-            typename Callbacks>
-        bool callback_skip_parse_impl(
+            typename Callbacks,
+            typename TokensView>
+        auto callback_parse_impl(
             Iter & first,
             Sentinel last,
             Parser const & parser,
             SkipParser const & skip,
             ErrorHandler const & error_handler,
-            Callbacks const & callbacks)
+            Callbacks const & callbacks,
+            TokensView const & tokens_view)
         {
+            constexpr bool have_skipper =
+                !std::is_same_v<SkipParser, detail::null_parser>;
             auto const initial_first = first;
             bool success = true;
             int trace_indent = 0;
             detail::symbol_table_tries_t symbol_table_tries;
+            pending_symbol_table_operations_t pending_symbol_table_operations;
+            scoped_apply_pending_symbol_table_operations apply_pending(
+                pending_symbol_table_operations);
             auto context = detail::make_context<Debug, true>(
                 first,
                 last,
@@ -2550,15 +2479,16 @@ namespace boost { namespace parser {
                 error_handler,
                 callbacks,
                 parser.globals_,
-                symbol_table_tries);
-            detail::visit_symbol_table_parsers(context, parser);
-            auto const flags =
-                Debug ? detail::enable_trace(detail::default_flags())
-                      : detail::default_flags();
-            detail::skip(first, last, skip, flags);
+                symbol_table_tries,
+                pending_symbol_table_operations,
+                tokens_view);
+            auto const flags = detail::initial_flags<have_skipper, Debug>();
+            if constexpr (have_skipper)
+                detail::skip(first, last, skip, flags);
             try {
                 parser(first, last, context, skip, flags, success);
-                detail::skip(first, last, skip, flags);
+                if constexpr (have_skipper)
+                    detail::skip(first, last, skip, flags);
                 if (Debug)
                     detail::final_trace(context, flags, nope{});
                 return success;
@@ -2568,6 +2498,23 @@ namespace boost { namespace parser {
                     throw;
                 }
                 return false;
+            } catch (lex_error<Iter> const & e) {
+                if (error_handler(initial_first, last, e) ==
+                    error_handler_result::rethrow) {
+                    throw;
+                }
+                return false;
+            }
+        }
+
+        template<typename I, typename S>
+        constexpr auto make_input_subrange(I first, S last) noexcept
+        {
+            if constexpr (is_token_iter_v<I>) {
+                return BOOST_PARSER_SUBRANGE(first, last);
+            } else {
+                return BOOST_PARSER_SUBRANGE(first, last) |
+                       detail::text::as_utf32;
             }
         }
 
@@ -2575,35 +2522,28 @@ namespace boost { namespace parser {
         constexpr auto make_input_subrange(R && r) noexcept
         {
             using r_t = remove_cv_ref_t<R>;
-            if constexpr (std::is_pointer_v<r_t>) {
-                using value_type = iter_value_t<r_t>;
+            using value_type = range_value_t<r_t>;
+            if constexpr (is_token_v<value_type>) {
+                return (R &&)r;
+            } else if constexpr (text::detail::is_bounded_array_v<r_t>) {
                 if constexpr (std::is_same_v<value_type, char>) {
-                    return BOOST_PARSER_SUBRANGE(r, text::null_sentinel);
+                    auto first = detail::text::detail::begin(r);
+                    auto last = detail::text::detail::end(r);
+                    if (first != last && !*std::prev(last))
+                        --last;
+                    return BOOST_PARSER_SUBRANGE(first, last);
                 } else {
                     return r | text::as_utf32;
                 }
             } else {
-                using value_type = range_value_t<r_t>;
-                if constexpr (text::detail::is_bounded_array_v<r_t>) {
-                    if constexpr (std::is_same_v<value_type, char>) {
-                        auto first = detail::text::detail::begin(r);
-                        auto last = detail::text::detail::end(r);
-                        if (first != last && !*std::prev(last))
-                            --last;
-                        return BOOST_PARSER_SUBRANGE(first, last);
-                    } else {
-                        return r | text::as_utf32;
-                    }
+                if constexpr (
+                    std::is_same_v<value_type, char> &&
+                    !is_utf8_view<r_t>::value) {
+                    return BOOST_PARSER_SUBRANGE(
+                        detail::text::detail::begin(r),
+                        detail::text::detail::end(r));
                 } else {
-                    if constexpr (
-                        std::is_same_v<value_type, char> &&
-                        !is_utf8_view<r_t>::value) {
-                        return BOOST_PARSER_SUBRANGE(
-                            detail::text::detail::begin(r),
-                            detail::text::detail::end(r));
-                    } else {
-                        return r | text::as_utf32;
-                    }
+                    return r | text::as_utf32;
                 }
             }
         }
@@ -2810,6 +2750,7 @@ namespace boost { namespace parser {
             T * x_;
         };
     }
+
 
 #ifndef BOOST_PARSER_DOXYGEN
 
@@ -4302,6 +4243,12 @@ namespace boost { namespace parser {
                 bool const can_backtrack =
                     parser::get(parser_index_merged_and_backtrack, 3_c);
 
+                if (!can_backtrack) {
+                    if constexpr (detail::is_token_iter_v<Iter>) {
+                        _tokens_view(context).clear_tokens_before(first);
+                    }
+                }
+
                 if (!detail::gen_attrs(flags)) {
                     parser.call(first, last, context, skip, flags, success);
                     if (!success && !can_backtrack) {
@@ -5051,6 +4998,48 @@ namespace boost { namespace parser {
             diagnostic_text_(other.diagnostic_text_)
         {}
 
+        /** Inserts an entry consisting of a UTF-8 string `str` to match, and
+            an associated attribute `x`, to `*this`.  The entry is added for
+            use in all subsequent top-level parses.  Subsequent lookups during
+            the current top-level parse will not necessarily match `str`. */
+        template<typename Context>
+        void insert_for_next_parse(
+            Context const & context, std::string_view str, T x)
+        {
+            auto & pending_ops =
+                detail::get_pending_symtab_ops(context, ref());
+            pending_ops.push_back(detail::symbol_table_operation<T>{
+                std::string(str),
+                std::move(x),
+                detail::symbol_table_op::insert});
+        }
+
+        /** Erases the entry whose UTF-8 match string is `str`, from `*this`.
+            The entry will no longer be available for use in all subsequent
+            top-level parses.  `str` will not be removed from the symbols
+            matched in the current top-level parse. */
+        template<typename Context>
+        void erase_for_next_parse(Context const & context, std::string_view str)
+        {
+            auto & pending_ops =
+                detail::get_pending_symtab_ops(context, ref());
+            pending_ops.push_back(detail::symbol_table_operation<T>{
+                std::string(str),
+                std::nullopt,
+                detail::symbol_table_op::erase});
+        }
+
+        /** Erases all the entries from the copy of the symbol table inside
+            the parse context `context`. */
+        template<typename Context>
+        void clear_for_next_parse(Context const & context)
+        {
+            auto & pending_ops =
+                detail::get_pending_symtab_ops(context, ref());
+            pending_ops.push_back(detail::symbol_table_operation<T>{
+                {}, std::nullopt, detail::symbol_table_op::clear});
+        }
+
         /** Uses UTF-8 string `str` to look up an attribute in the table
             during parsing, returning it as an optional reference.  The lookup
             is done on the copy of the symbol table inside the parse context
@@ -5157,8 +5146,6 @@ namespace boost { namespace parser {
         }
 
         mutable std::vector<std::pair<std::string, T>> initial_elements_;
-        mutable std::vector<detail::symbol_table_operation<T>>
-        pending_operations_;
         symbol_parser const * copied_from_;
 
         symbol_parser const & ref() const noexcept
@@ -5171,11 +5158,6 @@ namespace boost { namespace parser {
         initial_elements() const noexcept
         {
             return ref().initial_elements_;
-        }
-        std::vector<detail::symbol_table_operation<T>> &
-        pending_operations() const noexcept
-        {
-            return ref().pending_operations_;
         }
 
         std::string_view diagnostic_text_;
@@ -5751,20 +5733,14 @@ namespace boost { namespace parser {
                       this->parser_.initial_elements_.begin());
         }
 
-        using parser_interface<symbol_parser<T>>::operator();
-
         /** Inserts an entry consisting of a UTF-8 string `str` to match, and
             an associated attribute `x`, to `*this`.  The entry is added for
             use in all subsequent top-level parses.  Subsequent lookups during
             the current top-level parse will not necessarily match `str`. */
-        symbols & insert_for_next_parse(std::string_view str, T x)
+        void insert_for_next_parse(std::string_view str, T x)
         {
-            this->parser_.pending_operations().push_back(
-                detail::symbol_table_operation<T>{
-                    std::string(str),
-                    std::move(x),
-                    detail::symbol_table_op::insert});
-            return *this;
+            this->parser_.initial_elements_.push_back(
+                std::pair(std::string(str), std::move(x)));
         }
 
         /** Erases the entry whose UTF-8 match string is `str`, from `*this`.
@@ -5773,26 +5749,44 @@ namespace boost { namespace parser {
             matched in the current top-level parse. */
         void erase_for_next_parse(std::string_view str)
         {
-            this->parser_.pending_operations().push_back(
-                detail::symbol_table_operation<T>{
-                    std::string(str),
-                    std::nullopt,
-                    detail::symbol_table_op::erase});
+            auto it = std::find_if(
+                this->parser_.initial_elements_.begin(),
+                this->parser_.initial_elements_.end(),
+                [str](auto const & x) { return x.first == str; });
+            this->parser_.initial_elements_.erase(it);
         }
 
         /** Erases all the entries from the copy of the symbol table inside
             the parse context `context`. */
-        void clear_for_next_parse()
+        void clear_for_next_parse() { this->parser_.initial_elements_.clear(); }
+
+        /** Inserts an entry consisting of a UTF-8 string `str` to match, and
+            an associated attribute `x`, to `*this`.  The entry is added for
+            use in all subsequent top-level parses.  Subsequent lookups during
+            the current top-level parse will not necessarily match `str`. */
+        template<typename Context>
+        void insert_for_next_parse(
+            Context const & context, std::string_view str, T x)
         {
-            this->parser_.pending_operations().push_back(
-                detail::symbol_table_operation<T>{
-                    {}, std::nullopt, detail::symbol_table_op::clear});
+            this->parser_.insert_for_next_parse(context, str, std::move(x));
         }
 
-        /** Equivalent to `insert_for_next_parse(str, std::move(x))`. */
-        symbols & operator()(std::string_view str, T x)
+        /** Erases the entry whose UTF-8 match string is `str`, from `*this`.
+            The entry will no longer be available for use in all subsequent
+            top-level parses.  `str` will not be removed from the symbols
+            matched in the current top-level parse. */
+        template<typename Context>
+        void erase_for_next_parse(Context const & context, std::string_view str)
         {
-            return insert_for_next_parse(str, std::move(x));
+            this->parser_.erase_for_next_parse(context, str);
+        }
+
+        /** Erases all the entries from the copy of the symbol table inside
+            the parse context `context`. */
+        template<typename Context>
+        void clear_for_next_parse(Context const & context)
+        {
+            this->parser_.clear_for_next_parse(context);
         }
 
         /** Uses UTF-8 string `str` to look up an attribute in the table
@@ -5975,7 +5969,7 @@ namespace boost { namespace parser {
             parser(first, last, context, skip, flags, success, retval);        \
         }                                                                      \
     }
-        //]
+    //]
 
 #endif
 
@@ -6114,8 +6108,11 @@ namespace boost { namespace parser {
                 typename Parser::combining_groups>;
             using final_combining_groups = detail::
                 combined_combining_t<combining_groups, parser_combining_groups>;
+            using rhs_backtracking = decltype(detail::hl::prepend(
+                detail::hl::drop_front(typename Parser::backtracking{}),
+                std::bool_constant<AllowBacktracking>{}));
             using backtracking = decltype(detail::hl::concat(
-                BacktrackingTuple{}, typename Parser::backtracking{}));
+                BacktrackingTuple{}, rhs_backtracking{}));
             using parser_t = seq_parser<
                 decltype(detail::hl::concat(parsers_, parser.parser_.parsers_)),
                 backtracking,
@@ -6533,11 +6530,21 @@ namespace boost { namespace parser {
         constexpr char_parser() {}
         constexpr char_parser(Expected expected) : expected_(expected) {}
 
-        template<typename T>
-        using attribute_type = std::conditional_t<
-            std::is_same_v<AttributeType, void>,
-            std::decay_t<T>,
-            AttributeType>;
+        template<typename Iter>
+        static constexpr auto attribute_type_()
+        {
+            if constexpr (!std::is_same_v<AttributeType, void>) {
+                return detail::wrapper<AttributeType>{};
+            } else if constexpr (is_token_v<detail::iter_value_t<Iter>>) {
+                return detail::wrapper<
+                    typename detail::iter_value_t<Iter>::char_type>{};
+            } else {
+                return detail::wrapper<detail::iter_value_t<Iter>>{};
+            }
+        }
+
+        template<typename Iter>
+        using attribute_type = typename decltype(attribute_type_<Iter>())::type;
 
         template<
             typename Iter,
@@ -6550,9 +6557,9 @@ namespace boost { namespace parser {
             Context const & context,
             SkipParser const & skip,
             detail::flags flags,
-            bool & success) const -> attribute_type<decltype(*first)>
+            bool & success) const -> attribute_type<Iter>
         {
-            attribute_type<decltype(*first)> retval{};
+            attribute_type<Iter> retval{};
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -6579,12 +6586,31 @@ namespace boost { namespace parser {
                 success = false;
                 return;
             }
-            attribute_type<decltype(*first)> const x = *first;
-            if (detail::unequal(context, x, expected_)) {
-                success = false;
-                return;
+
+            if constexpr (is_token_v<detail::iter_value_t<Iter>>) {
+                using value_type = detail::iter_value_t<Iter>;
+                using attribute_t = typename value_type::char_type;
+                if ((*first).id() != character_id ||
+                    !(*first).has_long_long()) {
+                    success = false;
+                    return;
+                }
+                char32_t c = (char32_t)(*first).get_long_long();
+                if (detail::unequal(context, c, expected_)) {
+                    success = false;
+                    return;
+                }
+                detail::assign(retval, (attribute_t)c);
+            } else {
+                using attribute_t = attribute_type<Iter>;
+                attribute_t x = 0;
+                x = *first;
+                if (detail::unequal(context, x, expected_)) {
+                    success = false;
+                    return;
+                }
+                detail::assign(retval, x);
             }
-            detail::assign(retval, x);
             ++first;
         }
 
@@ -8502,13 +8528,240 @@ namespace boost { namespace parser {
 
 }}
 
+#if defined(BOOST_PARSER_LEXER_HPP)
+#include <boost/parser/token_parser.hpp>
+#endif
 #include <boost/parser/detail/printing_impl.hpp>
+#include <boost/parser/error_handling.hpp>
 
 namespace boost { namespace parser {
 
     /** An enumeration used for parameters to enable and disable trace in the
         `*parse()` functions. */
     enum class trace { off, on };
+
+    namespace detail {
+
+        template<typename R>
+        auto get_error_handler_iterator(R & r)
+        {
+            if constexpr (is_token_iter_v<detail::iterator_t<R>>) {
+                return detail::text::detail::begin(r).range_begin();
+            } else {
+                return detail::text::detail::begin(r);
+            }
+        }
+
+        template<typename R>
+        auto get_error_handler_sentinel(R & r)
+        {
+            if constexpr (is_token_iter_v<detail::iterator_t<R>>) {
+                return detail::text::detail::begin(r).range_end();
+            } else {
+                return detail::text::detail::begin(r);
+            }
+        }
+
+        template<
+            typename Attr,
+            typename I,
+            typename S,
+            typename Parser,
+            typename SkipParser,
+            typename TokensView>
+        auto prefix_parse_impl(
+            I & first,
+            S last,
+            Parser const & parser,
+            SkipParser const & skip,
+            Attr attr,
+            trace trace_mode,
+            TokensView const & tokens_view)
+        {
+            // TODO: shouldn't this be detail::is_char_iter_v<I> instead?
+            if constexpr (!detail::is_char8_iter_v<I>) {
+                if constexpr (std::is_reference_v<Attr>) {
+                    detail::attr_reset reset(attr);
+                    static_assert(
+                        decltype(detail::has_attribute(first, last, parser)){},
+                        "If you're seeing this error, you're trying to get "
+                        "parse() to fill in attr above, using the attribute "
+                        "generated by parser. However, parser does not "
+                        "generate an attribute.");
+                    if (trace_mode == trace::on) {
+                        return !!(
+                            reset = detail::parse_impl<true, Attr &>(
+                                first,
+                                last,
+                                parser,
+                                skip,
+                                parser.error_handler_,
+                                attr,
+                                tokens_view));
+                    } else {
+                        return !!(
+                            reset = detail::parse_impl<false, Attr &>(
+                                first,
+                                last,
+                                parser,
+                                skip,
+                                parser.error_handler_,
+                                attr,
+                                tokens_view));
+                    }
+                } else {
+                    if (trace_mode == trace::on) {
+                        return detail::parse_impl<true>(
+                            first,
+                            last,
+                            parser,
+                            skip,
+                            parser.error_handler_,
+                            attr,
+                            tokens_view);
+                    } else {
+                        return detail::parse_impl<false>(
+                            first,
+                            last,
+                            parser,
+                            skip,
+                            parser.error_handler_,
+                            attr,
+                            tokens_view);
+                    }
+                }
+            } else {
+                auto r = detail::make_input_subrange(first, last);
+                auto f = r.begin();
+                auto const l = r.end();
+                auto _ = detail::scoped_base_assign(first, f);
+                if constexpr (std::is_reference_v<Attr>) {
+                    detail::attr_reset reset(attr);
+                    static_assert(
+                        decltype(detail::has_attribute(f, l, parser)){},
+                        "If you're seeing this error, you're trying to get "
+                        "parse() to fill in attr above, using the attribute "
+                        "generated by parser. However, parser does not "
+                        "generate an attribute.");
+                    if (trace_mode == trace::on) {
+                        return !!(
+                            reset = detail::parse_impl<true, Attr &>(
+                                f,
+                                l,
+                                parser,
+                                skip,
+                                parser.error_handler_,
+                                attr,
+                                tokens_view));
+                    } else {
+                        return !!(
+                            reset = detail::parse_impl<false, Attr &>(
+                                f,
+                                l,
+                                parser,
+                                skip,
+                                parser.error_handler_,
+                                attr,
+                                tokens_view));
+                    }
+                } else {
+                    if (trace_mode == trace::on) {
+                        return detail::parse_impl<true>(
+                            f,
+                            l,
+                            parser,
+                            skip,
+                            parser.error_handler_,
+                            attr,
+                            tokens_view);
+                    } else {
+                        return detail::parse_impl<false>(
+                            f,
+                            l,
+                            parser,
+                            skip,
+                            parser.error_handler_,
+                            attr,
+                            tokens_view);
+                    }
+                }
+            }
+        }
+
+        template<
+            typename I,
+            typename S,
+            typename Parser,
+            typename SkipParser,
+            typename Callbacks,
+            typename TokensView>
+        auto callback_prefix_parse_impl(
+            I & first,
+            S last,
+            Parser const & parser,
+            SkipParser const & skip,
+            Callbacks const & callbacks,
+            trace trace_mode,
+            TokensView const & tokens_view)
+        {
+            // TODO: shouldn't this be detail::is_char_iter_v<I> instead?
+            if constexpr (!detail::is_char8_iter_v<I>) {
+                if (trace_mode == trace::on) {
+                    return detail::callback_parse_impl<true>(
+                        first,
+                        last,
+                        parser,
+                        skip,
+                        parser.error_handler_,
+                        callbacks,
+                        tokens_view);
+                } else {
+                    return detail::callback_parse_impl<false>(
+                        first,
+                        last,
+                        parser,
+                        skip,
+                        parser.error_handler_,
+                        callbacks,
+                        tokens_view);
+                }
+            } else {
+                auto r = detail::make_input_subrange(first, last);
+                auto f = r.begin();
+                auto const l = r.end();
+                auto _ = detail::scoped_base_assign(first, f);
+                if (trace_mode == trace::on) {
+                    return detail::callback_parse_impl<true>(
+                        f,
+                        l,
+                        parser,
+                        skip,
+                        parser.error_handler_,
+                        callbacks,
+                        tokens_view);
+                } else {
+                    return detail::callback_parse_impl<false>(
+                        f,
+                        l,
+                        parser,
+                        skip,
+                        parser.error_handler_,
+                        callbacks,
+                        tokens_view);
+                }
+            }
+        }
+
+        template<typename R>
+        decltype(auto) tokens_view_or_nope(R & r)
+        {
+            if constexpr (is_token_iter_v<iterator_t<R>>) {
+                return r;
+            } else {
+                return global_nope;
+            }
+        }
+    }
 
     // Parse API.
 
@@ -8554,39 +8807,14 @@ namespace boost { namespace parser {
     // clang-format on
 #endif
     {
-        detail::attr_reset reset(attr);
-        if constexpr (!detail::is_char8_iter_v<I>) {
-            static_assert(
-                decltype(detail::has_attribute(first, last, parser)){},
-                "If you're seeing this error, you're trying to get parse() to "
-                "fill in attr above, using the attribute generated by parser. "
-                "However, parser does not generate an attribute.");
-            if (trace_mode == trace::on) {
-                return reset = detail::parse_impl<true>(
-                           first, last, parser, parser.error_handler_, attr);
-            } else {
-                return reset = detail::parse_impl<false>(
-                           first, last, parser, parser.error_handler_, attr);
-            }
-        } else {
-            auto r =
-                BOOST_PARSER_SUBRANGE(first, last) | detail::text::as_utf32;
-            auto f = r.begin();
-            auto const l = r.end();
-            auto _ = detail::scoped_base_assign(first, f);
-            static_assert(
-                decltype(detail::has_attribute(f, l, parser)){},
-                "If you're seeing this error, you're trying to get parse() to "
-                "fill in attr above, using the attribute generated by parser. "
-                "However, parser does not generate an attribute.");
-            if (trace_mode == trace::on) {
-                return reset = detail::parse_impl<true>(
-                           f, l, parser, parser.error_handler_, attr);
-            } else {
-                return reset = detail::parse_impl<false>(
-                           f, l, parser, parser.error_handler_, attr);
-            }
-        }
+        return detail::prefix_parse_impl<Attr &>(
+            first,
+            last,
+            parser,
+            detail::null_parser{},
+            attr,
+            trace_mode,
+            detail::nope{});
     }
 
     /** Parses `r` using `parser`, and returns whether the parse was
@@ -8631,8 +8859,8 @@ namespace boost { namespace parser {
         // clang-format off
         requires error_handler<
             ErrorHandler,
-            std::ranges::iterator_t<decltype(detail::make_input_subrange(r))>,
-            std::ranges::sentinel_t<decltype(detail::make_input_subrange(r))>,
+            decltype(detail::get_error_handler_iterator(r)),
+            decltype(detail::get_error_handler_sentinel(r)),
             GlobalState> &&
         (!detail::derived_from_parser_interface_v<std::remove_cvref_t<Attr>>)
     // clang-format on
@@ -8645,7 +8873,14 @@ namespace boost { namespace parser {
         return reset = detail::if_full_parse(
                    first,
                    last,
-                   parser::prefix_parse(first, last, parser, attr, trace_mode));
+                   detail::prefix_parse_impl<Attr &>(
+                       first,
+                       last,
+                       parser,
+                       detail::null_parser{},
+                       attr,
+                       trace_mode,
+                       detail::tokens_view_or_nope(r)));
     }
 
     /** Parses `[first, last)` using `parser`.  Returns a `std::optional`
@@ -8679,28 +8914,14 @@ namespace boost { namespace parser {
         parser_interface<Parser, GlobalState, ErrorHandler> const & parser,
         trace trace_mode = trace::off)
     {
-        if constexpr (!detail::is_char8_iter_v<I>) {
-            if (trace_mode == trace::on) {
-                return detail::parse_impl<true>(
-                    first, last, parser, parser.error_handler_);
-            } else {
-                return detail::parse_impl<false>(
-                    first, last, parser, parser.error_handler_);
-            }
-        } else {
-            auto r =
-                BOOST_PARSER_SUBRANGE(first, last) | detail::text::as_utf32;
-            auto f = r.begin();
-            auto const l = r.end();
-            auto _ = detail::scoped_base_assign(first, f);
-            if (trace_mode == trace::on) {
-                return detail::parse_impl<true>(
-                    f, l, parser, parser.error_handler_);
-            } else {
-                return detail::parse_impl<false>(
-                    f, l, parser, parser.error_handler_);
-            }
-        }
+        return detail::prefix_parse_impl(
+            first,
+            last,
+            parser,
+            detail::null_parser{},
+            detail::nope{},
+            trace_mode,
+            detail::nope{});
     }
 
     /** Parses `r` using `parser`.  Returns a `std::optional` containing the
@@ -8738,8 +8959,8 @@ namespace boost { namespace parser {
         // clang-format off
         requires error_handler<
             ErrorHandler,
-            std::ranges::iterator_t<decltype(detail::make_input_subrange(r))>,
-            std::ranges::sentinel_t<decltype(detail::make_input_subrange(r))>,
+            decltype(detail::get_error_handler_iterator(r)),
+            decltype(detail::get_error_handler_sentinel(r)),
             GlobalState>
     // clang-format on
 #endif
@@ -8748,7 +8969,16 @@ namespace boost { namespace parser {
         auto first = r_.begin();
         auto const last = r_.end();
         return detail::if_full_parse(
-            first, last, parser::prefix_parse(first, last, parser, trace_mode));
+            first,
+            last,
+            detail::prefix_parse_impl(
+                first,
+                last,
+                parser,
+                detail::null_parser{},
+                detail::nope{},
+                trace_mode,
+                detail::tokens_view_or_nope(r)));
     }
 
     /** Parses `[first, last)` using `parser`, skipping all input recognized
@@ -8787,49 +9017,8 @@ namespace boost { namespace parser {
         Attr & attr,
         trace trace_mode = trace::off)
     {
-        detail::attr_reset reset(attr);
-        if constexpr (!detail::is_char8_iter_v<I>) {
-            static_assert(
-                decltype(detail::has_attribute(first, last, parser)){},
-                "If you're seeing this error, you're trying to get parse() to "
-                "fill in attr above, using the attribute generated by parser. "
-                "However, parser does not generate an attribute.");
-            if (trace_mode == trace::on) {
-                return reset = detail::skip_parse_impl<true>(
-                           first,
-                           last,
-                           parser,
-                           skip,
-                           parser.error_handler_,
-                           attr);
-            } else {
-                return reset = detail::skip_parse_impl<false>(
-                           first,
-                           last,
-                           parser,
-                           skip,
-                           parser.error_handler_,
-                           attr);
-            }
-        } else {
-            auto r =
-                BOOST_PARSER_SUBRANGE(first, last) | detail::text::as_utf32;
-            auto f = r.begin();
-            auto const l = r.end();
-            auto _ = detail::scoped_base_assign(first, f);
-            static_assert(
-                decltype(detail::has_attribute(f, l, parser)){},
-                "If you're seeing this error, you're trying to get parse() to "
-                "fill in attr above, using the attribute generated by parser. "
-                "However, parser does not generate an attribute.");
-            if (trace_mode == trace::on) {
-                return reset = detail::skip_parse_impl<true>(
-                           f, l, parser, skip, parser.error_handler_, attr);
-            } else {
-                return reset = detail::skip_parse_impl<false>(
-                           f, l, parser, skip, parser.error_handler_, attr);
-            }
-        }
+        return detail::prefix_parse_impl<Attr &>(
+            first, last, parser, skip, attr, trace_mode, detail::nope{});
     }
 
     /** Parses `r` using `parser`, skipping all input recognized by `skip`
@@ -8873,8 +9062,8 @@ namespace boost { namespace parser {
         // clang-format off
         requires error_handler<
             ErrorHandler,
-            std::ranges::iterator_t<decltype(detail::make_input_subrange(r))>,
-            std::ranges::sentinel_t<decltype(detail::make_input_subrange(r))>,
+            decltype(detail::get_error_handler_iterator(r)),
+            decltype(detail::get_error_handler_sentinel(r)),
             GlobalState>
     // clang-format on
 #endif
@@ -8886,8 +9075,14 @@ namespace boost { namespace parser {
         return reset = detail::if_full_parse(
                    first,
                    last,
-                   parser::prefix_parse(
-                       first, last, parser, skip, attr, trace_mode));
+                   detail::prefix_parse_impl<Attr &>(
+                       first,
+                       last,
+                       parser,
+                       skip,
+                       attr,
+                       trace_mode,
+                       detail::tokens_view_or_nope(r)));
     }
 
     /** Parses `[first, last)` using `parser`, skipping all input recognized
@@ -8923,28 +9118,14 @@ namespace boost { namespace parser {
         parser_interface<SkipParser> const & skip,
         trace trace_mode = trace::off)
     {
-        if constexpr (!detail::is_char8_iter_v<I>) {
-            if (trace_mode == trace::on) {
-                return detail::skip_parse_impl<true>(
-                    first, last, parser, skip, parser.error_handler_);
-            } else {
-                return detail::skip_parse_impl<false>(
-                    first, last, parser, skip, parser.error_handler_);
-            }
-        } else {
-            auto r =
-                BOOST_PARSER_SUBRANGE(first, last) | detail::text::as_utf32;
-            auto f = r.begin();
-            auto const l = r.end();
-            auto _ = detail::scoped_base_assign(first, f);
-            if (trace_mode == trace::on) {
-                return detail::skip_parse_impl<true>(
-                    f, l, parser, skip, parser.error_handler_);
-            } else {
-                return detail::skip_parse_impl<false>(
-                    f, l, parser, skip, parser.error_handler_);
-            }
-        }
+        return detail::prefix_parse_impl(
+            first,
+            last,
+            parser,
+            skip,
+            detail::nope{},
+            trace_mode,
+            detail::nope{});
     }
 
     /** Parses `r` using `parser`, skipping all input recognized by `skip`
@@ -8985,8 +9166,8 @@ namespace boost { namespace parser {
         // clang-format off
         requires error_handler<
             ErrorHandler,
-            std::ranges::iterator_t<decltype(detail::make_input_subrange(r))>,
-            std::ranges::sentinel_t<decltype(detail::make_input_subrange(r))>,
+            decltype(detail::get_error_handler_iterator(r)),
+            decltype(detail::get_error_handler_sentinel(r)),
             GlobalState>
     // clang-format on
 #endif
@@ -8997,7 +9178,14 @@ namespace boost { namespace parser {
         return detail::if_full_parse(
             first,
             last,
-            parser::prefix_parse(first, last, parser, skip, trace_mode));
+            detail::prefix_parse_impl(
+                first,
+                last,
+                parser,
+                skip,
+                detail::nope{},
+                trace_mode,
+                detail::tokens_view_or_nope(r)));
     }
 
     /** Parses `[first, last)` using `parser`, and returns whether the parse
@@ -9037,28 +9225,14 @@ namespace boost { namespace parser {
         Callbacks const & callbacks,
         trace trace_mode = trace::off)
     {
-        if constexpr (!detail::is_char8_iter_v<I>) {
-            if (trace_mode == trace::on) {
-                return detail::callback_parse_impl<true>(
-                    first, last, parser, parser.error_handler_, callbacks);
-            } else {
-                return detail::callback_parse_impl<false>(
-                    first, last, parser, parser.error_handler_, callbacks);
-            }
-        } else {
-            auto r =
-                BOOST_PARSER_SUBRANGE(first, last) | detail::text::as_utf32;
-            auto f = r.begin();
-            auto const l = r.end();
-            auto _ = detail::scoped_base_assign(first, f);
-            if (trace_mode == trace::on) {
-                return detail::callback_parse_impl<true>(
-                    f, l, parser, parser.error_handler_, callbacks);
-            } else {
-                return detail::callback_parse_impl<false>(
-                    f, l, parser, parser.error_handler_, callbacks);
-            }
-        }
+        return detail::callback_prefix_parse_impl(
+            first,
+            last,
+            parser,
+            detail::null_parser{},
+            callbacks,
+            trace_mode,
+            detail::nope{});
     }
 
     /** Parses `r` using `parser`, and returns whether the parse was
@@ -9103,8 +9277,8 @@ namespace boost { namespace parser {
         // clang-format off
         requires error_handler<
             ErrorHandler,
-            std::ranges::iterator_t<decltype(detail::make_input_subrange(r))>,
-            std::ranges::sentinel_t<decltype(detail::make_input_subrange(r))>,
+            decltype(detail::get_error_handler_iterator(r)),
+            decltype(detail::get_error_handler_sentinel(r)),
             GlobalState>
     // clang-format on
 #endif
@@ -9115,7 +9289,14 @@ namespace boost { namespace parser {
         return detail::if_full_parse(
             first,
             last,
-            parser::callback_prefix_parse(first, last, parser, callbacks));
+            detail::callback_prefix_parse_impl(
+                first,
+                last,
+                parser,
+                detail::null_parser{},
+                callbacks,
+                trace_mode,
+                detail::tokens_view_or_nope(r)));
     }
 
     /** Parses `[first, last)` using `parser`, skipping all input recognized
@@ -9159,38 +9340,8 @@ namespace boost { namespace parser {
         Callbacks const & callbacks,
         trace trace_mode = trace::off)
     {
-        if constexpr (!detail::is_char8_iter_v<I>) {
-            if (trace_mode == trace::on) {
-                return detail::callback_skip_parse_impl<true>(
-                    first,
-                    last,
-                    parser,
-                    skip,
-                    parser.error_handler_,
-                    callbacks);
-            } else {
-                return detail::callback_skip_parse_impl<false>(
-                    first,
-                    last,
-                    parser,
-                    skip,
-                    parser.error_handler_,
-                    callbacks);
-            }
-        } else {
-            auto r =
-                BOOST_PARSER_SUBRANGE(first, last) | detail::text::as_utf32;
-            auto f = r.begin();
-            auto const l = r.end();
-            auto _ = detail::scoped_base_assign(first, f);
-            if (trace_mode == trace::on) {
-                return detail::callback_skip_parse_impl<true>(
-                    f, l, parser, skip, parser.error_handler_, callbacks);
-            } else {
-                return detail::callback_skip_parse_impl<false>(
-                    f, l, parser, skip, parser.error_handler_, callbacks);
-            }
-        }
+        return detail::callback_prefix_parse_impl(
+            first, last, parser, skip, callbacks, trace_mode, detail::nope{});
     }
 
     /** Parses `r` using `parser`, skipping all input recognized by `skip`
@@ -9239,8 +9390,8 @@ namespace boost { namespace parser {
         // clang-format off
         requires error_handler<
             ErrorHandler,
-            std::ranges::iterator_t<decltype(detail::make_input_subrange(r))>,
-            std::ranges::sentinel_t<decltype(detail::make_input_subrange(r))>,
+            decltype(detail::get_error_handler_iterator(r)),
+            decltype(detail::get_error_handler_sentinel(r)),
             GlobalState>
     // clang-format on
 #endif
@@ -9251,8 +9402,14 @@ namespace boost { namespace parser {
         return detail::if_full_parse(
             first,
             last,
-            parser::callback_prefix_parse(
-                first, last, parser, skip, callbacks, trace_mode));
+            detail::callback_prefix_parse_impl(
+                first,
+                last,
+                parser,
+                skip,
+                callbacks,
+                trace_mode,
+                detail::tokens_view_or_nope(r)));
     }
 
     namespace literals {
@@ -9327,7 +9484,9 @@ namespace boost { namespace parser {
                 std::declval<int &>(),
                 std::declval<error_handler_type>(),
                 std::declval<global_state_type &>(),
-                std::declval<detail::symbol_table_tries_t &>()));
+                std::declval<detail::symbol_table_tries_t &>(),
+                std::declval<detail::pending_symbol_table_operations_t &>(),
+                detail::tokens_view_or_nope(std::declval<R &>())));
             using type = decltype(std::declval<Parser>()(
                 std::declval<iterator &>(),
                 std::declval<sentinel>(),

@@ -34,12 +34,7 @@ int main()
 }
 ```
 
-This library is header-only, and has a default dependency on Boost.Hana.  The
-Boost.Hana dependency can be eliminated, and `std::tuple` will be used instead
-of `boost::hana::tuple` throughout the library, if you `#define`
-`BOOST_PARSER_DISABLE_HANA_TUPLE`.  To try out the lib without mseeing with
-dependencies, add its `include/` dir as an include path in your build and
-define `BOOST_PARSER_DISABLE_HANA_TUPLE` your build.
+This library is header-only, and has no Boost dependencies by default.
 
 Features:
 
@@ -52,9 +47,7 @@ Features:
 - Trace support for debugging your parsers.
 - Clever hacks to make compile time errors easier to deal with.  (These are totally optional.)
 
-This library targets submission to Boost.
-
-Online docs: https://tzlaine.github.io/parser
+This library first appeared in Boost 1.87.0
 
 Master status:
 

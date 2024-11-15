@@ -228,7 +228,9 @@ constexpr auto double_s = u8"sS";       // U+0073 U+0073
     // with mutation
     {
         symbols<int> roman_numerals;
-        roman_numerals.insert_for_next_parse("I", 1)("V", 5)("X", 10);
+        roman_numerals.insert_for_next_parse("I", 1);
+        roman_numerals.insert_for_next_parse("V", 5);
+        roman_numerals.insert_for_next_parse("X", 10);
         auto const add_numeral = [&roman_numerals](auto & context) {
             using namespace boost::parser::literals;
             char chars[2] = {get(_attr(context), 0_c), 0};

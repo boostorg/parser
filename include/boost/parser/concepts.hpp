@@ -12,6 +12,8 @@
 
 #if defined(BOOST_PARSER_DOXYGEN) || BOOST_PARSER_USE_CONCEPTS
 
+#include <boost/parser/lexer_fwd.hpp>
+
 #include <ranges>
 
 
@@ -32,8 +34,9 @@ namespace boost { namespace parser {
 
     //[ parsable_range_like_concept
     template<typename T>
-    concept parsable_range = std::ranges::forward_range<T> &&
-        code_unit<std::ranges::range_value_t<T>>;
+    concept parsable_range = (std::ranges::forward_range<T> &&
+                              code_unit<std::ranges::range_value_t<T>>) ||
+                             detail::is_tokens_view_v<T>;
 
     template<typename T>
     concept parsable_pointer = std::is_pointer_v<std::remove_cvref_t<T>> &&
@@ -58,7 +61,8 @@ namespace boost { namespace parser {
         std::declval<int &>(),
         std::declval<ErrorHandler const &>(),
         std::declval<detail::nope &>(),
-        std::declval<detail::symbol_table_tries_t &>()));
+        std::declval<detail::symbol_table_tries_t &>(),
+        std::declval<detail::pending_symbol_table_operations_t &>()));
 
     template<typename T, typename I, typename S, typename GlobalState>
     concept error_handler =

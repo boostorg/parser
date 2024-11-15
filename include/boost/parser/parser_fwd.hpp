@@ -11,6 +11,7 @@
 
 #include <any>
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <memory>
 #include <optional>
@@ -67,6 +68,12 @@ namespace boost { namespace parser {
         return BOOST_PARSER_SUBRANGE(ptr, detail::text::null_sentinel);
     }
 
+    /** The token ID used for whitespace tokens. */
+    inline constexpr int ws_id = -1000000;
+
+    /** The token ID used for single-character tokens. */
+    inline constexpr int character_id = -2000000;
+
     namespace detail {
         template<typename T>
         constexpr bool is_optional_v = enable_optional<T>;
@@ -84,11 +91,23 @@ namespace boost { namespace parser {
         {
             std::any trie_;
             bool has_case_folded_;
-            bool pending_operations_;
         };
 
         using symbol_table_tries_t =
             std::map<void *, symbol_table_trie_element, std::less<void *>>;
+
+        using pending_symtab_ops_visitor = std::function<void()>;
+        struct pending_symtab_ops_entry
+        {
+            pending_symtab_ops_visitor visit_;
+            // Contains std::vector<detail::symbol_table_operation<T>> (T is
+            // known to visit_).
+            std::any ops_;
+        };
+        using pending_symbol_table_operations_t = std::map<
+            void const *,
+            pending_symtab_ops_entry,
+            std::less<void const *>>;
 
         template<
             bool DoTrace,
@@ -103,7 +122,9 @@ namespace boost { namespace parser {
             int & indent,
             ErrorHandler const & error_handler,
             nope &,
-            symbol_table_tries_t & symbol_table_tries) noexcept;
+            symbol_table_tries_t & symbol_table_tries,
+            pending_symbol_table_operations_t &
+                pending_symbol_table_operations) noexcept;
 
         struct skip_skipper;
 
@@ -132,6 +153,15 @@ namespace boost { namespace parser {
         {};
         struct upper_case_chars
         {};
+
+        struct any_token_value
+        {
+            template<typename T>
+            bool matches_value(T) const
+            {
+                return true;
+            }
+        };
     }
 
     /** Repeats the application of another parser `p` of type `Parser`,
@@ -412,6 +442,16 @@ namespace boost { namespace parser {
         `T`. */
     template<typename T>
     struct float_parser;
+
+    /** A tag type used to represent a value type that is any specialization
+        of `std::basic_string_view`.  Which specialization is used depends on
+        the input. */
+    struct string_view_tag
+    {};
+
+    /** TODO */
+    template<typename TokenSpec, typename Expected>
+    struct token_parser;
 
     /** Applies at most one of the parsers in `OrParser`.  If `switch_value_`
         matches one or more of the values in the parsers in `OrParser`, the

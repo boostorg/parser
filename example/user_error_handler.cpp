@@ -31,9 +31,9 @@ struct logging_error_handler
     // and rethrow.  Returning fail fails the top-level parse; returning
     // rethrow just re-throws the parse_error exception that got us here in
     // the first place.
-    template<typename Iter, typename Sentinel>
+    template<typename Iter, typename Sentinel, template<class> class Exception>
     bp::error_handler_result
-    operator()(Iter first, Sentinel last, bp::parse_error<Iter> const & e) const
+    operator()(Iter first, Sentinel last, Exception<Iter> const & e) const
     {
         bp::write_formatted_expectation_failure_error_message(
             ofs_, filename_, first, last, e);

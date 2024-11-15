@@ -1126,23 +1126,11 @@ the second `'X'` is recognized by the symbol table parser.  However:
 
 If we parse again, we find that `"X"` did not stay in the symbol table.  The
 fact that `symbols` was declared const might have given you a hint that this
-would happen.  Also, notice that the call to `insert()` in the semantic action
-uses the parse context; that's where all the symbol table changes are stored
-during the parse.
+would happen.
 
 The full program:
 
 [self_filling_symbol_table_example]
-
-[tip _symbols_ also has a call operator that does exactly what
-`.insert_for_next_parse()` does.  This allows you to chain additions with a
-convenient syntax, like this:
-
-```
-    symbols<int> roman_numerals;
-    roman_numerals.insert_for_next_parse("I", 1)("V", 5)("X", 10);
-```
-]
 
 [important _symbols_ stores all its strings in UTF-32 internally.  If you do
 Unicode or ASCII parsing, this will not matter to you at all.  If you do
@@ -1162,6 +1150,11 @@ the symbol table entirely.  Just as with insertion, there are versions of
 erase and clear for the current parse, and another that applies only to
 subsequent parses.  The full set of operations can be found in the _symbols_
 API docs.
+
+[mpte There are two versions of each of the _symbols_ `*_for_next_parse()`
+functions _emdash_ one that takes a context, and one that does not.  The one
+with the context is meant to be used within a semantic action.  The one
+without the context is for use outside of any parse.]
 
 [endsect]
 

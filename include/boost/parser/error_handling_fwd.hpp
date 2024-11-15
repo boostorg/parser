@@ -24,10 +24,29 @@ namespace boost { namespace parser {
     template<typename Iter>
     struct parse_error : std::runtime_error
     {
-        parse_error(Iter it, std::string const & msg) :
-            runtime_error(msg), iter(it)
+        parse_error(Iter it, std::string msg) :
+            runtime_error(""), message(msg), iter(it)
         {}
 
+        char const * what() const noexcept override { return message.c_str(); }
+
+        std::string message;
+        Iter iter;
+    };
+
+    /** The exception thrown when a lexing error is encountered, consisting of
+        an iterator to the point of failure, and a description of the value
+        expected at the point of failure in `what()`. */
+    template<typename Iter>
+    struct lex_error : std::runtime_error
+    {
+        lex_error(Iter it, std::string msg) :
+            runtime_error(""), message(msg), iter(it)
+        {}
+
+        char const * what() const noexcept override { return message.c_str(); }
+
+        std::string message;
         Iter iter;
     };
 
@@ -71,13 +90,13 @@ namespace boost { namespace parser {
 
     /** Writes a formatted parse-expectation failure (meaning prefixed with
         the file name, line, and column number) to `os`. */
-    template<typename Iter, typename Sentinel>
+    template<typename Iter, typename Sentinel, template<class> class Exception>
     std::ostream & write_formatted_expectation_failure_error_message(
         std::ostream & os,
         std::string_view filename,
         Iter first,
         Sentinel last,
-        parse_error<Iter> const & e,
+        Exception<Iter> const & e,
         int64_t preferred_max_line_length = 80,
         int64_t max_after_caret = 40);
 
@@ -85,16 +104,31 @@ namespace boost { namespace parser {
     /** Writes a formatted parse-expectation failure (meaning prefixed with
         the file name, line, and column number) to `os`.  This overload is
         Windows-only. */
-    template<typename Iter, typename Sentinel>
+    template<typename Iter, typename Sentinel, template<class> class Exception>
     std::ostream & write_formatted_expectation_failure_error_message(
         std::ostream & os,
         std::wstring_view filename,
         Iter first,
         Sentinel last,
-        parse_error<Iter> const & e,
+        Exception<Iter> const & e,
         int64_t preferred_max_line_length = 80,
         int64_t max_after_caret = 40);
 #endif
+
+    /** TODO: Document that users may need to use this if they make their own
+        error handlers and do token parsing. */
+    template<typename I, typename S>
+    auto normalize_iterators(I first, I curr, S last);
+
+    /** TODO: Document that users may need to use this if they make their own
+        error handlers and do token parsing. */
+    template<typename I, typename S>
+    auto normalize_iterators(I first, parse_error<I> e, S last);
+
+    /** TODO: Document that users may need to use this if they make their own
+        error handlers and do token parsing. */
+    template<typename I, typename S>
+    auto normalize_iterators(I first, lex_error<I> e, S last);
 
     /** The kinds of diagnostics that can be handled by an error handler. */
     enum class diagnostic_kind {
@@ -109,12 +143,16 @@ namespace boost { namespace parser {
     {
         constexpr default_error_handler() = default;
 
-        /** Handles a `parse_error` exception thrown during parsing.  A
-            formatted parse-expectation failure is printed to `std::cerr`.
-            Always returns `error_handler_result::fail`. */
-        template<typename Iter, typename Sentinel>
-        error_handler_result operator()(
-            Iter first, Sentinel last, parse_error<Iter> const & e) const;
+        /** Handles a `parse_error` or `lex_error` exception thrown during
+            parsing/lexing.  A formatted parse-expectation failure is printed
+            to `std::cerr`.  Always returns `error_handler_result::fail`. */
+        template<
+            typename Iter,
+            typename Sentinel,
+            template<class>
+            class Exception>
+        error_handler_result
+        operator()(Iter first, Sentinel last, Exception<Iter> const & e) const;
 
         /** Prints `message` to `std::cerr`.  The diagnostic is printed with
             the given `kind`, indicating the location as being at `it`.  This
@@ -191,9 +229,13 @@ namespace boost { namespace parser {
             formatted parse-expectation failure is printed to `*err_os_` when
             `err_os_` is non-null, or `std::cerr` otherwise.  Always returns
             `error_handler_result::fail`. */
-        template<typename Iter, typename Sentinel>
+        template<
+            typename Iter,
+            typename Sentinel,
+            template<class>
+            class Exception>
         error_handler_result
-        operator()(Iter first, Sentinel last, parse_error<Iter> const & e) const;
+        operator()(Iter first, Sentinel last, Exception<Iter> const & e) const;
 
         /** Let `std::ostream * s = kind == diagnostic_kind::error : err_os_ :
             warn_os_`; prints `message` to `*s` when `s` is non-null, or
@@ -224,6 +266,16 @@ namespace boost { namespace parser {
         std::ostream * err_os_;
         std::ostream * warn_os_;
     };
+
+    /** An error handler that just re-throws any exception generated by the
+        parse. */
+    struct rethrow_error_handler;
+
+#if defined(_MSC_VER) || defined(BOOST_PARSER_DOXYGEN)
+    /** An error handler that prints to the Visual Studio debugger via calls
+        to `OutputDebugString()`. */
+    struct vs_output_error_handler;
+#endif
 
 }}
 

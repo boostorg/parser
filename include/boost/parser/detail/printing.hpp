@@ -355,6 +355,13 @@ namespace boost { namespace parser { namespace detail {
         std::ostream & os,
         int components = 0);
 
+    template<typename Context, typename TokenSpec, typename Expected>
+    void print_parser(
+        Context const & context,
+        token_parser<TokenSpec, Expected> const & parser,
+        std::ostream & os,
+        int components = 0);
+
     enum { trace_indent_factor = 2 };
 
     inline void trace_indent(std::ostream & os, int indent)
@@ -602,29 +609,19 @@ namespace boost { namespace parser { namespace detail {
             Context const & context,
             flags f,
             Attribute const & attr,
-            std::string name) :
-            os_(os),
-            initial_first_(first),
-            first_(first),
-            last_(last),
-            context_(context),
-            flags_(f),
-            attr_(attr),
-            name_(std::move(name))
-        {
-            if (!detail::do_trace(flags_))
-                return;
-            detail::trace_prefix(os, first_, last_, context_, name_);
-        }
+            std::string name);
+        ~scoped_trace_t();
+        // implemented in printing_impl.hpp
 
-        ~scoped_trace_t()
+        template<typename I, typename S>
+        void impl(I initial_first, I first, S last)
         {
             if (!detail::do_trace(flags_))
                 return;
             detail::trace_indent(os_, detail::_indent(context_));
             if (*context_.pass_) {
                 os_ << "matched ";
-                detail::trace_input(os_, initial_first_, first_);
+                detail::trace_input(os_, initial_first, first);
                 os_ << "\n";
                 detail::print_attribute(
                     os_,
@@ -633,7 +630,7 @@ namespace boost { namespace parser { namespace detail {
             } else {
                 os_ << "no match\n";
             }
-            detail::trace_suffix(os_, first_, last_, context_, name_);
+            detail::trace_suffix(os_, first, last, context_, name_);
         }
 
         std::ostream & os_;

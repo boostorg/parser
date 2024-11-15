@@ -693,12 +693,14 @@ namespace boost::parser::detail { namespace text {
             using T = detail::remove_cv_ref_t<R>;
             if constexpr (forward_range_v<T>) {
                 auto unpacked =
-                    boost::parser::detail::text::unpack_iterator_and_sentinel(detail::begin(r), detail::end(r));
+                    boost::parser::detail::text::unpack_iterator_and_sentinel(
+                        detail::begin(r), detail::end(r));
                 if constexpr (is_bounded_array_v<T>) {
                     constexpr auto n = std::extent_v<T>;
                     if (n && !r[n - 1])
                         --unpacked.last;
-                    return BOOST_PARSER_DETAIL_TEXT_SUBRANGE(unpacked.first, unpacked.last);
+                    return BOOST_PARSER_DETAIL_TEXT_SUBRANGE(
+                        unpacked.first, unpacked.last);
                 } else if constexpr (
                     !std::is_same_v<decltype(unpacked.first), iterator_t<R>> ||
                     !std::is_same_v<decltype(unpacked.last), sentinel_t<R>>) {

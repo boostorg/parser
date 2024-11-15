@@ -10,6 +10,12 @@
 
 using namespace boost::parser;
 
+rule<class symbol_rule, std::string_view> const symrule = "symbols";
+symbols<std::string_view> rule_symbols;
+auto const fwd_attr = [](auto & ctx) { _val(ctx) = _attr(ctx); };
+auto symrule_def = rule_symbols[fwd_attr];
+BOOST_PARSER_DEFINE_RULES(symrule);
+
 int main()
 {
 // symbols_empty
@@ -137,7 +143,9 @@ int main()
 // symbols_mutating
 {
     symbols<int> roman_numerals;
-    roman_numerals.insert_for_next_parse("I", 1)("V", 5)("X", 10);
+    roman_numerals.insert_for_next_parse("I", 1);
+    roman_numerals.insert_for_next_parse("V", 5);
+    roman_numerals.insert_for_next_parse("X", 10);
     auto const add_numeral = [&roman_numerals](auto & context) {
         using namespace boost::parser::literals;
         char chars[2] = {get(_attr(context), 0_c), 0};
@@ -166,7 +174,9 @@ int main()
 // insert/erase/clear
 {
     symbols<int> roman_numerals;
-    roman_numerals.insert_for_next_parse("I", 1)("V", 5)("X", 10);
+    roman_numerals.insert_for_next_parse("I", 1);
+    roman_numerals.insert_for_next_parse("V", 5);
+    roman_numerals.insert_for_next_parse("X", 10);
 
     auto const insert_numeral = [&roman_numerals](auto & context) {
         using namespace boost::parser::literals;
@@ -189,15 +199,16 @@ int main()
     auto const next_insert_numeral = [&roman_numerals](auto & context) {
         using namespace boost::parser::literals;
         char chars[2] = {get(_attr(context), 0_c), 0};
-        roman_numerals.insert_for_next_parse(chars, get(_attr(context), 1_c));
+        roman_numerals.insert_for_next_parse(
+            context, chars, get(_attr(context), 1_c));
     };
     auto const next_erase_numeral = [&roman_numerals](auto & context) {
         using namespace boost::parser::literals;
         char chars[2] = {_attr(context), 0};
-        roman_numerals.erase_for_next_parse(chars);
+        roman_numerals.erase_for_next_parse(context, chars);
     };
-    auto const next_clear_numerals = [&roman_numerals](auto &) {
-        roman_numerals.clear_for_next_parse();
+    auto const next_clear_numerals = [&roman_numerals](auto & context) {
+        roman_numerals.clear_for_next_parse(context);
     };
 
     auto const next_add_parser =
@@ -217,7 +228,7 @@ int main()
     {
         // add only for the next parse
         auto result = parse("next-addL50L", next_add_parser >> roman_numerals);
-        BOOST_TEST(!result); // TODO
+        BOOST_TEST(!result);
 
         result = parse("L", roman_numerals);
         BOOST_TEST(result);
@@ -273,8 +284,8 @@ int main()
         BOOST_TEST(*parse("V", roman_numerals) == 5);
 
         auto result = parse("next-delVV", next_delete_parser >> roman_numerals);
-        BOOST_TEST(result);       // TODO
-        BOOST_TEST(*result == 5); // TODO
+        BOOST_TEST(result);
+        BOOST_TEST(*result == 5);
 
         result = parse("V", roman_numerals);
         BOOST_TEST(!result);
@@ -326,11 +337,67 @@ int main()
         BOOST_TEST(*parse("L", roman_numerals) == 50);
 
         auto result = parse("next-clearI", next_clear_parser >> roman_numerals);
-        BOOST_TEST(result);       // TODO
-        BOOST_TEST(*result == 1); // TODO
+        BOOST_TEST(result);
+        BOOST_TEST(*result == 1);
 
         BOOST_TEST(!parse("I", roman_numerals));
         BOOST_TEST(!parse("L", roman_numerals));
+    }
+
+    {
+        // parse using symbols directly -- not using the table within a rule
+        rule_symbols.clear_for_next_parse();
+        rule_symbols.insert_for_next_parse("I", "one");
+        rule_symbols.insert_for_next_parse("L", "50");
+
+        auto result = parse("I", rule_symbols);
+        BOOST_TEST(result);
+        BOOST_TEST(*result == "one");
+
+        result = parse("L", rule_symbols);
+        BOOST_TEST(result);
+        BOOST_TEST(*result == "50");
+
+        BOOST_TEST(!parse("X", rule_symbols));
+    }
+
+    {
+        // symbols within a rule
+        rule_symbols.clear_for_next_parse();
+        rule_symbols.insert_for_next_parse("foo", "foofie");
+        rule_symbols.insert_for_next_parse("bar", "barrie");
+
+        auto result = parse("foo", symrule);
+        BOOST_TEST(result);
+        BOOST_TEST(*result == "foofie");
+
+        result = parse("bar", symrule);
+        BOOST_TEST(result);
+        BOOST_TEST(*result == "barrie");
+
+        BOOST_TEST(!parse("X", symrule));
+        BOOST_TEST(!parse("I", symrule));
+    }
+
+    {
+        // symbols within a rule w/error handler
+        rule_symbols.clear_for_next_parse();
+        rule_symbols.insert_for_next_parse("foo", "foofie");
+        rule_symbols.insert_for_next_parse("bar", "barrie");
+
+        callback_error_handler error_handler(
+            [](std::string_view m) { std::cout << m << "\n"; });
+        auto parser = with_error_handler(symrule, error_handler);
+
+        auto result = parse("foo", parser);
+        BOOST_TEST(result);
+        BOOST_TEST(*result == "foofie");
+
+        result = parse("bar", parser);
+        BOOST_TEST(result);
+        BOOST_TEST(*result == "barrie");
+
+        BOOST_TEST(!parse("baz", parser));
     }
 }
 

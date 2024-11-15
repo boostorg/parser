@@ -72,6 +72,17 @@ int main()
         auto r = "some input" | bp::to_tokens(adobe_lexer);
         auto result = bp::parse(r, parser);
         BOOST_TEST(!result);
+
+        static_assert(!std::same_as<
+                      std::remove_cvref_t<
+                          decltype(bp::detail::tokens_view_or_nope(r))>,
+                      bp::detail::nope>);
+
+        auto const & cr = r;
+        static_assert(!std::same_as<
+                      std::remove_cvref_t<
+                          decltype(bp::detail::tokens_view_or_nope(cr))>,
+                      bp::detail::nope>);
     }
     {
         // TODO: Document the idiom that you should use enumerations for the
@@ -84,6 +95,24 @@ int main()
         BOOST_TEST(result);
         BOOST_TEST(std::get<0>(*result) == "foo");
         BOOST_TEST(std::get<1>(*result) == false);
+    }
+
+    // Test the use of an external token cache.
+    {
+        auto parser = identifier >> '=' >> true_false >> ';';
+        std::vector<bp::token<char>> cache;
+        auto r = "foo = false;" | bp::to_tokens(adobe_lexer, std::ref(cache));
+        bp::parse(r, parser);
+        BOOST_TEST(cache.size() == 4u);
+    }
+
+    // Test the clearing of the token cache at expectation points.
+    {
+        auto parser = identifier >> '=' > true_false >> ';';
+        std::vector<bp::token<char>> cache;
+        auto r = "foo = false;" | bp::to_tokens(adobe_lexer, std::ref(cache));
+        bp::parse(r, parser);
+        BOOST_TEST(cache.size() == 2u);
     }
 
     return boost::report_errors();

@@ -54,6 +54,12 @@ namespace boost { namespace parser {
             template<typename CharType>
             bool matches(std::basic_string_view<CharType> value) const
             {
+                // TODO: this is wrong, maybe.  Can we transcode both sides to
+                // UTF-32?  We have a problem that the usual opt-in is not
+                // available; you cannot specify the input in terms of
+                // utfN_view.  Maybe if CharType is not char, we do the
+                // transcoding?  Try it that way, write some tests, and
+                // consider whether this is a good idea.
                 return std::ranges::equal(value, value_);
             }
 
@@ -184,6 +190,12 @@ namespace boost { namespace parser {
             return parser_interface(
                 token_parser<token_spec, decltype(expected)>(expected));
         }
+
+        // TODO: Consider adding a special string_view-like type that can be
+        // passed to the range overload above.  It would be based on
+        // adobe::name_t.  When comparing it to a tokens' string_view, if it
+        // matches, it would replace the token's string_view, so that
+        // subsequent comparisons are O(1) in the length of the string.
 
         Expected expected_;
     };

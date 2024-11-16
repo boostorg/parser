@@ -595,3 +595,194 @@ same attribute generation rules.
     [[`p1 | p2[a] | p3`]             [`std::optional<std::variant<_ATTR_np_(p1), _ATTR_np_(p3)>>`]]
 ]
 ]
+
+[template table_token_parsers_and_their_semantics
+This table lists all the _Parser_ parsers usable during token parsing.  For
+the callable parsers, a separate entry exists for each possible arity of
+arguments.  For a parser `p`, if there is no entry for `p` without arguments,
+`p` is a function, and cannot itself be used as a parser; it must be called.
+In the table below:
+
+* each entry is a global object usable directly in your parsers, unless
+  otherwise noted;
+
+* "code point" is used to refer to the elements of the input range, which
+  assumes that the parse is being done in the Unicode-aware code path (if the
+  parse is being done in the non-Unicode code path, read "code point" as
+  "`char`");
+
+* _RES_ is a notional macro that expands to the resolution of parse argument
+  or evaluation of a parse predicate (see _parsers_uses_);
+
+* "`_RES_np_(pred) == true`" is a shorthand notation for "`_RES_np_(pred)` is
+  contextually convertible to `bool` and `true`"; likewise for `false`;
+
+* `c` is a character of some character type;
+
+* `str` is a string literal of type `CharType const[]`, for some character
+  type `Char\Type`;
+
+* `pred` is a parse predicate;
+
+* `arg0`, `arg1`, `arg2`, ... are parse arguments;
+
+* `a` is a semantic action;
+
+* `r` is an object whose type models `parsable_range` and
+  `std::ranges::contiguous_range`; and
+
+* `p`, `p1`, `p2`, ... are parsers.
+
+[note The definition of `parsable_range` is:
+
+[parsable_range_concept]
+
+]
+
+[note Some of the parsers in this table consume no input.  All parsers consume
+the input they match unless otherwise stated in the table below.]
+
+[table Token Parsers and Their Semantics
+    [[Parser] [Semantics] [Attribute Type] [Notes]]
+
+    [[ _e_ ]
+      [ Matches /epsilon/, the empty string.  Always matches, and consumes no input. ]
+      [ None. ]
+      [ Matching _e_ an unlimited number of times creates an infinite loop, which is undefined behavior in C++.  _Parser_ will assert in debug mode when it encounters `*_e_`, `+_e_`, etc (this applies to unconditional _e_ only). ]]
+
+    [[ `_e_(pred)` ]
+     [ Fails to match the input if `_RES_np_(pred) == false`.  Otherwise, the semantics are those of _e_. ]
+     [ None. ]
+     []]
+
+    [[ _ws_ ]
+     [ Matches a single whitespace code point (see note), according to the Unicode White_Space property. ]
+     [ None. ]
+     [ For more info, see the [@https://www.unicode.org/Public/UCD/latest/ucd/PropList.txt Unicode properties].  _ws_ may consume one code point or two.  It only consumes two code points when it matches `"\r\n"`. ]]
+
+    [[ _eol_ ]
+     [ Matches a single newline (see note), following the "hard" line breaks in the Unicode line breaking algorithm. ]
+     [ None. ]
+     [ For more info, see the [@https://unicode.org/reports/tr14 Unicode Line Breaking Algorithm].  _eol_ may consume one code point or two.  It only consumes two code points when it matches `"\r\n"`. ]]
+
+    [[ _eoi_ ]
+     [ Matches only at the end of input, and consumes no input. ]
+     [ None. ]
+     []]
+
+    [[ _attr_np_`(arg0)` ]
+     [ Always matches, and consumes no input.  Generates the attribute `_RES_np_(arg0)`. ]
+     [ `decltype(_RES_np_(arg0))`. ]
+     [ An important use case for `_attr_` is to provide a default attribute value as a trailing alternative.  For instance, an *optional* comma-delmited list is: `int_ % ',' | attr(std::vector<int>)`.  Without the "`| attr(...)`", at least one `int_` match would be required. ]]
+
+    [[ _ch_ ]
+     [ Matches any single code point. ]
+     [ The code point type in Unicode parsing, or `char` in non-Unicode parsing.  See _attr_gen_. ]
+     []]
+
+    [[ `_ch_(arg0)` ]
+     [ Matches exactly the code point `_RES_np_(arg0)`. ]
+     [ The code point type in Unicode parsing, or `char` in non-Unicode parsing.  See _attr_gen_. ]
+     []]
+
+    [[ `_ch_(arg0, arg1)` ]
+     [ Matches the next code point `n` in the input, if `_RES_np_(arg0) <= n && n <= _RES_np_(arg1)`. ]
+     [ The code point type in Unicode parsing, or `char` in non-Unicode parsing.  See _attr_gen_. ]
+     []]
+
+    [[ `_ch_(r)` ]
+     [ Matches the next code point `n` in the input, if `n` is one of the code points in `r`. ]
+     [ The code point type in Unicode parsing, or `char` in non-Unicode parsing.  See _attr_gen_. ]
+     [ `r` is taken to be in a UTF encoding.  The exact UTF used depends on `r`'s element type.  If you do not pass UTF encoded ranges for `r`, the behavior of _ch_ is undefined.  Note that ASCII is a subset of UTF-8, so ASCII is fine.  EBCDIC is not.  `r` is not copied; a reference to it is taken.  The lifetime of `_ch_(r)` must be within the lifetime of `r`.  This overload of _ch_ does *not* take parse arguments. ]]
+
+    [[ _cp_ ]
+     [ Matches a single code point. ]
+     [ `char32_t` ]
+     [ Similar to _ch_, but with a fixed `char32_t` attribute type; _cp_ has all the same call operator overloads as _ch_, though they are not repeated here, for brevity. ]]
+
+    [[ _cu_ ]
+     [ Matches a single code point. ]
+     [ `char` ]
+     [ Similar to _ch_, but with a fixed `char` attribute type; _cu_ has all the same call operator overloads as _ch_, though they are not repeated here, for brevity.  Even though the name "`cu`" suggests that this parser match at the code unit level, it does not.  The name refers to the attribute type generated, much like the names _i_ versus _ui_. ]]
+
+    [[ `_blank_` ]
+     [ Equivalent to `_ws_ - _eol_`. ]
+     [ The code point type in Unicode parsing, or `char` in non-Unicode parsing.  See the entry for _ch_. ]
+     []]
+
+    [[ `_control_` ]
+     [ Matches a single control-character code point. ]
+     [ The code point type in Unicode parsing, or `char` in non-Unicode parsing.  See the entry for _ch_. ]
+     []]
+
+    [[ `_digit_` ]
+     [ Matches a single decimal digit code point. ]
+     [ The code point type in Unicode parsing, or `char` in non-Unicode parsing.  See the entry for _ch_. ]
+     []]
+
+    [[ `_punct_` ]
+     [ Matches a single punctuation code point. ]
+     [ The code point type in Unicode parsing, or `char` in non-Unicode parsing.  See the entry for _ch_. ]
+     []]
+
+    [[ `_hex_digit_` ]
+     [ Matches a single hexidecimal digit code point. ]
+     [ The code point type in Unicode parsing, or `char` in non-Unicode parsing.  See the entry for _ch_. ]
+     []]
+
+    [[ `_lower_` ]
+     [ Matches a single lower-case code point. ]
+     [ The code point type in Unicode parsing, or `char` in non-Unicode parsing.  See the entry for _ch_. ]
+     []]
+
+    [[ `_upper_` ]
+     [ Matches a single upper-case code point. ]
+     [ The code point type in Unicode parsing, or `char` in non-Unicode parsing.  See the entry for _ch_. ]
+     []]
+
+    [[ _lit_np_`(c)`]
+     [ Matches exactly the given code point `c`. ]
+     [ None. ]
+     [_lit_ does *not* take parse arguments. ]]
+
+    [[ `c_l` ]
+     [ Matches exactly the given code point `c`. ]
+     [ None. ]
+     [ This is a _udl_ that represents `_lit_np_(c)`, for example `'F'_l`. ]]
+
+    [[ _lit_np_`(r)`]
+     [ Matches exactly the given string `r`. ]
+     [ None. ]
+     [ _lit_ does *not* take parse arguments. ]]
+
+    [[ `str_l` ]
+     [ Matches exactly the given string `str`. ]
+     [ None. ]
+     [ This is a _udl_ that represents `_lit_np_(s)`, for example `"a string"_l`. ]]
+
+    [[ `_rpt_np_(arg0)[p]` ]
+     [ Matches iff `p` matches exactly `_RES_np_(arg0)` times. ]
+     [ `std::string` if `_ATTR_np_(p)` is `char` or `char32_t`, otherwise `std::vector<_ATTR_np_(p)>` ]
+     [ The special value _inf_ may be used; it indicates unlimited repetition.  `decltype(_RES_np_(arg0))` must be implicitly convertible to `int64_t`.  Matching _e_ an unlimited number of times creates an infinite loop, which is undefined behavior in C++.  _Parser_ will assert in debug mode when it encounters `_rpt_np_(_inf_)[_e_]` (this applies to unconditional _e_ only). ]]
+
+    [[ `_rpt_np_(arg0, arg1)[p]` ]
+     [ Matches iff `p` matches between `_RES_np_(arg0)` and `_RES_np_(arg1)` times, inclusively. ]
+     [ `std::string` if `_ATTR_np_(p)` is `char` or `char32_t`, otherwise `std::vector<_ATTR_np_(p)>` ]
+     [ The special value _inf_ may be used for the upper bound; it indicates unlimited repetition.  `decltype(_RES_np_(arg0))` and `decltype(_RES_np_(arg1))` each must be implicitly convertible to `int64_t`.  Matching _e_ an unlimited number of times creates an infinite loop, which is undefined behavior in C++.  _Parser_ will assert in debug mode when it encounters `_rpt_np_(n, _inf_)[_e_]` (this applies to unconditional _e_ only). ]]
+
+    [[ `_if_np_(pred)[p]` ]
+     [ Equivalent to `_e_(pred) >> p`. ]
+     [ `std::optional<_ATTR_np_(p)>` ]
+     [ It is an error to write `_if_np_(pred)`.  That is, it is an error to omit the conditionally matched parser `p`. ]]
+
+    [[ `_sw_np_(arg0)(arg1, p1)(arg2, p2) ...` ]
+     [ Equivalent to `p1` when `_RES_np_(arg0) == _RES_np_(arg1)`, `p2` when `_RES_np_(arg0) == _RES_np_(arg2)`, etc.  If there is such no `argN`, the behavior of _sw_ is undefined. ]
+     [ `std::variant<_ATTR_np_(p1), _ATTR_np_(p2), ...>` ]
+     [ It is an error to write `_sw_np_(arg0)`.  That is, it is an error to omit the conditionally matched parsers `p1`, `p2`, .... ]]
+
+    [[ _symbols_t_ ]
+     [ _symbols_ is an associative container of key, value pairs.  Each key is a _std_str_ and each value has type `T`.  In the Unicode parsing path, the strings are considered to be UTF-8 encoded; in the non-Unicode path, no encoding is assumed.  _symbols_ Matches the longest prefix `pre` of the input that is equal to one of the keys `k`.  If the length `len` of `pre` is zero, and there is no zero-length key, it does not match the input.  If `len` is positive, the generated attribute is the value associated with `k`.]
+     [ `T` ]
+     [ Unlike the other entries in this table, _symbols_ is a type, not an object. ]]
+]
+]

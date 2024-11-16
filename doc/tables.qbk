@@ -34,9 +34,9 @@ itself be used as a parser; it must be called.  In the table below:
 
 * `a` is a semantic action;
 
-* `r` is an object whose type models `parsable_range`; and
+* `r` is an object whose type models `parsable_range`;
 
-* `p`, `p1`, `p2`, ... are parsers.
+* `p`, `p1`, `p2`, ... are parsers; and
 
 * `escapes` is a _symbols_t_ object, where `T` is `char` or `char32_t`.
 

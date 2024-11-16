@@ -351,7 +351,7 @@ so this directive is only available in C++20 and later.
 
     namespace bp = boost::parser;
     auto int_parser = bp::int_ % ',';              // ATTR(int_parser) is std::vector<int>
-    auto sv_parser = bp::string_view[int_parser];  // ATTR(subrange_parser) is a string_view
+    auto sv_parser = bp::string_view[int_parser];  // ATTR(sv_parser) is a string_view
 
     auto const str = std::string("1, 2, 3, 4, a, b, c");
     auto first = str.begin();

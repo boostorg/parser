@@ -761,6 +761,7 @@ namespace boost { namespace parser {
     struct tokens_view
         : public std::ranges::view_interface<tokens_view<V, Lexer, TokenCache>>
     {
+#ifndef BOOST_PARSER_DOXYGEN
     private:
         template<bool>
         struct iterator;
@@ -774,6 +775,7 @@ namespace boost { namespace parser {
         using tokens_type = decltype(Lexer::regex_range(std::declval<V &>()));
         using const_tokens_type =
             decltype(Lexer::regex_range(std::declval<V const &>()));
+#endif
 
     public:
         using token_type = typename Lexer::token_type;
@@ -815,6 +817,7 @@ namespace boost { namespace parser {
         constexpr sentinel<false> end() { return sentinel<false>(); }
         constexpr sentinel<true> end() const { return sentinel<true>(); }
 
+#ifndef BOOST_PARSER_DOXYGEN
     private:
         // Called during parse after reaching an expectation point.
         template<bool Const>
@@ -1010,6 +1013,7 @@ namespace boost { namespace parser {
                 return !ctre_range.begin().current_match;
             }
         };
+#endif
     };
 
     template<typename R, typename Lexer>

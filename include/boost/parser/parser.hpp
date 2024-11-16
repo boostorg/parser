@@ -8545,7 +8545,7 @@ namespace boost { namespace parser {
         template<typename R>
         auto get_error_handler_iterator(R & r)
         {
-            if constexpr (is_token_iter_v<detail::iterator_t<R>>) {
+            if constexpr (is_token_iter_v<iterator_t<R>>) {
                 return detail::text::detail::begin(r).range_begin();
             } else {
                 return detail::text::detail::begin(r);
@@ -9068,6 +9068,9 @@ namespace boost { namespace parser {
     // clang-format on
 #endif
     {
+        static_assert(
+            !detail::is_token_iter_v<detail::iterator_t<R>>,
+            "You cannot use a skipper when parsing tokens.");
         detail::attr_reset reset(attr);
         auto r_ = detail::make_input_subrange(r);
         auto first = r_.begin();
@@ -9172,6 +9175,9 @@ namespace boost { namespace parser {
     // clang-format on
 #endif
     {
+        static_assert(
+            !detail::is_token_iter_v<detail::iterator_t<R>>,
+            "You cannot use a skipper when parsing tokens.");
         auto r_ = detail::make_input_subrange(r);
         auto first = r_.begin();
         auto const last = r_.end();
@@ -9396,6 +9402,9 @@ namespace boost { namespace parser {
     // clang-format on
 #endif
     {
+        static_assert(
+            !detail::is_token_iter_v<detail::iterator_t<R>>,
+            "You cannot use a skipper when parsing tokens.");
         auto r_ = detail::make_input_subrange(r);
         auto first = r_.begin();
         auto const last = r_.end();

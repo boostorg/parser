@@ -39,6 +39,7 @@ namespace boost { namespace parser {
         }
 
         template<typename T>
+        // TODO: requires std::integral<T> || std::floating_point<T>
         struct token_with_value
         {
             explicit token_with_value(T value) : value_(value) {}
@@ -69,8 +70,6 @@ namespace boost { namespace parser {
 
 #ifndef BOOST_PARSER_DOXYGEN
 
-    // TODO: Constrain the AttributeType to something that detail::token_as()
-    // can handle.
     template<typename TokenSpec, typename Expected>
     struct token_parser
     {

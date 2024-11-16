@@ -24,10 +24,6 @@ namespace bp = boost::parser;
 int main()
 {
     {
-        // TODO: Document that maximum munch does not appear to apply in CTRE
-        // regexes -- putting "<==" after "<|>|<=|>=" causes input "<==" to be
-        // tokenized as "<", "==".
-
         static_assert(decltype(adobe_lexer)::size() == 29 + 1);
         static_assert(
             std::same_as<decltype(adobe_lexer)::id_type, adobe_tokens>);

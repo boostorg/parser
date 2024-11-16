@@ -271,8 +271,6 @@ namespace boost { namespace parser {
             return error_handler_result::fail;
         }
 
-        // TODO: Add term 'token parsing' to glossary at start of docs.
-
         // TODO: Add a test that exercises this function when doing token
         // parsing.
         template<typename Context, typename Iter>

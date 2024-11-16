@@ -251,8 +251,6 @@ namespace boost { namespace parser {
             string_view sv_;
         } value_;
         position_type underlying_position_ = 0;
-        // TODO: Document the 22-bit size limitation on id_ (values must be
-        // positive).
         int id_ : 24;
         detail::token_kind kind_ : 8;
     };
@@ -445,25 +443,16 @@ namespace boost { namespace parser {
         static_assert(
             0 <= (int)ID, "Token IDs must be integral values or enums >=0.");
 
-        // TODO: Document that capture groups are not allowed within a
-        // token_spec regex, and to  Use '(?:' followed by ')' to create a
-        // non-capturing group.
-
         static constexpr ctll::fixed_string regex = Regex;
         static constexpr id_type id = ID;
         static constexpr int base = Base < 0 ? 10 : Base;
         static constexpr bool is_character_token = Base < 0;
     };
 
-    // TODO: Document that this takes a pack of char -- and nothing else.  Also
-    // note that for anything more complicated, including a short UTF-8 sequence
-    // that encodes a code point, you must use the token_spec form.
     /** TODO */
     template<char Ch, auto... Chs>
     constexpr auto token_chars = detail::token_chars_spec<Ch, Chs...>{};
 
-    // TODO: Document that the ID type given to the inital lexer<>() is the one
-    // that must be used for all non-character token specs.
     /** TODO */
     template<
         typename CharType,
@@ -835,10 +824,8 @@ namespace boost { namespace parser {
         friend struct seq_parser;
 
         // TODO: Document that the token cache will grow without bound if the
-        // parser contains no sequence points.
-
-        // TODO: Document the point above in the doc section that talks about
-        // the importance of sequence points.
+        // parser contains no sequence points.  Document this in the doc
+        // section that talks about the importance of sequence points.
 
         V base_ = V();
         Lexer lexer_;
@@ -892,10 +879,6 @@ namespace boost { namespace parser {
                     auto const parse_results = *ctre_first;
 
                     if constexpr (Lexer::has_ws) {
-                        // TODO: Document that ws is implicitly and unalterably
-                        // filtered out; to get ws tokens, you must explicitly
-                        // provide "" as the ws str for lexer<>, and then add a
-                        // token spec for ws separately.
                         if (auto sv =
                                 parse_results.template get<Lexer::size()>()) {
                             continue;

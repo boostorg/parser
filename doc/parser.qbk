@@ -268,6 +268,7 @@
 [def _nttps_               [@https://en.cppreference.com/w/cpp/language/template_parameters NTTPs]]
 
 [def _ctre_                [@https://github.com/hanickadot/compile-time-regular-expressions CTRE]]
+[def _pcre_                [@https://www.pcre.org PCRE]]
 
 [def _Spirit_              [@https://www.boost.org/doc/libs/release/libs/spirit Boost.Spirit]]
 [def _spirit_reals_        [@https://www.boost.org/doc/libs/release/libs/spirit/doc/html/spirit/qi/reference/numeric/real.html real number parsers]]

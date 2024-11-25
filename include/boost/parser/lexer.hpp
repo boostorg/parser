@@ -145,10 +145,11 @@ namespace boost { namespace parser {
         };
     }
 
-    /** TODO */
+    /** A convenience constant for specifying the empty string as the
+        whitespace template parameter to `boost::parser::lexer`. */
     inline constexpr ctll::fixed_string no_ws = "";
 
-    /** TODO */
+    /** A token produced by the lexer during token parsing. */
     template<typename CharType>
     struct token
     {
@@ -433,7 +434,10 @@ namespace boost { namespace parser {
         }
     }
 
-    /** TODO */
+    /** Represents the compile time parameters for matching a single token
+        during token parsing, and for producing a `std::basic_string_view` or
+        number from the matched characters.  Don't use this directly; use
+        `boost::parser::token_spec` instead. */
     template<ctll::fixed_string Regex, auto ID, typename ValueType, int Base>
     struct token_spec_t
     {

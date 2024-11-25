@@ -325,7 +325,8 @@ namespace boost { namespace parser {
 
 #ifdef BOOST_PARSER_DOXYGEN
 
-    /** TODO */
+    /** A type trait that evaluates to `true` iff `T` is a specialization of
+        `boost::parser::token`. */
     template<typename T>
     constexpr bool is_token_v = detail::foo;
 

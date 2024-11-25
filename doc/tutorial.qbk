@@ -3778,10 +3778,10 @@ charaters, or any C++-style trailing comment (`// ...`).
 
     bp::lexer<char, int, "\\s+|\\/\\/.*$">
 
-If whitespace information is important in your parse, simply provide `""` to
-`lexer<>` as the whitespace regex, and make a regular token that matches
-whitespace.  That way, you'll see all the whitespace in the sequence of tokens
-that you parse.
+If whitespace information is important in your parse, simply provide `""` or
+the more readable convenience constant `bp::no_ws` to `lexer<>` as the
+whitespace regex, and make a regular token that matches whitespace.  That way,
+you'll see all the whitespace in the sequence of tokens that you parse.
 
 [heading Token attribute types]
 

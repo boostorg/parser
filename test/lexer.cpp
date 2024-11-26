@@ -498,8 +498,6 @@ int main()
 
     // lexing errors
     {
-        // TODO: Document that a lexing error is a programming error, not an
-        // input error.
         using namespace std::literals;
 
         auto const lexer = bp::lexer<char, int> |
@@ -566,14 +564,6 @@ int main()
         }
         BOOST_TEST(caught_exception);
     }
-
-    // TODO: Document the limitation of CTRE that the input must be a
-    // continguous_range, so that string_views can be formed.
-
-    // TODO: Document that every spec's chars are assumed to be in UTF when
-    // CTRE_STRING_IS_UTF8 is defined, and no encoding otherwise.  Also document
-    // that char16_t is treated as UTF-16, but wchar_t and char32_t are *both*
-    // treated as UTF-32, even on windows.
 
     return boost::report_errors();
 }

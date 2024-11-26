@@ -449,7 +449,11 @@ namespace boost { namespace parser {
     struct string_view_tag
     {};
 
-    /** TODO */
+    /** Matches a token from the input with ID `TokenSpec::id`.  Fails on any
+        other input.  The parse will also fail if `Expected` is anything but
+        `detail::nope` (which it is by default), and `expected_.matches(attr)`
+        is not `true` for the produced attribute `attr`.  Used in token
+        parsing only.  */
     template<typename TokenSpec, typename Expected>
     struct token_parser;
 

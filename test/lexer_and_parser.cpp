@@ -7,8 +7,10 @@
  */
 
 #define BOOST_PARSER_TESTING
+//[ tokens_basics_headers
 #include <boost/parser/lexer.hpp>
 #include <boost/parser/parser.hpp>
+//]
 
 #include <boost/core/lightweight_test.hpp>
 
@@ -85,10 +87,6 @@ int main()
                       bp::detail::nope>);
     }
     {
-        // TODO: Document the idiom that you should use enumerations for the
-        // ID type, and that the enumeration should be stream-insertable, with
-        // a user-friendly name for each enumerator.  This is to make error
-        // messages better than "expected tok<0> here:".
         auto parser = identifier >> '=' >> true_false >> ';';
         auto r = "foo = false;" | bp::to_tokens(adobe_lexer);
         auto result = bp::parse(r, parser);
@@ -114,6 +112,112 @@ int main()
         bp::parse(r, parser);
         BOOST_TEST(cache.size() == 2u);
     }
+
+    // TODO: Add API tests exercising all the *parse() overloads that accept
+    // tokens_views.
+
+    // TODO: Add tests exercising all terminal parsers (esp. character
+    // parsers) that are compat. w/token parsing.
+
+    // TODO: Adapt symbols for use with token parsing; test here.
+
+    // TODO: Adapt the string literal parser to match against
+    // string_view-providing tokens.
+
+    // doc examples
+    // clang-format off
+    {
+    //[ tokens_basics_lexer
+    auto const foo = bp::token_spec<"foo", 0>;
+    auto const bar = bp::token_spec<"b.r", 1>;
+    auto const baz = bp::token_spec<"b.z", 2>;
+
+    auto const lexer = bp::lexer<char, int> | foo | bar | baz;
+    //]
+
+    //[ tokens_basics_input_range
+    auto r = "foobazbar" | bp::to_tokens(lexer);
+    //]
+
+    //[ tokens_basics_parser
+    auto parser = foo >> baz >> bar;
+    //]
+
+    //[ tokens_basics_parse
+    auto result = bp::parse(r, parser);
+    assert(result);
+    assert(std::get<0>(*result) == "foo");
+    assert(std::get<1>(*result) == "baz");
+    assert(std::get<2>(*result) == "bar");
+    //]
+    }
+
+    {
+    //[ tokens_attrs
+    constexpr auto true_false = bp::token_spec<"true|false", 0, bool>;
+    constexpr auto identifier = bp::token_spec<"[a-zA-Z]\\w*", 1>;
+    constexpr auto number = bp::token_spec<"\\d+(?:\\.\\d*)?", 2, double>;
+    //]
+    (void)true_false;
+    (void)identifier;
+    (void)number;
+    }
+
+    {
+    //[ tokens_token_char
+    constexpr auto true_false = bp::token_spec<"true|false", 0, bool>;
+    constexpr auto identifier = bp::token_spec<"[a-zA-Z]\\w*", 1>;
+
+    constexpr auto lexer =
+        bp::lexer<char, int> | true_false | identifier | bp::token_chars<'=', ';'>;
+
+    auto parser = identifier >> '=' >> true_false >> ';';
+    auto r = "foo = false;" | bp::to_tokens(lexer);
+    auto result = bp::parse(r, parser);
+    assert(result);
+    assert(std::get<0>(*result) == "foo");
+    assert(std::get<1>(*result) == false);
+    //]
+    }
+
+    {
+    //[ tokens_caching_simple
+    constexpr auto true_false = bp::token_spec<"true|false", 0, bool>;
+    constexpr auto identifier = bp::token_spec<"[a-zA-Z]\\w*", 1>;
+
+    constexpr auto lexer =
+        bp::lexer<char, int> | true_false | identifier | bp::token_chars<'=', ';'>;
+
+    auto parser = identifier >> '=' >> true_false >> ';';
+    std::vector<bp::token<char>> cache;
+    auto r = "foo = false;" | bp::to_tokens(lexer, std::ref(cache));
+    auto result = bp::parse(r, parser);
+    assert(result);
+    assert(std::get<0>(*result) == "foo");
+    assert(std::get<1>(*result) == false);
+    assert(cache.size() == 4u);
+    //]
+    }
+
+    {
+    constexpr auto true_false = bp::token_spec<"true|false", 0, bool>;
+    constexpr auto identifier = bp::token_spec<"[a-zA-Z]\\w*", 1>;
+
+    constexpr auto lexer =
+        bp::lexer<char, int> | true_false | identifier | bp::token_chars<'=', ';'>;
+
+    //[ tokens_caching_expectation_point
+    auto parser = identifier >> '=' > true_false >> ';';
+    std::vector<bp::token<char>> cache;
+    auto r = "foo = false;" | bp::to_tokens(lexer, std::ref(cache));
+    auto result = bp::parse(r, parser);
+    assert(result);
+    assert(std::get<0>(*result) == "foo");
+    assert(std::get<1>(*result) == false);
+    assert(cache.size() == 2u);
+    //]
+    }
+    // clang-format on
 
     return boost::report_errors();
 }

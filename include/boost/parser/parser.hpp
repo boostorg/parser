@@ -325,7 +325,8 @@ namespace boost { namespace parser {
 
 #ifdef BOOST_PARSER_DOXYGEN
 
-    /** TODO */
+    /** A type trait that evaluates to `true` iff `T` is a specialization of
+        `boost::parser::token`. */
     template<typename T>
     constexpr bool is_token_v = detail::foo;
 
@@ -6658,7 +6659,7 @@ namespace boost { namespace parser {
             matches one of the values in `r`.  If the character being matched
             during the parse is a `char32_t` value, the elements of `r` are
             transcoded from their presumed encoding to UTF-32 during the
-            comparison.  Otherwise, the character begin matched is directly
+            comparison.  Otherwise, the character being matched is directly
             compared to the elements of `r`. */
 #if BOOST_PARSER_USE_CONCEPTS
         template<parsable_range_like R>
@@ -6688,7 +6689,7 @@ namespace boost { namespace parser {
 
         /** Returns a `parser_interface` containing a `char_parser` that
             matches one of the values in `r`.  `r` must be a sorted,
-            random-access sequence of `char32_t`.  The character begin matched
+            random-access sequence of `char32_t`.  The character being matched
             is directly compared to the elements of `r`.  The match is found
             via binary search.  No case folding is performed.
 
@@ -7373,7 +7374,7 @@ namespace boost { namespace parser {
             the input being matched during the parse is a a sequence of
             `char32_t`, the elements of `r` are transcoded from their presumed
             encoding to UTF-32 during the comparison.  Otherwise, the
-            character begin matched is directly compared to the elements of
+            character being matched is directly compared to the elements of
             `r`. */
 #if BOOST_PARSER_USE_CONCEPTS
         template<parsable_range_like R>
@@ -7443,7 +7444,7 @@ namespace boost { namespace parser {
             the input being matched during the parse is a a sequence of
             `char32_t`, the elements of `r` are transcoded from their presumed
             encoding to UTF-32 during the comparison.  Otherwise, the
-            character begin matched is directly compared to the elements of
+            character being matched is directly compared to the elements of
             `r`.  `symbols` provides a list of strings that may appear after a
             backslash to form an escape sequence, and what character(s) each
             escape sequence represents.  Note that `"\\"` and `"\ch"` are

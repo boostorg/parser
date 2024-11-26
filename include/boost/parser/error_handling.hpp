@@ -156,7 +156,7 @@ namespace boost { namespace parser {
     {
         std::string message = "error: Expected ";
         message += e.what();
-        // TODO: Document that this gracelfully handles token iterators, and
+        // TODO: Document that this gracefully handles token iterators, and
         // document the other parts of the API that do or do not.
         auto [first, it, last] = parser::normalize_iterators(first_, e, last_);
         return parser::write_formatted_message(
@@ -270,8 +270,6 @@ namespace boost { namespace parser {
             }
             return error_handler_result::fail;
         }
-
-        // TODO: Add term 'token parsing' to glossary at start of docs.
 
         // TODO: Add a test that exercises this function when doing token
         // parsing.

@@ -42,6 +42,7 @@
 [import ../test/parser.cpp]
 [import ../test/parser_rule.cpp]
 [import ../test/parser_quoted_string.cpp]
+[import ../test/lexer_and_parser.cpp]
 
 [import ../include/boost/parser/concepts.hpp]
 [import ../include/boost/parser/error_handling_fwd.hpp]
@@ -108,6 +109,16 @@
 [def _trans_replace_v_     [classref boost::parser::transform_replace_view `boost::parser::transform_replace_view`]]
 [def _trans_replace_vs_    [classref boost::parser::transform_replace_view `boost::parser::transform_replace_view`s]]
 
+
+[def _lex_                 [classref boost::parser::lexer_t `boost::parser::lexer_t`]]
+[def _tok_                 [classref boost::parser::token `boost::parser::token`]]
+[def _toks_                [classref boost::parser::token `boost::parser::token`s]]
+[def _tok_spec_            [classref boost::parser::token_spec_t `boost::parser::token_spec_t`]]
+[def _tok_specs_           [classref boost::parser::token_spec_t `boost::parser::token_spec_t`s]]
+[def _tok_chs_             [globalref boost::parser::token_chars `boost::parser::token_chars`]]
+[def _to_tok_              [globalref boost::parser::to_tokens `boost::parser::to_tokens`]]
+[def _tok_v_               [classref boost::parser::tokens_view `boost::parser::tokens_view`]]
+[def _ch_id_               [globalref boost::parser::character_id `boost::parser::character_id`]]
 
 [def _std_str_             `std::string`]
 [def _std_vec_char_        `std::vector<char>`]
@@ -252,6 +263,12 @@
 [def _udl_                 [@https://en.cppreference.com/w/cpp/language/user_literal UDL]]
 [def _udls_                [@https://en.cppreference.com/w/cpp/language/user_literal UDLs]]
 [def _yaml_                [@https://yaml.org/spec/1.2/spec.html YAML 1.2]]
+
+[def _nttp_                [@https://en.cppreference.com/w/cpp/language/template_parameters NTTP]]
+[def _nttps_               [@https://en.cppreference.com/w/cpp/language/template_parameters NTTPs]]
+
+[def _ctre_                [@https://github.com/hanickadot/compile-time-regular-expressions CTRE]]
+[def _pcre_                [@https://www.pcre.org PCRE]]
 
 [def _Spirit_              [@https://www.boost.org/doc/libs/release/libs/spirit Boost.Spirit]]
 [def _spirit_reals_        [@https://www.boost.org/doc/libs/release/libs/spirit/doc/html/spirit/qi/reference/numeric/real.html real number parsers]]

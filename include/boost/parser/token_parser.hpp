@@ -39,6 +39,7 @@ namespace boost { namespace parser {
         }
 
         template<typename T>
+        // TODO: requires std::integral<T> || std::floating_point<T>
         struct token_with_value
         {
             explicit token_with_value(T value) : value_(value) {}
@@ -54,12 +55,10 @@ namespace boost { namespace parser {
             template<typename CharType>
             bool matches(std::basic_string_view<CharType> value) const
             {
-                // TODO: this is wrong, maybe.  Can we transcode both sides to
-                // UTF-32?  We have a problem that the usual opt-in is not
-                // available; you cannot specify the input in terms of
-                // utfN_view.  Maybe if CharType is not char, we do the
-                // transcoding?  Try it that way, write some tests, and
-                // consider whether this is a good idea.
+                // TODO: this is wrong.  We need to transcode both sides to
+                // UTF-32, when !same_as<CharType, char>.  (Need to write some
+                // tests, and evaluate whether this is a good idea.  If not,
+                // go change the docs on token_parser).
                 return std::ranges::equal(value, value_);
             }
 
@@ -69,8 +68,6 @@ namespace boost { namespace parser {
 
 #ifndef BOOST_PARSER_DOXYGEN
 
-    // TODO: Constrain the AttributeType to something that detail::token_as()
-    // can handle.
     template<typename TokenSpec, typename Expected>
     struct token_parser
     {
@@ -155,7 +152,8 @@ namespace boost { namespace parser {
             ++first;
         }
 
-        /** TODO */
+        /** Returns a `parser_interface` containing a `token_parser` that
+            matches `value`. */
         template<typename T>
             requires std::is_integral_v<T> || std::is_floating_point_v<T>
         constexpr auto operator()(T value) const noexcept
@@ -170,6 +168,12 @@ namespace boost { namespace parser {
                     detail::token_with_value(std::move(value))));
         }
 
+        /** Returns a `parser_interface` containing a `token_parser` that
+            matches the range `r`.  If the token being matched during the
+            parse has a `char_type` of `char8_t`, `char16_t`, or `char32_t`,
+            the elements of `r` are transcoded from their presumed encoding to
+            UTF-32 during the comparison.  Otherwise, the character being
+            matched is directly compared to the elements of `r`. */
         template<parsable_range_like R>
         constexpr auto operator()(R && r) const noexcept
         {
@@ -202,7 +206,10 @@ namespace boost { namespace parser {
 
 #endif
 
-    /** TODO */
+    /** A variable template that defines a token parser associated with
+        `boost::parser::token_spec_t<Regex, ID, ValueType, Base>`.  This token
+        parser can be used to specify a lexer, and may also be used in
+        parsers. */
     template<
         ctll::fixed_string Regex,
         auto ID,

@@ -11,7 +11,10 @@
 
 namespace boost { namespace parser {
 
-    /** TODO */
+    /** A `std::views`-compatible view that provides the tokens from the given
+        contiguous range, using the given lexer and optional token cache.  You
+        should typically not need to use this type directly; use
+        `boost::parser::to_tokens` instead. */
     template<
         std::ranges::contiguous_range V,
         typename Lexer,

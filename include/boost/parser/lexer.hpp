@@ -145,10 +145,11 @@ namespace boost { namespace parser {
         };
     }
 
-    /** TODO */
+    /** A convenience constant for specifying the empty string as the
+        whitespace template parameter to `boost::parser::lexer`. */
     inline constexpr ctll::fixed_string no_ws = "";
 
-    /** TODO */
+    /** A token produced by the lexer during token parsing. */
     template<typename CharType>
     struct token
     {
@@ -251,8 +252,6 @@ namespace boost { namespace parser {
             string_view sv_;
         } value_;
         position_type underlying_position_ = 0;
-        // TODO: Document the 22-bit size limitation on id_ (values must be
-        // positive).
         int id_ : 24;
         detail::token_kind kind_ : 8;
     };
@@ -351,13 +350,8 @@ namespace boost { namespace parser {
         struct token_chars_spec
         {
             static_assert(
-                (std::same_as<decltype(Ch), decltype(Chs)> && ... && true),
-                "All non-type template parameters given to token_chars_spec "
-                "must be chars.");
-
-            static_assert(
-                (unsigned char)Ch < 128 &&
-                    ((unsigned char)(Chs < 128) && ... && true),
+                (unsigned char)Ch < 128u &&
+                    ((unsigned char)(Chs < 128u) && ... && true),
                 "All non-type template parameters given to token_chars_spec "
                 "must be <= 127.");
         };
@@ -435,7 +429,10 @@ namespace boost { namespace parser {
         }
     }
 
-    /** TODO */
+    /** Represents the compile time parameters for matching a single token
+        during token parsing, and for producing a `std::basic_string_view` or
+        number from the matched characters.  Don't use this directly; use
+        `boost::parser::token_spec` instead. */
     template<ctll::fixed_string Regex, auto ID, typename ValueType, int Base>
     struct token_spec_t
     {
@@ -445,26 +442,23 @@ namespace boost { namespace parser {
         static_assert(
             0 <= (int)ID, "Token IDs must be integral values or enums >=0.");
 
-        // TODO: Document that capture groups are not allowed within a
-        // token_spec regex, and to  Use '(?:' followed by ')' to create a
-        // non-capturing group.
-
         static constexpr ctll::fixed_string regex = Regex;
         static constexpr id_type id = ID;
         static constexpr int base = Base < 0 ? 10 : Base;
         static constexpr bool is_character_token = Base < 0;
     };
 
-    // TODO: Document that this takes a pack of char -- and nothing else.  Also
-    // note that for anything more complicated, including a short UTF-8 sequence
-    // that encodes a code point, you must use the token_spec form.
-    /** TODO */
+    /** Specifies one or more single-character tokens.  Each character must be
+        in the ASCII range (< 128), and must be of type `char`.  If you want
+        to specify tokens of longer than 1 character, use
+        `boost::parser::token_spec`. */
     template<char Ch, auto... Chs>
+        requires(std::same_as<decltype(Chs), char> && ... && true)
     constexpr auto token_chars = detail::token_chars_spec<Ch, Chs...>{};
 
-    // TODO: Document that the ID type given to the inital lexer<>() is the one
-    // that must be used for all non-character token specs.
-    /** TODO */
+    /** The type used to represent the lexer used to tokenize input during
+        token parsing.  Do not use this directly; use `boost::parser::lexer`
+        instead. */
     template<
         typename CharType,
         typename ID,
@@ -534,7 +528,10 @@ namespace boost { namespace parser {
     // implicit 0-group that we ignore, but we still need initial elements to
     // make all the indices line up later.
 
-    /** TODO */
+    /** A variable template used to generate a lexer for use in token parsing.
+        The resulting lexer has no associated tokens.  Associate tokens with
+        it by piping `boost::parser::token_spec`s and/or
+        `boost::parser::token_chars`s after it. */
     template<
         typename CharType,
         typename ID,
@@ -752,7 +749,6 @@ namespace boost { namespace parser {
         using maybe_const = std::conditional_t<Const, T const, T>;
     }
 
-    /** TODO */
     template<
         std::ranges::contiguous_range V,
         typename Lexer,
@@ -835,10 +831,8 @@ namespace boost { namespace parser {
         friend struct seq_parser;
 
         // TODO: Document that the token cache will grow without bound if the
-        // parser contains no sequence points.
-
-        // TODO: Document the point above in the doc section that talks about
-        // the importance of sequence points.
+        // parser contains no sequence points.  Document this in the doc
+        // section that talks about the importance of sequence points.
 
         V base_ = V();
         Lexer lexer_;
@@ -892,10 +886,6 @@ namespace boost { namespace parser {
                     auto const parse_results = *ctre_first;
 
                     if constexpr (Lexer::has_ws) {
-                        // TODO: Document that ws is implicitly and unalterably
-                        // filtered out; to get ws tokens, you must explicitly
-                        // provide "" as the ws str for lexer<>, and then add a
-                        // token spec for ws separately.
                         if (auto sv =
                                 parse_results.template get<Lexer::size()>()) {
                             continue;
@@ -1048,7 +1038,12 @@ namespace boost { namespace parser {
         };
     }
 
-    /** TODO */
+    /** A range adaptor that produces `boost::parser::token_view`s.  Takes a
+        range (possibly using pipe syntax) as the first argument.  The second
+        argument is the lexer to use.  The third argument is a
+        `std::reference_wrapper<TokenCache>`, where `TokenCache` is a
+        random-access container used to cache tokens during token parsing;
+        this argument is optional. */
     inline constexpr detail::stl_interfaces::adaptor<detail::to_tokens_impl>
         to_tokens = detail::to_tokens_impl{};
 

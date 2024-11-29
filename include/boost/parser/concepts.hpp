@@ -32,7 +32,6 @@ namespace boost { namespace parser {
     concept parsable_iter =
         std::forward_iterator<T> && code_unit<std::iter_value_t<T>>;
 
-    //[ parsable_range_like_concept
     //[ parsable_range_concept
     template<typename T>
     concept parsable_range = (std::ranges::forward_range<T> &&
@@ -46,7 +45,6 @@ namespace boost { namespace parser {
 
     template<typename T>
     concept parsable_range_like = parsable_range<T> || parsable_pointer<T>;
-    //]
 
     template<typename T>
     concept range_like = std::ranges::range<T> || parsable_pointer<T>;

@@ -6511,7 +6511,7 @@ namespace boost { namespace parser {
         {
             if constexpr (!std::is_same_v<AttributeType, void>) {
                 return detail::wrapper<AttributeType>{};
-            } else if constexpr (is_token_v<detail::iter_value_t<Iter>>) {
+            } else if constexpr (detail::is_token_iter_v<Iter>) {
                 return detail::wrapper<
                     typename detail::iter_value_t<Iter>::char_type>{};
             } else {
@@ -6563,7 +6563,7 @@ namespace boost { namespace parser {
                 return;
             }
 
-            if constexpr (is_token_v<detail::iter_value_t<Iter>>) {
+            if constexpr (detail::is_token_iter_v<Iter>) {
                 using value_type = detail::iter_value_t<Iter>;
                 using attribute_t = typename value_type::char_type;
                 if ((*first).id() != character_id ||

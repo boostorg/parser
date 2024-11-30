@@ -1463,12 +1463,6 @@ namespace boost { namespace parser {
         void append(nope &, Iter first, Sentinel last, bool gen_attrs)
         {}
 
-        // TODO: Remove, if possible.
-        constexpr inline flags default_flags()
-        {
-            return flags(
-                uint32_t(flags::gen_attrs) | uint32_t(flags::use_skip));
-        }
         constexpr inline flags enable_skip(flags f)
         {
             return flags(uint32_t(f) | uint32_t(flags::use_skip));

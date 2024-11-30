@@ -22,7 +22,7 @@ namespace boost::parser {
             std::declval<
                 parse_context<false, false, I, S, default_error_handler>>(),
             ws,
-            detail::default_flags(),
+            flags(uint32_t(flags::gen_attrs) | uint32_t(flags::use_skip)),
             std::declval<bool &>()));
         template<typename R, typename Parser>
         using range_attr_t = attr_type<iterator_t<R>, sentinel_t<R>, Parser>;

@@ -3474,30 +3474,11 @@ namespace boost { namespace parser {
                             std::move(temp_retval)));
                 }
             } else {
-#if 0 // TODO Seems incompatible with this parser.
-                // call_impl requires a tuple, so we must wrap this scalar.
-                tuple<Attribute> temp_retval{};
-                call_impl(
-                    first,
-                    last,
-                    context,
-                    skip,
-                    flags,
-                    success,
-                    temp_retval,
-                    indices);
-
-                if (success && detail::gen_attrs(flags)) {
-                    detail::assign(
-                        retval, std::move(detail::hl::front(temp_retval)));
-                }
-#else
                 static_assert(
                     std::is_same_v<Attribute, void> && false,
                     "It looks like you passed an attribute to this permutation "
                     "parser that is not capable of taking the number, or the "
                     "types of values compatible with the ones it produces.");
-#endif
             }
 
             if (success)

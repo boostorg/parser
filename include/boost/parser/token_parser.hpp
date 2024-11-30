@@ -39,9 +39,9 @@ namespace boost { namespace parser {
         }
 
         template<typename T>
-        // TODO: requires std::integral<T> || std::floating_point<T>
         struct token_with_value
         {
+            static_assert(std::integral<T> || std::floating_point<T>);
             explicit token_with_value(T value) : value_(value) {}
             bool matches(T value) const { return value == value_; }
             T value_;

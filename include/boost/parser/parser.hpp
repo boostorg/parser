@@ -2520,7 +2520,7 @@ namespace boost { namespace parser {
         }
 
         template<typename R>
-        constexpr auto make_input_subrange(R && r) noexcept
+        constexpr decltype(auto) make_input_subrange(R && r) noexcept
         {
             using r_t = remove_cv_ref_t<R>;
             using value_type = range_value_t<r_t>;
@@ -8632,7 +8632,7 @@ namespace boost { namespace parser {
                     }
                 }
             } else {
-                auto r = detail::make_input_subrange(first, last);
+                auto && r = detail::make_input_subrange(first, last);
                 auto f = r.begin();
                 auto const l = r.end();
                 auto _ = detail::scoped_base_assign(first, f);
@@ -8727,7 +8727,7 @@ namespace boost { namespace parser {
                         tokens_view);
                 }
             } else {
-                auto r = detail::make_input_subrange(first, last);
+                auto && r = detail::make_input_subrange(first, last);
                 auto f = r.begin();
                 auto const l = r.end();
                 auto _ = detail::scoped_base_assign(first, f);
@@ -8868,7 +8868,7 @@ namespace boost { namespace parser {
 #endif
     {
         detail::attr_reset reset(attr);
-        auto r_ = detail::make_input_subrange(r);
+        auto && r_ = detail::make_input_subrange(r);
         auto first = r_.begin();
         auto const last = r_.end();
         return reset = detail::if_full_parse(
@@ -8966,7 +8966,7 @@ namespace boost { namespace parser {
     // clang-format on
 #endif
     {
-        auto r_ = detail::make_input_subrange(r);
+        auto && r_ = detail::make_input_subrange(r);
         auto first = r_.begin();
         auto const last = r_.end();
         return detail::if_full_parse(
@@ -9073,7 +9073,7 @@ namespace boost { namespace parser {
             !detail::is_token_iter_v<detail::iterator_t<R>>,
             "You cannot use a skipper when parsing tokens.");
         detail::attr_reset reset(attr);
-        auto r_ = detail::make_input_subrange(r);
+        auto && r_ = detail::make_input_subrange(r);
         auto first = r_.begin();
         auto const last = r_.end();
         return reset = detail::if_full_parse(
@@ -9179,7 +9179,7 @@ namespace boost { namespace parser {
         static_assert(
             !detail::is_token_iter_v<detail::iterator_t<R>>,
             "You cannot use a skipper when parsing tokens.");
-        auto r_ = detail::make_input_subrange(r);
+        auto && r_ = detail::make_input_subrange(r);
         auto first = r_.begin();
         auto const last = r_.end();
         return detail::if_full_parse(
@@ -9290,7 +9290,7 @@ namespace boost { namespace parser {
     // clang-format on
 #endif
     {
-        auto r_ = detail::make_input_subrange(r);
+        auto && r_ = detail::make_input_subrange(r);
         auto first = r_.begin();
         auto const last = r_.end();
         return detail::if_full_parse(
@@ -9406,7 +9406,7 @@ namespace boost { namespace parser {
         static_assert(
             !detail::is_token_iter_v<detail::iterator_t<R>>,
             "You cannot use a skipper when parsing tokens.");
-        auto r_ = detail::make_input_subrange(r);
+        auto && r_ = detail::make_input_subrange(r);
         auto first = r_.begin();
         auto const last = r_.end();
         return detail::if_full_parse(

@@ -100,7 +100,9 @@ int main()
         auto parser = identifier >> '=' >> true_false >> ';';
         std::vector<bp::token<char>> cache;
         auto r = "foo = false;" | bp::to_tokens(adobe_lexer, std::ref(cache));
-        bp::parse(r, parser);
+        auto result = bp::parse(r, parser);
+        BOOST_TEST(std::get<0>(*result) == "foo");
+        BOOST_TEST(std::get<1>(*result) == false);
         BOOST_TEST(cache.size() == 4u);
     }
 
@@ -109,7 +111,9 @@ int main()
         auto parser = identifier >> '=' > true_false >> ';';
         std::vector<bp::token<char>> cache;
         auto r = "foo = false;" | bp::to_tokens(adobe_lexer, std::ref(cache));
-        bp::parse(r, parser);
+        auto result = bp::parse(r, parser);
+        BOOST_TEST(std::get<0>(*result) == "foo");
+        BOOST_TEST(std::get<1>(*result) == false);
         BOOST_TEST(cache.size() == 2u);
     }
 

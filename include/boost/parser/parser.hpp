@@ -4637,9 +4637,10 @@ namespace boost { namespace parser {
                 skip,
                 detail::disable_attrs(flags),
                 success);
-            if (success && detail::gen_attrs(flags))
+            if (success && detail::gen_attrs(flags)) {
                 detail::assign(
                     retval, BOOST_PARSER_SUBRANGE<Iter>(initial_first, first));
+            }
         }
 
         Parser parser_;

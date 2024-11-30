@@ -8554,7 +8554,6 @@ namespace boost { namespace parser {
             trace trace_mode,
             TokensView const & tokens_view)
         {
-            // TODO: shouldn't this be detail::is_char_iter_v<I> instead?
             if constexpr (!detail::is_char8_iter_v<I>) {
                 if constexpr (std::is_reference_v<Attr>) {
                     detail::attr_reset reset(attr);
@@ -8680,7 +8679,6 @@ namespace boost { namespace parser {
             trace trace_mode,
             TokensView const & tokens_view)
         {
-            // TODO: shouldn't this be detail::is_char_iter_v<I> instead?
             if constexpr (!detail::is_char8_iter_v<I>) {
                 if (trace_mode == trace::on) {
                     return detail::callback_parse_impl<true>(

@@ -29,8 +29,12 @@ namespace boost { namespace parser {
         std::same_as<std::remove_cv_t<T>, char32_t>;
 
     template<typename T>
+    concept token_iter = is_token_v<std::iter_value_t<T>>;
+
+    template<typename T>
     concept parsable_iter =
-        std::forward_iterator<T> && code_unit<std::iter_value_t<T>>;
+        (std::forward_iterator<T> && code_unit<std::iter_value_t<T>>) ||
+        token_iter<T>;
 
     //[ parsable_range_concept
     template<typename T>

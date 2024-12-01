@@ -74,6 +74,26 @@ namespace boost { namespace parser {
     /** The token ID used for single-character tokens. */
     inline constexpr int character_id = -2000000;
 
+#ifdef BOOST_PARSER_DOXYGEN
+
+    /** A type trait that evaluates to `true` iff `T` is a specialization of
+        `boost::parser::token`. */
+    template<typename T>
+    constexpr bool is_token_v = detail::foo;
+
+#else
+
+    template<typename CharType>
+    struct token;
+
+    template<typename T>
+    constexpr bool is_token_v = false;
+
+    template<typename CharType>
+    constexpr bool is_token_v<token<CharType>> = true;
+
+#endif
+
     namespace detail {
         template<typename T>
         constexpr bool is_optional_v = enable_optional<T>;

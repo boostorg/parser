@@ -25,6 +25,7 @@ namespace boost { namespace parser {
     namespace detail {
         template<typename T>
         constexpr bool is_tokens_view_v = false;
+
         template<typename V, typename Lexer, typename TokenCache>
         constexpr bool is_tokens_view_v<tokens_view<V, Lexer, TokenCache>> =
             true;

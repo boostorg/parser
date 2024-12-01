@@ -973,6 +973,8 @@ namespace boost { namespace parser {
                 return token_offset_ == rhs.token_offset_;
             }
 
+            Parent & parent() const { return *parent_; }
+
             auto base() const
             {
                 return token_offset_ - parent_->base_token_offset_ ==

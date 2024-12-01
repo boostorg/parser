@@ -117,9 +117,6 @@ int main()
         BOOST_TEST(cache.size() == 2u);
     }
 
-    // TODO: Add API tests exercising all the *parse() overloads that accept
-    // tokens_views.
-
     // TODO: Add tests exercising all terminal parsers (esp. character
     // parsers) that are compat. w/token parsing.
 

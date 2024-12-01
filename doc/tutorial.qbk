@@ -3737,14 +3737,14 @@ Next, you define a parser.
 This has the same semantics as the characater parsers you've seen in the rest
 of the documentation.  Each _tok_spec_ has the same interface as a parser, so
 it can be used with all the parser combining operations, like `operator>>`.
-However, unlike when doing character parseing, when token parsing all the
-terminal parsers are restricted to a subset of the terminal parsers avilable
-in character parsing (see the full list in the table below).  This is because
-most of the parsers in _Parser_ parse sequences of characters.  For example,
-if you used `_str_np_("foo")` above instead of `foo`, the _str_ parser would
-try to match three consecutive values from the input sequence, and would
-expect them to equal `'f'`, `'o'`, `and `'o'`, respectively.  It would instead
-see three tokens, and the comparison would not even compile.
+However, unlike when doing character parsing, when token parsing all the
+terminal parsers are restricted to a subset of the terminal parsers that are
+available in character parsing (see the full list in the table below).  This
+is because most of the parsers in _Parser_ parse sequences of characters.  For
+example, if you used `_i_(42)` above instead of `foo`, the _i_ parser would
+try to match two consecutive values from the input sequence, and would expect
+them to equal `'4'` and `'2'`, respectively.  It would instead see two tokens,
+and the comparisons would not even compile.
 
 Finally, you can put everything together in a call to _p_.
 
@@ -3766,12 +3766,12 @@ non-capture group, like `"(?:foo)+"`.
 
 Using the parser above, what if we tried to parse the token range `"foo baz
 bar" | bp::to_tokens(lexer)` instead?  Turns out, we get the same answer.  You
-cannot use a skipper when parsing tokens.  However, parsers are much simpler
-when you have a notion of a skipper, especially for whitespace.  So, _lex_ has
-one built in; it uses `"\\s+"` by default.  Whitespace is matched, but
-produces no tokens.  If you want to change the whitespace/skipper regex, you
-can provide it when specifying the lexer.  For example, here is how you would
-specify the whitespace/skipped tokens to be any sequence of whitespace
+cannot use am explicit skipper when parsing tokens.  However, parsers are much
+simpler when you have a notion of a skipper, especially for whitespace.  So,
+_lex_ has one built in; it uses `"\\s+"` by default.  Whitespace is matched,
+but produces no tokens.  If you want to change the whitespace/skipper regex,
+you can provide it when specifying the lexer.  For example, here is how you
+would specify the whitespace/skipped tokens to be any sequence of whitespace
 charaters, or any C++-style trailing comment (`// ...`).
 
     bp::lexer<char, int, "\\s+|\\/\\/.*$">
@@ -3823,10 +3823,10 @@ of those ten characters.
 Just about any parser above a certain size will have punctuation of some sort
 _emdash_ elements of the input, usually a single character, that delimit other
 parts of the input, like commas and braces.  To make it easier to specify such
-tokens, _Parser_ provides _tok_chs_.  You can give _tok_chs_ a list of single
-characters, and it will create a separate, single-character regex for each
-one, and add it to your lexer.  Each such token will have the special ID
-_ch_id_.
+tokens, _Parser_ provides _tok_chs_.  You can give _tok_chs_ a list of
+individual characters, and it will create a separate, single-character regex
+for each one, and add it to your lexer.  Each such token will have the special
+ID _ch_id_.
 
 Note that the single character you provide must be a `char` in the ASCII range
 (that is, less than `128`).  If you want to use a single character that is
@@ -3855,17 +3855,17 @@ to match in parens after the token, like `true_false(true)` or
 
 So far, we've only seen `int` used as the token ID type.  Any integral type or
 enum can be used, though.  There are limitations on the values you can provide
-for IDs.  First, the values must all be positive; negative values are reserved
-for use by _Parser_.  Second, the values must not exceed `2^23-1`; no one is
-likely to have very many unique IDs, and token storage can be reduced a bit by
-using 3 bytes for the ID instead of 4.
+for IDs.  First, the values must all be nonnegative; negative values are
+reserved for use by _Parser_.  Second, the values must not exceed `2^23-1`; no
+one is likely to have very many unique IDs, and token storage can be reduced a
+bit by using 3 bytes for the ID instead of 4.
 
 Using an enum has the advantage of making the code a lot clearer.  For
 instance:
 
     enum class token_names { foo, bar };
-    auto const foo = bp::token_spec<"fo+o", token_names::foo>;
-    auto const bar = bp::token_spec<"b.*r", token_names::bar>;
+    auto const foo = bp::token_spec<"foo", token_names::foo>;
+    auto const bar = bp::token_spec<"b.r", token_names::bar>;
 
 ... reads a lot better than just using IDs like `0` and `1`.
 
@@ -3893,7 +3893,7 @@ bar
 ^
 ]
 
-Instead of `"tok<N>"`, it would be nice to give the failed expectation a
+Instead of `"tok<N>"`, it might be nice to give the failed expectation a
 user-friendly name.  In character parsers we usually do this by giving _rs_
 user-facing diagnostic text.  This makes your parse failures much easier to
 understand and correct.  However, many _tok_specs_ may already have a nice
@@ -3963,8 +3963,8 @@ tokens before the expectation point is erased from the token cache.
 
 Note the use of `std::ref()` to pass a reference to `cache`.  This is
 necessary because _to_tok_ uses `std::bind_back()` (or a workalike in C++17
-mode).  As with the other binders `std`, it does not gracefully handle binding
-lvalue references, so you have to use `std::ref()`.
+mode).  As with the other binders in `std`, it does not gracefully propagate
+bare lvalue references, so you have to use `std::ref()`.
 
 [heading Lexing failures]
 
@@ -3991,30 +3991,28 @@ TODO
 
 [heading The token parsers]
 
+Many of the parsers that work in character parsing do not work in token
+parsing, because they try to parse individual characters from the input.
+Token parsing only provides tokens, not characters.  This table describes all
+the parsers compatible with token parsing.
+
 [table_token_parsers_and_their_semantics]
 
 [heading Directives and token parsing]
 
 One directive that works in character parsing does not work in token parsing
 _emdash_ the argument form of _skip_.  The argument to _skip_ is a new
-skipper, and this cannot be changed in the middle of the parse.  The set of
+skipper, and this cannot be changed in the middle of tokenization.  The set of
 tokens and their regexes are fixed at compile time.  The nullary form of
-_skip_ works fine.
+_skip_ works fine; all it does is re-enable skipping that has been turned off
+by _lexeme_.
 
 [heading The token parsing API]
 
-Not all the _p_ and _cbp_ overloads can do token parsing, because some of
-them cannot accept a _tok_v_ as input.
-
-Obviously, the iterator/sentinel overloads cannot accept one directly, but
-they also cannot accept the `.begin()` and `.end()` of a _tok_v_.  This is
-because the iterator/sentinel interface does not provide access to the _tok_v_
-itself, which contains the token cache.  The _tok_v_ must be accessible
-somehow in order to trim tokens from the cache at expectation points.
-
-The overloads that take a skipper are precluded, since the skipper must be
-built into the lexer itself (see the section above about whitespace handling
-for details).
+Not all the _p_ and _cbp_ overloads can do token parsing, because some of them
+cannot accept a _tok_v_ as input.  In particular, the overloads that take a
+skipper are precluded, since the skipper must be built into the lexer itself
+(see the section above about whitespace handling for details).
 
 [heading _ctre_ particulars]
 
@@ -4025,7 +4023,7 @@ _ctre_ uses _pcre_ as its regex grammar.
 "Maximum munch" appears not to be the way _ctre_ tokenizes input.  For
 instance, if you have _tok_spec_ A that matches `"<=="` and _tok_spec_ B that
 matches `"<|>|<=|>=|==|!="`, the input characters `"<=="` will be tokenized as
-`"<=="` if the lexer includes `A | B`, but wil be parsed as `"<"` followed by
+`"<=="` if the lexer includes `A | B`, but will be parsed as `"<"` followed by
 `"=="` if the lexer includes `B | A`.
 
 _ctre_ uses `char32_t` for all its compile time strings.  If you give it a

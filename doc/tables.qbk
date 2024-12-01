@@ -628,8 +628,9 @@ In the table below:
 
 * `a` is a semantic action;
 
-* `r` is an object whose type models `parsable_range` and
-  `std::ranges::contiguous_range`; and
+* `r` is an object whose type models `parsable_range`;
+
+* `tok` is a token parser created using _tok_spec_; and
 
 * `p`, `p1`, `p2`, ... are parsers.
 
@@ -644,6 +645,21 @@ the input they match unless otherwise stated in the table below.]
 
 [table Token Parsers and Their Semantics
     [[Parser] [Semantics] [Attribute Type] [Notes]]
+
+    [[ `tok` ]
+      [ Matches any token with the same ID as `tok`. ]
+      [ The attribute type given when specifying `tok`, or a string view if unspecified.  The attribute type must be a specialization of `std::basic_string_view`, an integral type, or a floating point type. ]
+      []]
+
+    [[ `tok(arg0)` ]
+     [ Matches exactly the value `_RES_np_(arg0)`. ]
+     [ The attribute type given when specifying `tok`.  The attribute type must be a an integral type or a floating point type. ]
+     [ This case applies only when `arg0` is *not* a range. ]]
+
+    [[ `tok(r)` ]
+     [ Matches exactly the value `r`. ]
+     [ The attribute type given when specifying `tok`.  The attribute type must be a specialization of `std::basic_string_view`. ]
+     [ This overload does *not* take parse arguments. ]]
 
     [[ _e_ ]
       [ Matches /epsilon/, the empty string.  Always matches, and consumes no input. ]
@@ -759,6 +775,16 @@ the input they match unless otherwise stated in the table below.]
      [ Matches exactly the given string `str`. ]
      [ None. ]
      [ This is a _udl_ that represents `_lit_np_(s)`, for example `"a string"_l`. ]]
+
+    [[ `_str_np_(r)`]
+     [ Matches exactly `r`, and generates the match as an attribute. ]
+     [ _std_str_ ]
+     [ _str_ does *not* take parse arguments. ]]
+
+    [[ `str_p`]
+     [ Matches exactly `str`, and generates the match as an attribute. ]
+     [ _std_str_ ]
+     [ This is a _udl_ that represents `_str_np_(s)`, for example `"a string"_p`. ]]
 
     [[ `_rpt_np_(arg0)[p]` ]
      [ Matches iff `p` matches exactly `_RES_np_(arg0)` times. ]

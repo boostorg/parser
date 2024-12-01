@@ -4388,6 +4388,28 @@ namespace boost { namespace parser {
         constexpr bool in_recursion =
             std::is_same_v<typename Context::rule_tag, TagType> &&
             !std::is_same_v<typename Context::rule_tag, void>;
+
+        template<bool TokenParsing, typename Context>
+        struct scoped_lexeme
+        {
+            scoped_lexeme(Context const & context, bool produce_ws_tokens) :
+                context_(context), produce_ws_tokens_(produce_ws_tokens)
+            {
+                if constexpr (TokenParsing) {
+                    context_.tokens_view_->produce_ws_tokens(
+                        produce_ws_tokens_);
+                }
+            }
+            ~scoped_lexeme()
+            {
+                if constexpr (TokenParsing) {
+                    context_.tokens_view_->produce_ws_tokens(
+                        !produce_ws_tokens_);
+                }
+            }
+            Context const & context_;
+            bool produce_ws_tokens_;
+        };
     }
 
 #ifndef BOOST_PARSER_DOXYGEN
@@ -4787,6 +4809,10 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
+            [[maybe_unused]] auto scoped_lexeme =
+                detail::scoped_lexeme<detail::is_token_iter_v<Iter>, Context>(
+                    context, true);
+
             parser_.call(
                 first,
                 last,
@@ -4893,6 +4919,15 @@ namespace boost { namespace parser {
         {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+
+            static_assert(
+                !detail::is_token_iter_v<Iter> || detail::is_nope_v<SkipParser>,
+                "It looks like you tried to use a skip directive to replace "
+                "the skip parser.  This is not supported in token parsing.");
+
+            [[maybe_unused]] auto scoped_lexeme =
+                detail::scoped_lexeme<detail::is_token_iter_v<Iter>, Context>(
+                    context, false);
 
             if constexpr (detail::is_nope_v<SkipParser>) {
                 parser_.call(

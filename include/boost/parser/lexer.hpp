@@ -824,6 +824,12 @@ namespace boost { namespace parser {
             base_token_offset_ += erasure;
         }
 
+        // Called during parse when entering/leaving lexeme parsing.
+        void produce_ws_tokens(bool produce) const
+        {
+            produce_ws_tokens_ = produce;
+        }
+
         template<
             typename ParserTuple,
             typename BacktrackingTuple,
@@ -840,6 +846,7 @@ namespace boost { namespace parser {
         mutable TokenCache owned_cache_;
         TokenCache & tokens_;
         mutable size_t base_token_offset_ = 0;
+        mutable bool produce_ws_tokens_ = false;
 
         template<bool Const>
         struct iterator
@@ -886,8 +893,20 @@ namespace boost { namespace parser {
                     auto const parse_results = *ctre_first;
 
                     if constexpr (Lexer::has_ws) {
-                        if (auto sv =
+                        if (auto result =
                                 parse_results.template get<Lexer::size()>()) {
+                            string_view const sv = result;
+                            if (parent_->produce_ws_tokens_) {
+                                ++i;
+                                parent_->tokens_.push_back(
+                                    detail::make_token<detail::parse_spec{}>(
+                                        ws_id,
+                                        sv,
+                                        (ctre_first.current -
+                                         ctre_first.orig_begin) -
+                                            sv.size(),
+                                        iterator(parent_, i)));
+                            }
                             continue;
                         }
                     }

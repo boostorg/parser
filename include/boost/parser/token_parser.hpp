@@ -38,6 +38,8 @@ namespace boost { namespace parser {
             }
         }
 
+        // TODO: This needs to use resolve(value_), and we need a test for
+        // that.
         template<typename T>
         struct token_with_value
         {

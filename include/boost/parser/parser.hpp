@@ -5126,15 +5126,59 @@ namespace boost { namespace parser {
                 *this, first, last, context, flags, retval);
 
             auto [trie, _0] = detail::get_trie(context, ref());
-            auto const lookup = context.no_case_depth_
-                                    ? trie.longest_match(detail::case_fold_view(
-                                          BOOST_PARSER_SUBRANGE(first, last)))
-                                    : trie.longest_match(first, last);
-            if (lookup.match) {
-                std::advance(first, lookup.size);
+            auto [lookup, lookup_succeeded] =
+                lookup_and_advance(first, last, trie, context.no_case_depth_);
+            if (lookup_succeeded)
                 detail::assign(retval, T{*trie[lookup]});
-            } else {
+            else
                 success = false;
+        }
+
+        template<typename I, typename S>
+        static auto make_token_subrange(I f, S l)
+        {
+            auto subrange = BOOST_PARSER_SUBRANGE(f, l);
+            if constexpr (std::is_same_v<
+                              detail::remove_cv_ref_t<decltype(*f)>,
+                              char>) {
+                return subrange;
+            } else {
+                return subrange | detail::text::as_utf32;
+            }
+        }
+
+        template<typename Iter, typename Sentinel, typename Trie>
+        static auto lookup_and_advance(
+            Iter & first, Sentinel last, Trie & trie, int no_case_depth)
+        {
+            if constexpr (detail::is_token_iter_v<Iter>) {
+                using lookup_type = decltype(trie.longest_match(
+                    detail::case_fold_view(make_token_subrange(
+                        (*first).get_string_view().begin(),
+                        (*first).get_string_view().end()))));
+                if (!(*first).has_string_view())
+                    return std::pair(lookup_type{}, false);
+
+                auto const sv = (*first).get_string_view();
+                auto token_cps = make_token_subrange(sv.begin(), sv.end());
+                auto const lookup =
+                    no_case_depth
+                        ? trie.longest_match(detail::case_fold_view(token_cps))
+                        : trie.longest_match(
+                              token_cps.begin(), token_cps.end());
+                if (lookup.match && lookup.size == (int)sv.size()) {
+                    ++first;
+                    return std::pair(lookup, true);
+                }
+                return std::pair(lookup, false);
+            } else {
+                auto const lookup =
+                    no_case_depth ? trie.longest_match(detail::case_fold_view(
+                                        BOOST_PARSER_SUBRANGE(first, last)))
+                                  : trie.longest_match(first, last);
+                if (lookup.match)
+                    std::advance(first, lookup.size);
+                return std::pair(lookup, lookup.match);
             }
         }
 
@@ -7121,13 +7165,36 @@ namespace boost { namespace parser {
                 return;
             }
 
-            if constexpr (std::is_same_v<
-                              detail::remove_cv_ref_t<decltype(*first)>,
-                              char32_t>) {
-                auto const cps =
-                    BOOST_PARSER_SUBRANGE(expected_first_, expected_last_) |
-                    detail::text::as_utf32;
+            auto const cps = make_subrange(expected_first_, expected_last_);
 
+            if constexpr (detail::is_token_iter_v<Iter>) {
+                if (!(*first).has_string_view()) {
+                    success = false;
+                    return;
+                }
+
+                auto const sv = (*first).get_string_view();
+                auto token_cps = make_subrange(sv.begin(), sv.end());
+                auto const mismatch = detail::no_case_aware_string_mismatch(
+                    token_cps.begin(),
+                    token_cps.end(),
+                    cps.begin(),
+                    cps.end(),
+                    context.no_case_depth_);
+                if (mismatch.in1 != token_cps.end() ||
+                    mismatch.in2 != cps.end()) {
+                    success = false;
+                    return;
+                }
+
+                detail::append(
+                    retval,
+                    token_cps.begin(),
+                    token_cps.end(),
+                    detail::gen_attrs(flags));
+
+                ++first;
+            } else {
                 auto const mismatch = detail::no_case_aware_string_mismatch(
                     first,
                     last,
@@ -7143,22 +7210,19 @@ namespace boost { namespace parser {
                     retval, first, mismatch.first, detail::gen_attrs(flags));
 
                 first = mismatch.first;
+            }
+        }
+
+        template<typename I, typename S>
+        static auto make_subrange(I f, S l)
+        {
+            auto subrange = BOOST_PARSER_SUBRANGE(f, l);
+            if constexpr (std::is_same_v<
+                              detail::remove_cv_ref_t<decltype(*f)>,
+                              char>) {
+                return subrange;
             } else {
-                auto const mismatch = detail::no_case_aware_string_mismatch(
-                    first,
-                    last,
-                    expected_first_,
-                    expected_last_,
-                    context.no_case_depth_);
-                if (mismatch.second != expected_last_) {
-                    success = false;
-                    return;
-                }
-
-                detail::append(
-                    retval, first, mismatch.first, detail::gen_attrs(flags));
-
-                first = mismatch.first;
+                return subrange | detail::text::as_utf32;
             }
         }
 

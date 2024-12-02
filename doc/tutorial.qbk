@@ -3744,9 +3744,7 @@ most of the parsers in _Parser_ parse sequences of characters.  For example,
 if you used `_str_np_("foo")` above instead of `foo`, the _str_ parser would
 try to match three consecutive values from the input sequence, and would
 expect them to equal `'f'`, `'o'`, `and `'o'`, respectively.  It would instead
-see three tokens, and the comparison would not even compile.  Similarly, any
-character-based directive will not work with a token parser _emdash_
-_no_case_, for example.
+see three tokens, and the comparison would not even compile.
 
 Finally, you can put everything together in a call to _p_.
 
@@ -3997,12 +3995,11 @@ TODO
 
 [heading Directives and token parsing]
 
-Some directives that work in character parsing do not work in token parsing.
-They are: _no_case_, _lexeme_, and _skip_.  These directives all change the
-way characters are intrepreted in the middle of the parse.  This is not
-possible when using a lexer, because a token parser parses tokens, not
-characters.  The interpretation of the underlying characters is done in the
-lexer, and by the time the parser is looking at tokens, it's too late.
+One directive that works in character parsing does not work in token parsing
+_emdash_ the argument form of _skip_.  The argument to _skip_ is a new
+skipper, and this cannot be changed in the middle of the parse.  The set of
+tokens and their regexes are fixed at compile time.  The nullary form of
+_skip_ works fine.
 
 [heading The token parsing API]
 

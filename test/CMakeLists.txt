@@ -104,6 +104,7 @@ if (CXX_STD GREATER_EQUAL 20)
     add_test_executable(lexer)
     add_test_executable(lexer_adobe_files)
     add_test_executable(lexer_and_parser)
+    add_test_executable(lexer_and_parser_symbol_table)
 endif()
 
 if (MSVC)

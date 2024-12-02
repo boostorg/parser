@@ -192,16 +192,10 @@ namespace boost { namespace parser {
         template<typename I, typename S>
         auto normalize_iterators_impl(I first, I it, S last)
         {
-            if constexpr (detail::is_token_iter_v<I>) {
-                auto const underlying_first = it.range_begin();
-                auto const underlying_it =
-                    underlying_first + (*it).underlying_position();
-                auto const underlying_last = it.range_end();
-                return std::tuple(
-                    underlying_first, underlying_it, underlying_last);
-            } else {
+            if constexpr (detail::is_token_iter_v<I>)
+                return std::tuple(it.range_begin(), it.base(), it.range_end());
+            else
                 return std::tuple(first, it, last);
-            }
         }
     }
 

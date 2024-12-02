@@ -941,6 +941,9 @@ namespace boost { namespace parser {
 
             constexpr token_type const & operator*() const
             {
+                BOOST_PARSER_DEBUG_ASSERT(
+                    token_offset_ - parent_->base_token_offset_ <
+                    (BOOST_PARSER_TOKEN_POSITION_TYPE)parent_->tokens_.size());
                 return parent_
                     ->tokens_[token_offset_ - parent_->base_token_offset_];
             }
@@ -949,6 +952,15 @@ namespace boost { namespace parser {
             {
                 BOOST_PARSER_DEBUG_ASSERT(parent_ == rhs.parent_);
                 return token_offset_ == rhs.token_offset_;
+            }
+
+            auto base() const
+            {
+                return token_offset_ - parent_->base_token_offset_ ==
+                               (BOOST_PARSER_TOKEN_POSITION_TYPE)
+                                   parent_->tokens_.size()
+                           ? range_end()
+                           : range_begin() + (**this).underlying_position();
             }
 
             auto range_begin() const

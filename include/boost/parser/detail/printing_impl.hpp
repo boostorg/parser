@@ -1014,10 +1014,8 @@ namespace boost { namespace parser { namespace detail {
         if (!detail::do_trace(flags_))
             return;
         if constexpr (is_token_iter_v<Iter>) {
-            auto const initial_first = first_.range_begin();
-            auto const first = initial_first + (*first_).underlying_position();
-            auto const last = first_.range_end();
-            detail::trace_prefix(os, first, last, context_, name_);
+            detail::trace_prefix(
+                os, first_.base(), first_.range_end(), context_, name_);
         } else {
             detail::trace_prefix(os, first_, last_, context_, name_);
         }
@@ -1032,14 +1030,10 @@ namespace boost { namespace parser { namespace detail {
     scoped_trace_t<DoTrace, Iter, Sentinel, Context, Attribute>::
         ~scoped_trace_t()
     {
-        if constexpr (is_token_iter_v<Iter>) {
-            auto const initial_first = first_.range_begin();
-            auto const first = initial_first + (*first_).underlying_position();
-            auto const last = first_.range_end();
-            impl(initial_first, first, last);
-        } else {
+        if constexpr (is_token_iter_v<Iter>)
+            impl(first_.range_begin(), first_.base(), first_.range_end());
+        else
             impl(initial_first_, first_, last_);
-        }
     }
 
 }}}

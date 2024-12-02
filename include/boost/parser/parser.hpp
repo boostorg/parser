@@ -4665,13 +4665,8 @@ namespace boost { namespace parser {
         {
             auto r =
                 parser::detail::text::unpack_iterator_and_sentinel(first, last);
-            static_assert(
-                std::contiguous_iterator<decltype(r.first)>,
-                "string_view_parser and the string_view[] directive that uses "
-                "it requires that the underlying char sequence being parsed be "
-                "a contiguous range.  If you're seeing this static_assert, you "
-                "have not met this contract.");
-            using char_type = detail::remove_cv_ref_t<decltype(*r.first)>;
+            using char_type = std::remove_cv_t<
+                std::remove_pointer_t<decltype(underlying_pointer(r.first))>>;
             std::basic_string_view<char_type> retval;
             call(first, last, context, skip, flags, success, retval);
             return retval;
@@ -4709,21 +4704,42 @@ namespace boost { namespace parser {
 
             auto r = parser::detail::text::unpack_iterator_and_sentinel(
                 initial_first, first);
-            static_assert(
-                std::contiguous_iterator<decltype(r.first)>,
-                "string_view_parser and the string_view[] directive that uses "
-                "it requires that the underlying char sequence being parsed be "
-                "a contiguous range.  If you're seeing this static_assert, you "
-                "have not met this contract.");
-            using char_type = detail::remove_cv_ref_t<decltype(*r.first)>;
+            using char_type = std::remove_cv_t<
+                std::remove_pointer_t<decltype(underlying_pointer(r.first))>>;
             if (initial_first == first) {
                 detail::assign(retval, std::basic_string_view<char_type>{});
             } else {
                 detail::assign(
                     retval,
                     std::basic_string_view<char_type>{
-                        &*r.first, std::size_t(r.last - r.first)});
+                        underlying_pointer(r.first),
+                        underlying_distance<decltype(r.first)>(r)});
             }
+        }
+
+        template<typename I>
+        static auto underlying_pointer(I it)
+        {
+            if constexpr (detail::is_token_iter_v<I>) {
+                return &*it.base();
+            } else {
+                static_assert(
+                    std::contiguous_iterator<I>,
+                    "string_view_parser and the string_view[] directive that "
+                    "uses it requires that the underlying char sequence being "
+                    "parsed be a contiguous range.  If you're seeing this "
+                    "static_assert, you have not met this contract.");
+                return &*it;
+            }
+        }
+
+        template<typename I, typename R>
+        static size_t underlying_distance(R & r)
+        {
+            if constexpr (detail::is_token_iter_v<I>)
+                return size_t(r.last.base() - r.first.base());
+            else
+                return size_t(r.last - r.first);
         }
 
         Parser parser_;

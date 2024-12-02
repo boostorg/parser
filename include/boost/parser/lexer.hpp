@@ -342,8 +342,8 @@ namespace boost { namespace parser {
             }
 #if defined(__cpp_lib_unreachable)
             std::unreachable();
-            return parse_spec{token_parsed_type::string_view, base};
 #endif
+            return parse_spec{token_parsed_type::string_view, base};
         }
 
         template<char Ch, auto... Chs>

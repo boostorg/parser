@@ -1581,7 +1581,7 @@ namespace boost { namespace parser {
         {
             std::optional<T> retval;
             if (success)
-                retval = x;
+                retval = std::move(x);
             return retval;
         }
 

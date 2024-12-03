@@ -1068,7 +1068,17 @@ namespace boost { namespace parser {
                 requires std::ranges::viewable_range<R>
             [[nodiscard]] constexpr auto operator()(R && r, Lexer lexer) const
             {
-                return tokens_view((R &&)r, lexer);
+                using T = detail::remove_cv_ref_t<R>;
+                if constexpr (std::is_bounded_array_v<T>) {
+                    constexpr auto n = std::extent_v<T>;
+                    auto const offset = n && !r[n - 1] ? 1 : 0;
+                    return tokens_view(
+                        BOOST_PARSER_DETAIL_TEXT_SUBRANGE(
+                            std::begin(r), std::end(r) - offset),
+                        lexer);
+                } else {
+                    return tokens_view((R &&)r, lexer);
+                }
             }
 
             template<parsable_range R, typename Lexer, typename TokenCache>
@@ -1078,7 +1088,18 @@ namespace boost { namespace parser {
                 Lexer lexer,
                 std::reference_wrapper<TokenCache> cache) const
             {
-                return tokens_view((R &&)r, lexer, cache);
+                using T = detail::remove_cv_ref_t<R>;
+                if constexpr (std::is_bounded_array_v<T>) {
+                    constexpr auto n = std::extent_v<T>;
+                    auto const offset = n && !r[n - 1] ? 1 : 0;
+                    return tokens_view(
+                        BOOST_PARSER_DETAIL_TEXT_SUBRANGE(
+                            std::begin(r), std::end(r) - offset),
+                        lexer,
+                        cache);
+                } else {
+                    return tokens_view((R &&)r, lexer, cache);
+                }
             }
         };
     }

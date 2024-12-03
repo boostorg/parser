@@ -65,6 +65,7 @@ namespace boost { namespace parser {
 
             bool_,
 
+            char_,
             signed_char,
             unsigned_char,
             short_,
@@ -96,6 +97,7 @@ namespace boost { namespace parser {
                 BOOST_PARSER_CASE(character);
                 BOOST_PARSER_CASE(string_view);
                 BOOST_PARSER_CASE(bool_);
+                BOOST_PARSER_CASE(char_);
                 BOOST_PARSER_CASE(signed_char);
                 BOOST_PARSER_CASE(unsigned_char);
                 BOOST_PARSER_CASE(short_);
@@ -299,6 +301,8 @@ namespace boost { namespace parser {
                 return parse_spec{token_parsed_type::string_view, base};
             } else if constexpr (std::is_same_v<value_t, bool>) {
                 return parse_spec{token_parsed_type::bool_, base};
+            } else if constexpr (std::is_same_v<value_t, char>) {
+                return parse_spec{token_parsed_type::char_, base};
             } else if constexpr (std::is_same_v<value_t, signed char>) {
                 return parse_spec{token_parsed_type::signed_char, base};
             } else if constexpr (std::is_same_v<value_t, unsigned char>) {
@@ -597,6 +601,14 @@ namespace boost { namespace parser {
                     throw lex_error<TokenIter>(it, "'true' or 'false'");
                 }
 
+            case token_parsed_type::char_: {
+                char value;
+                report_error(
+                    type_wrapper<decltype(value)>{},
+                    Spec.radix,
+                    numeric::parse_int<true, Spec.radix, 1, -1>(f, l, value));
+                return {id, underlying_position, (long long)value};
+            }
             case token_parsed_type::signed_char: {
                 signed char value;
                 report_error(

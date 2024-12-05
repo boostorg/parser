@@ -4370,24 +4370,28 @@ namespace boost { namespace parser {
             std::is_same_v<typename Context::rule_tag, TagType> &&
             !std::is_same_v<typename Context::rule_tag, void>;
 
-        template<bool TokenParsing, typename Context>
+        template<typename I, typename Context>
         struct scoped_lexeme
         {
-            scoped_lexeme(Context const & context, bool produce_ws_tokens) :
-                context_(context), produce_ws_tokens_(produce_ws_tokens)
+            scoped_lexeme(
+                I & it, Context const & context, bool produce_ws_tokens) :
+                it_(it),
+                context_(context),
+                produce_ws_tokens_(produce_ws_tokens)
             {
-                if constexpr (TokenParsing) {
+                if constexpr (is_token_iter_v<I>) {
                     context_.tokens_view_->produce_ws_tokens(
-                        produce_ws_tokens_);
+                        produce_ws_tokens_, it_);
                 }
             }
             ~scoped_lexeme()
             {
-                if constexpr (TokenParsing) {
+                if constexpr (is_token_iter_v<I>) {
                     context_.tokens_view_->produce_ws_tokens(
-                        !produce_ws_tokens_);
+                        !produce_ws_tokens_, it_);
                 }
             }
+            I & it_;
             Context const & context_;
             bool produce_ws_tokens_;
         };
@@ -4666,8 +4670,7 @@ namespace boost { namespace parser {
             detail::flags flags,
             bool & success) const
         {
-            auto r =
-                parser::detail::text::unpack_iterator_and_sentinel(first, last);
+            auto r = unpack_iterator_and_sentinel_(first, last);
             using char_type = std::remove_cv_t<
                 std::remove_pointer_t<decltype(underlying_pointer(r.first))>>;
             std::basic_string_view<char_type> retval;
@@ -4705,8 +4708,7 @@ namespace boost { namespace parser {
             if (!success || !detail::gen_attrs(flags))
                 return;
 
-            auto r = parser::detail::text::unpack_iterator_and_sentinel(
-                initial_first, first);
+            auto r = unpack_iterator_and_sentinel_(initial_first, first);
             using char_type = std::remove_cv_t<
                 std::remove_pointer_t<decltype(underlying_pointer(r.first))>>;
             if (initial_first == first) {
@@ -4743,6 +4745,22 @@ namespace boost { namespace parser {
                 return size_t(r.last.base() - r.first.base());
             else
                 return size_t(r.last - r.first);
+        }
+
+        template<typename I, typename S>
+        struct unpacked_token_range
+        {
+            I first;
+            S last;
+        };
+
+        template<typename I, typename S>
+        static auto unpack_iterator_and_sentinel_(I f, S l)
+        {
+            if constexpr (detail::is_token_iter_v<I>)
+                return unpacked_token_range{f, l};
+            else
+                return parser::detail::text::unpack_iterator_and_sentinel(f, l);
         }
 
         Parser parser_;
@@ -4791,8 +4809,7 @@ namespace boost { namespace parser {
                 *this, first, last, context, flags, retval);
 
             [[maybe_unused]] auto scoped_lexeme =
-                detail::scoped_lexeme<detail::is_token_iter_v<Iter>, Context>(
-                    context, true);
+                detail::scoped_lexeme<Iter, Context>(first, context, true);
 
             parser_.call(
                 first,
@@ -4907,8 +4924,7 @@ namespace boost { namespace parser {
                 "the skip parser.  This is not supported in token parsing.");
 
             [[maybe_unused]] auto scoped_lexeme =
-                detail::scoped_lexeme<detail::is_token_iter_v<Iter>, Context>(
-                    context, false);
+                detail::scoped_lexeme<Iter, Context>(first, context, false);
 
             if constexpr (detail::is_nope_v<SkipParser>) {
                 parser_.call(
@@ -7659,7 +7675,8 @@ namespace boost { namespace parser {
                 }
                 if (x == 0x000d) { // cr
                     ++first;
-                    if (first != last && *first == 0x000a) // lf
+                    auto const opt_ch_2 = detail::char_from_iter(first, last);
+                    if (opt_ch_2 && *opt_ch_2 == 0x000a) // lf
                         ++first;
                     return;
                 }
@@ -7692,7 +7709,8 @@ namespace boost { namespace parser {
                 }
                 if (x == 0x000d) { // cr
                     ++first;
-                    if (first != last && *first == 0x000a) // lf
+                    auto const opt_ch_2 = detail::char_from_iter(first, last);
+                    if (opt_ch_2 && *opt_ch_2 == 0x000a) // lf
                         ++first;
                     return;
                 }

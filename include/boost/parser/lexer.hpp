@@ -831,14 +831,20 @@ namespace boost { namespace parser {
         template<bool Const>
         void clear_tokens_before(iterator<Const> it) const
         {
-            size_t const erasure = it.token_offset_ - base_token_offset_;
-            tokens_.erase(tokens_.begin(), tokens_.begin() + erasure);
-            base_token_offset_ += erasure;
+            size_t const tokens_pos = it.token_offset_ - base_token_offset_;
+            tokens_.erase(tokens_.begin(), tokens_.begin() + tokens_pos);
+            base_token_offset_ += tokens_pos;
         }
 
         // Called during parse when entering/leaving lexeme parsing.
-        void produce_ws_tokens(bool produce) const
+        template<bool Const>
+        void produce_ws_tokens(bool produce, iterator<Const> it) const
         {
+            if (it == end())
+                return;
+            latest_ = std::ranges::begin(base_) + (*it).underlying_position();
+            size_t const tokens_pos = it.token_offset_ - base_token_offset_;
+            tokens_.erase(tokens_.begin() + tokens_pos, tokens_.end());
             produce_ws_tokens_ = produce;
         }
 
@@ -847,6 +853,9 @@ namespace boost { namespace parser {
             typename BacktrackingTuple,
             typename CombiningGroups>
         friend struct seq_parser;
+
+        template<typename I, typename Context>
+        friend struct detail::scoped_lexeme;
 
         // TODO: Document that the token cache will grow without bound if the
         // parser contains no sequence points.  Document this in the doc
@@ -886,7 +895,7 @@ namespace boost { namespace parser {
             {}
             iterator(Parent & parent) : parent_(&parent) { fill_cache(); }
 
-            void fill_cache()
+            void fill_cache() const
             {
                 using string_view = typename Lexer::string_view;
 
@@ -958,11 +967,22 @@ namespace boost { namespace parser {
         public:
             iterator() = default;
             iterator(iterator const &) = default;
+            iterator & operator=(iterator const &) = default;
 
             iterator(iterator<false> const & other)
                 requires(Const)
                 : parent_(other.parent_), token_offset_(other.token_offset_)
             {}
+
+            iterator & operator=(iterator<false> const & other)
+                requires(Const)
+            {
+                parent_ = other.parent_;
+                token_offset_ = other.token_offset_;
+            }
+
+            // TODO: Document that lexeme/skip cause re-tokenization;
+            // recommend using a token instead.
 
             iterator & operator++()
             {
@@ -975,6 +995,10 @@ namespace boost { namespace parser {
 
             token_type const & operator*() const
             {
+                if ((BOOST_PARSER_TOKEN_POSITION_TYPE)parent_->tokens_.size() <=
+                    token_offset_ - parent_->base_token_offset_) {
+                    fill_cache();
+                }
                 BOOST_PARSER_DEBUG_ASSERT(
                     token_offset_ - parent_->base_token_offset_ <
                     (BOOST_PARSER_TOKEN_POSITION_TYPE)parent_->tokens_.size());

@@ -182,6 +182,9 @@ namespace boost { namespace parser {
                 return true;
             }
         };
+
+        template<typename I, typename Context>
+        struct scoped_lexeme;
     }
 
     /** Repeats the application of another parser `p` of type `Parser`,

@@ -989,11 +989,25 @@ namespace boost { namespace parser {
 
             auto base() const
             {
-                return token_offset_ - parent_->base_token_offset_ ==
-                               (BOOST_PARSER_TOKEN_POSITION_TYPE)
-                                   parent_->tokens_.size()
-                           ? range_end()
-                           : range_begin() + (**this).underlying_position();
+                bool const at_end =
+                    token_offset_ - parent_->base_token_offset_ ==
+                    (BOOST_PARSER_TOKEN_POSITION_TYPE)parent_->tokens_.size();
+                if (at_end) {
+                    if constexpr (std::ranges::common_range<
+                                      std::conditional_t<Const, V const, V>>) {
+                        return range_end();
+                    } else {
+                        auto retval = range_begin();
+                        if (!parent_->tokens_.empty()) {
+                            retval +=
+                                parent_->tokens_.back().underlying_position();
+                        }
+                        std::ranges::advance(retval, range_end());
+                        return retval;
+                    }
+                } else {
+                    return range_begin() + (**this).underlying_position();
+                }
             }
 
             auto range_begin() const

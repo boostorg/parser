@@ -6575,6 +6575,31 @@ namespace boost { namespace parser {
         return parser_interface{attr_parser<Attribute>{std::move(a)}};
     }
 
+    namespace detail {
+        template<typename I, typename S>
+        auto char_from_iter(I it, S last)
+        {
+            if constexpr (detail::is_token_iter_v<I>) {
+                using return_type =
+                    std::optional<typename iter_value_t<I>::char_type>;
+                if (it == last || (*it).id() != character_id ||
+                    !(*it).has_long_long()) {
+                    return return_type{};
+                }
+                return return_type((*it).get_long_long());
+            } else {
+                using return_type = std::optional<std::decay_t<decltype(*it)>>;
+                if (it == last)
+                    return return_type{};
+                return return_type(*it);
+            }
+        }
+
+        template<typename T, typename U>
+        using char_type_from_iter = typename decltype(char_from_iter(
+            std::declval<T>(), std::declval<U>()))::value_type;
+    }
+
 #ifndef BOOST_PARSER_DOXYGEN
 
     template<typename Expected, typename AttributeType>
@@ -6635,35 +6660,14 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
-            if (first == last) {
+            auto const opt_ch = detail::char_from_iter(first, last);
+            if (!opt_ch || detail::unequal(context, *opt_ch, expected_)) {
                 success = false;
                 return;
             }
 
-            if constexpr (detail::is_token_iter_v<Iter>) {
-                using value_type = detail::iter_value_t<Iter>;
-                using attribute_t = typename value_type::char_type;
-                if ((*first).id() != character_id ||
-                    !(*first).has_long_long()) {
-                    success = false;
-                    return;
-                }
-                char32_t c = (char32_t)(*first).get_long_long();
-                if (detail::unequal(context, c, expected_)) {
-                    success = false;
-                    return;
-                }
-                detail::assign(retval, (attribute_t)c);
-            } else {
-                using attribute_t = attribute_type<Iter>;
-                attribute_t x = 0;
-                x = *first;
-                if (detail::unequal(context, x, expected_)) {
-                    success = false;
-                    return;
-                }
-                detail::assign(retval, x);
-            }
+            detail::assign(retval, (attribute_type<Iter>)*opt_ch);
+
             ++first;
         }
 
@@ -6784,8 +6788,8 @@ namespace boost { namespace parser {
     {
         constexpr digit_parser() {}
 
-        template<typename T>
-        using attribute_type = std::decay_t<T>;
+        template<typename I, typename S>
+        using attribute_type = detail::char_type_from_iter<I, S>;
 
         template<
             typename Iter,
@@ -6798,9 +6802,9 @@ namespace boost { namespace parser {
             Context const & context,
             SkipParser const & skip,
             detail::flags flags,
-            bool & success) const -> attribute_type<decltype(*first)>
+            bool & success) const -> attribute_type<Iter, Sentinel>
         {
-            attribute_type<decltype(*first)> retval{};
+            attribute_type<Iter, Sentinel> retval{};
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -6823,11 +6827,13 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
-            if (first == last) {
+            auto const opt_ch = detail::char_from_iter(first, last);
+            if (!opt_ch) {
                 success = false;
                 return;
             }
-            attribute_type<decltype(*first)> const x = *first;
+
+            attribute_type<Iter, Sentinel> const x = *opt_ch;
             char32_t const x_cmp = x;
             if (x_cmp < U'\x0100' && (x_cmp < U'0' || U'9' < x_cmp)) {
                 success = false;
@@ -6935,8 +6941,8 @@ namespace boost { namespace parser {
                 one_byte_offset_ = int(it - first);
         }
 
-        template<typename T>
-        using attribute_type = std::decay_t<T>;
+        template<typename I, typename S>
+        using attribute_type = detail::char_type_from_iter<I, S>;
 
         template<
             typename Iter,
@@ -6949,9 +6955,9 @@ namespace boost { namespace parser {
             Context const & context,
             SkipParser const & skip,
             detail::flags flags,
-            bool & success) const -> attribute_type<decltype(*first)>
+            bool & success) const -> attribute_type<Iter, Sentinel>
         {
-            attribute_type<decltype(*first)> retval{};
+            attribute_type<Iter, Sentinel> retval{};
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -6974,13 +6980,14 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
-            if (first == last) {
+            auto const opt_ch = detail::char_from_iter(first, last);
+            if (!opt_ch) {
                 success = false;
                 return;
             }
 
             auto const & chars = detail::char_set<Tag>::chars;
-            attribute_type<decltype(*first)> const x = *first;
+            attribute_type<Iter, Sentinel> const x = *opt_ch;
             uint32_t const x_cmp = x;
             if (x_cmp < U'\x0100') {
                 uint32_t const * it = std::lower_bound(
@@ -7015,8 +7022,8 @@ namespace boost { namespace parser {
     {
         constexpr char_subrange_parser() {}
 
-        template<typename T>
-        using attribute_type = std::decay_t<T>;
+        template<typename I, typename S>
+        using attribute_type = detail::char_type_from_iter<I, S>;
 
         template<
             typename Iter,
@@ -7029,9 +7036,9 @@ namespace boost { namespace parser {
             Context const & context,
             SkipParser const & skip,
             detail::flags flags,
-            bool & success) const -> attribute_type<decltype(*first)>
+            bool & success) const -> attribute_type<Iter, Sentinel>
         {
-            attribute_type<decltype(*first)> retval{};
+            attribute_type<Iter, Sentinel> retval{};
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -7054,11 +7061,13 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
-            if (first == last) {
+            auto const opt_ch = detail::char_from_iter(first, last);
+            if (!opt_ch) {
                 success = false;
                 return;
             }
-            attribute_type<decltype(*first)> const x = *first;
+
+            attribute_type<Iter, Sentinel> const x = *opt_ch;
             char32_t const x_cmp = x;
             success = false;
             for (auto subrange : detail::char_subranges<Tag>::ranges) {
@@ -7197,8 +7206,8 @@ namespace boost { namespace parser {
                     cps.begin(),
                     cps.end(),
                     context.no_case_depth_);
-                if (mismatch.in1 != token_cps.end() ||
-                    mismatch.in2 != cps.end()) {
+                if (mismatch.first != token_cps.end() ||
+                    mismatch.second != cps.end()) {
                     success = false;
                     return;
                 }
@@ -7636,11 +7645,13 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
-            if (first == last) {
+            auto const opt_ch = detail::char_from_iter(first, last);
+            if (!opt_ch) {
                 success = false;
                 return;
             }
-            int const x = *first;
+
+            int const x = *opt_ch;
             if constexpr (NewlinesOnly) {
                 if (x == 0x000a) { // lf
                     ++first;

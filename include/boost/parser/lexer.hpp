@@ -884,6 +884,7 @@ namespace boost { namespace parser {
             iterator(Parent * parent, size_t token_offset) :
                 parent_(parent), token_offset_(token_offset)
             {}
+            iterator(Parent & parent) : parent_(&parent) { fill_cache(); }
 
             void fill_cache()
             {
@@ -955,11 +956,13 @@ namespace boost { namespace parser {
             }
 
         public:
-            constexpr iterator() = default;
-            constexpr iterator(Parent & parent) : parent_(&parent)
-            {
-                fill_cache();
-            }
+            iterator() = default;
+            iterator(iterator const &) = default;
+
+            iterator(iterator<false> const & other)
+                requires(Const)
+                : parent_(other.parent_), token_offset_(other.token_offset_)
+            {}
 
             iterator & operator++()
             {
@@ -970,7 +973,7 @@ namespace boost { namespace parser {
                 return *this;
             }
 
-            constexpr token_type const & operator*() const
+            token_type const & operator*() const
             {
                 BOOST_PARSER_DEBUG_ASSERT(
                     token_offset_ - parent_->base_token_offset_ <
@@ -981,8 +984,14 @@ namespace boost { namespace parser {
 
             bool operator==(iterator rhs) const
             {
-                BOOST_PARSER_DEBUG_ASSERT(parent_ == rhs.parent_);
-                return token_offset_ == rhs.token_offset_;
+                return parent_ == rhs.parent_ &&
+                       token_offset_ == rhs.token_offset_;
+            }
+
+            bool operator==(iterator<!Const> rhs) const
+            {
+                return parent_ == rhs.parent_ &&
+                       token_offset_ == rhs.token_offset_;
             }
 
             Parent & parent() const { return *parent_; }

@@ -31,7 +31,7 @@ namespace boost { namespace parser {
     }
 
     /** Returns the `line_position` for `it`, counting lines from the
-        beginning of the input `first`. */
+        beginning of the input `first`.  Requires non-token iterators. */
     template<typename Iter>
     line_position<Iter> find_line_position(Iter first, Iter it)
     {
@@ -57,7 +57,7 @@ namespace boost { namespace parser {
     }
 
     /** Returns the iterator to the end of the line in which `it` is
-        found.  */
+        found.  Requires non-token iterators.  */
     template<typename Iter, typename Sentinel>
     Iter find_line_end(Iter it, Sentinel last)
     {
@@ -156,8 +156,6 @@ namespace boost { namespace parser {
     {
         std::string message = "error: Expected ";
         message += e.what();
-        // TODO: Document that this gracefully handles token iterators, and
-        // document the other parts of the API that do or do not.
         auto [first, it, last] = parser::normalize_iterators(first_, e, last_);
         return parser::write_formatted_message(
             os,

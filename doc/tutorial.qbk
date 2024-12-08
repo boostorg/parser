@@ -4045,6 +4045,10 @@ reporting API you need to know which functions require token iterators and
 which do not, and how to get from token iterators down to the underlying input
 iterators.
 
+TODO: Note on the error handling-specific page that some error handling
+functions require normalize_iterators, and some apply it themselves.  Also
+note that all the error handlers appply it.
+
 [endsect]
 
 [section Memory Allocation]

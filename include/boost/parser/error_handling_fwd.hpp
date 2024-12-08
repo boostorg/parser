@@ -61,7 +61,7 @@ namespace boost { namespace parser {
     };
 
     /** Writes a formatted message (meaning prefixed with the file name, line,
-        and column number) to `os`. */
+        and column number) to `os`.  Normalizes token iterators as needed. */
     template<typename Iter, typename Sentinel>
     std::ostream & write_formatted_message(
         std::ostream & os,
@@ -75,7 +75,8 @@ namespace boost { namespace parser {
 
 #if defined(_MSC_VER) || defined(BOOST_PARSER_DOXYGEN)
     /** Writes a formatted message (meaning prefixed with the file name, line,
-        and column number) to `os`.  This overload is Windows-only. */
+        and column number) to `os`.  Normalizes token iterators as needed.
+        This overload is Windows-only. */
     template<typename Iter, typename Sentinel>
     std::ostream & write_formatted_message(
         std::ostream & os,
@@ -89,7 +90,8 @@ namespace boost { namespace parser {
 #endif
 
     /** Writes a formatted parse-expectation failure (meaning prefixed with
-        the file name, line, and column number) to `os`. */
+        the file name, line, and column number) to `os`.  Normalizes token
+        iterators as needed. */
     template<typename Iter, typename Sentinel, template<class> class Exception>
     std::ostream & write_formatted_expectation_failure_error_message(
         std::ostream & os,
@@ -102,8 +104,8 @@ namespace boost { namespace parser {
 
 #if defined(_MSC_VER) || defined(BOOST_PARSER_DOXYGEN)
     /** Writes a formatted parse-expectation failure (meaning prefixed with
-        the file name, line, and column number) to `os`.  This overload is
-        Windows-only. */
+        the file name, line, and column number) to `os`.  Normalizes token
+        iterators as needed.  This overload is Windows-only. */
     template<typename Iter, typename Sentinel, template<class> class Exception>
     std::ostream & write_formatted_expectation_failure_error_message(
         std::ostream & os,
@@ -115,18 +117,32 @@ namespace boost { namespace parser {
         int64_t max_after_caret = 40);
 #endif
 
-    /** TODO: Document that users may need to use this if they make their own
-        error handlers and do token parsing. */
+    // TODO: Document that users may need to use this if they make their own
+    // error handlers and do token parsing.
+
+    /** Returns a tuple of three iterators (corresponding to `first`, `curr`,
+        and `last`) that are suitable for use in the other error handling
+        functions, many of which require iterators into the undelying sequence
+        being parsed.  For non-token parsing cases, this is effectively a
+        no-op; the given iterators are simply returned as-is. */
     template<typename I, typename S>
     auto normalize_iterators(I first, I curr, S last);
 
-    /** TODO: Document that users may need to use this if they make their own
-        error handlers and do token parsing. */
+    /** Returns a tuple of three iterators (corresponding to `first`, the
+        iterator captured in `e`, and `last`) that are suitable for use in the
+        other error handling functions, many of which require iterators into
+        the undelying sequence being parsed.  For non-token parsing cases,
+        this is effectively a no-op; the given iterators are simply returned
+        as-is. */
     template<typename I, typename S>
     auto normalize_iterators(I first, parse_error<I> e, S last);
 
-    /** TODO: Document that users may need to use this if they make their own
-        error handlers and do token parsing. */
+    /** Returns a tuple of three iterators (corresponding to `first`, the
+        iterator captured in `e`, and `last`) that are suitable for use in the
+        other error handling functions, many of which require iterators into
+        the undelying sequence being parsed.  For non-token parsing cases,
+        this is effectively a no-op; the given iterators are simply returned
+        as-is. */
     template<typename I, typename S>
     auto normalize_iterators(I first, lex_error<I> e, S last);
 

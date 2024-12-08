@@ -117,9 +117,6 @@ namespace boost { namespace parser {
         int64_t max_after_caret = 40);
 #endif
 
-    // TODO: Document that users may need to use this if they make their own
-    // error handlers and do token parsing.
-
     /** Returns a tuple of three iterators (corresponding to `first`, `curr`,
         and `last`) that are suitable for use in the other error handling
         functions, many of which require iterators into the undelying sequence

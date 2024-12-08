@@ -7206,7 +7206,9 @@ namespace boost { namespace parser {
                 return;
             }
 
-            auto const cps = make_subrange(expected_first_, expected_last_);
+            using char_type = detail::char_type_from_iter<Iter, Sentinel>;
+            auto const cps =
+                make_subrange<char_type>(expected_first_, expected_last_);
 
             if constexpr (detail::is_token_iter_v<Iter>) {
                 if (!(*first).has_string_view()) {
@@ -7215,7 +7217,7 @@ namespace boost { namespace parser {
                 }
 
                 auto const sv = (*first).get_string_view();
-                auto token_cps = make_subrange(sv.begin(), sv.end());
+                auto token_cps = make_subrange<char_type>(sv.begin(), sv.end());
                 auto const mismatch = detail::no_case_aware_string_mismatch(
                     token_cps.begin(),
                     token_cps.end(),
@@ -7254,13 +7256,11 @@ namespace boost { namespace parser {
             }
         }
 
-        template<typename I, typename S>
+        template<typename CharType, typename I, typename S>
         static auto make_subrange(I f, S l)
         {
             auto subrange = BOOST_PARSER_SUBRANGE(f, l);
-            if constexpr (std::is_same_v<
-                              detail::remove_cv_ref_t<decltype(*f)>,
-                              char>) {
+            if constexpr (std::is_same_v<CharType, char>) {
                 return subrange;
             } else {
                 return subrange | detail::text::as_utf32;

@@ -3665,7 +3665,7 @@ Some things to be aware of when looking at _Parser_ trace output:
 
 [endsect]
 
-[section Using a Lexer / Token Parsing]
+[section Token parsing / Using a Lexer]
 
 _Parser_ has optional support for lexing before parsing.  The optional support
 is based on an external dependency, _ctre_.  _ctre_ produces a sequence of
@@ -3702,7 +3702,7 @@ an ID of `0`, etc.  _lex_ takes two template parameters.  The first parameter
 indicates that the value type of the parsed input sequence is `char`.  The
 second one indicates that the ID-type of all subsequent _tok_specs_ will be
 `int`.  We create a full lexer by starting with the `lexer<...>` expression,
-follwed by a piped-together sequence of _tok_specs_.
+followed by a piped-together sequence of _tok_specs_.
 
 The final lexer `lexer` has a combined regex string, `"(foo)|(b.*r)|(b.+z)"`.
 This string is built up at compile time, and is represented by an _nttp_.  It
@@ -3734,7 +3734,7 @@ Next, you define a parser.
 
 [tokens_basics_parser]
 
-This has the same semantics as the characater parsers you've seen in the rest
+This has the same semantics as the character parsers you've seen in the rest
 of the documentation.  Each _tok_spec_ has the same interface as a parser, so
 it can be used with all the parser combining operations, like `operator>>`.
 However, unlike when doing character parsing, when token parsing all the
@@ -3772,7 +3772,7 @@ _lex_ has one built in; it uses `"\\s+"` by default.  Whitespace is matched,
 but produces no tokens.  If you want to change the whitespace/skipper regex,
 you can provide it when specifying the lexer.  For example, here is how you
 would specify the whitespace/skipped tokens to be any sequence of whitespace
-charaters, or any C++-style trailing comment (`// ...`).
+characters, or any C++-style trailing comment (`// ...`).
 
     bp::lexer<char, int, "\\s+|\\/\\/.*$">
 
@@ -3797,7 +3797,7 @@ The attribute types for these tokens are `bool`, `std::string_view`, and
 because that is the default if you do not specify a type.
 
 A _tok_ is essentially a variant of `std::basic_string_view<CharType>`, `long
-long`, and `long double`.  The latter two types were seleced because they can
+long`, and `long double`.  The latter two types were selected because they can
 fit any value of an integral or floating-point type, respectively.  Even
 though _tok_ effectively erases the exact type when it is integral or
 floating-point, the token parser retains the information of what the exact
@@ -3841,10 +3841,69 @@ literals are turned into _ch_ parsers.  _ch_ parsers that you explicitly write
 may be used as well.  They will only match single-character tokens, though
 (that is, tokens with the ID _ch_id_).
 
+[heading The differences between parsing characters and parsing tokens]
+
+Even though _ch_ and _str_ (and lots of other character parsers _emdash_ see
+the table below) are available when doing token parsing, their semantics are
+subtly different when using for token parsing.  This is because token parsing
+involves parsing chunks of input as tokens, rather than individual characters.
+This may sound obvious, but the implications are not.  Consider this example.
+
+[tokens_string_in_character_vs_token_parsing]
+
+Why doesn't the token parsing case work?  In the character parsing case,
+_str_np_ tries to match characters from the input, one at a time; it sees
+`'='` followed by `';'`, so it matches.  In the token parsing case, this does
+not happen.  Instead, the input is broken up into two tokens (one for `'='`
+and one for `';'`).  `_str_np_("=;")` tries to match the first token in its
+entirety, but that token is a character token, not a token with a
+`std::basic_string_view` attribute.  Even if that token did have
+a`std::basic_string_view` attribute, it would be `"="`, not `"=;"`, and so the
+match would still fail.
+
+So, even though string matching is available using _str_, make sure you
+understand that _str_ is looking for 1) a token with a string view attribute,
+and 2) a full match of the token's string view against the range provided to
+_str_.
+
+_ch_ is also a bit different, since it only matches character tokens that you
+make with _tok_chs_.  Such tokens have the token ID _ch_id_.  _ch_ will
+*never* match any other kind of token.  This goes for all the character
+parsers (_blank_, _punct_, _upper_, etc).
+
+The character class parsers (e.g. _punct_) are also limited in token parsing
+vs. their use in character parsing.  _tok_chs_ limits characters to the ASCII
+range for simplicity, and to discourage parsing of sequences of tokens to find
+things that are detectable using _pcre_ directly.  In other words, if you need
+the full set of punctuation characters, use `"\p{P}"` in one of your token
+regexes, rather than trying to parse punctuation characters out of the input
+using _punct_.  Because _tok_chs_ limits characters to the ASCII range, all
+the matching for any character class parser (like _punct_) above the ASCII
+range will fail.
+
+[important Though the string and character parsers are available, they're a
+bit clunky and should be avoided in most cases.  Instead, use the character
+handling from the _pcre_ regex language to make the tokens you want.  The best
+use of string and character parsers in your _Parser_ token parsers is as
+literals like `"function"`, `'='`, etc.]
+
+One more important difference between token and character parsing is the
+effect that using _lexeme_ and/or _skip_ has.  If you use _lexeme_ or _skip_,
+you are changing the sequence tokens that must be in the token cache.  As
+such, whenever you *enter* or *leave* a _lexeme_ *or* _skip_ directive, the
+token cache is flushed.  The flushed tokens are everything from the current
+token position to the end of the cache.  If you write `bp::lexeme[p]`
+frequently enough in your parsers, you could be in for some very uneven
+performance.
+
+[important Though you may be used to using _lexeme_ and _skip_ in character
+parsing, prefer to write explicit token regexes that have equivalent
+semantics, but operating during lexing rather than during parsing.]
+
 [heading Parsing tokens with a specific value]
 
 So far, we've only seen examples of parsing for a particular token.  Sometimes
-we want to match only occurrances of a given token with a particular value,
+we want to match only occurrences of a given token with a particular value,
 just like when we write something like `_ch_('a', 'z')` in a character parser.
 
 Just as with _ch_ and most other _Parser_ parsers, you can just add the value
@@ -3953,7 +4012,7 @@ Note the size of the cache after the parse; it still contains some tokens.
 This is a special case of a more general phenomenon: the token cache grows
 without bound when there are no expectation points.  This is because, without
 expectation points, backtracking is unbounded (refer to the _expect_pts_
-section to see why).  If you can go back arbitarily far in order to backtrack,
+section to see why).  If you can go back arbitrarily far in order to backtrack,
 you need to be sure that there will be a token at the place you backtrack to.
 
 However, if you use expectation points, the cache is trimmed.  The prefix of
@@ -3985,10 +4044,6 @@ guaranteed to fail.
 The takeaway here is that a lexing failure might be due to bad input, but it
 can also be the sign of a bug in one or more of your _tok_specs_.
 
-[heading Tradeoffs of token- vs. character-parsing]
-
-TODO
-
 [heading The token parsers]
 
 Many of the parsers that work in character parsing do not work in token
@@ -4009,10 +4064,10 @@ by _lexeme_.
 
 [heading The token parsing API]
 
-Not all the _p_ and _cbp_ overloads can do token parsing, because some of them
-cannot accept a _tok_v_ as input.  In particular, the overloads that take a
-skipper are precluded, since the skipper must be built into the lexer itself
-(see the section above about whitespace handling for details).
+Not all the _p_ and _cbp_ overloads can do token parsing.  In particular, the
+overloads that take a skipper are precluded, since the skipper must be built
+into the lexer itself (see the section above about whitespace handling for
+details).
 
 [heading _ctre_ particulars]
 
@@ -4036,18 +4091,23 @@ array of `char` will be interpreted as UTF-8, and will be transcoded to UTF-32
 before being stored in the array of `char32_t`.  All the `charN_t` character
 types will be interpreted as UTF-N encoded, and will be transcoded to UTF-32
 if needed.  `wchar_t` is taken to mean UTF-32 *even on Windows*.  Again, all
-of this trancoding happens at compile time.
+of this transcoding happens at compile time.
 
 [heading Error handling details]
 
-TODO: Describe how it mostly just works, but that if you use the error
-reporting API you need to know which functions require token iterators and
-which do not, and how to get from token iterators down to the underlying input
-iterators.
+Error handling during token parsing mostly Just Works.  That is, you don't
+need to know or do anything special just because you are parsing tokens.
 
-TODO: Note on the error handling-specific page that some error handling
-functions require normalize_iterators, and some apply it themselves.  Also
-note that all the error handlers appply it.
+However, the error reporting functions all operate at the level of character
+input, not tokens.  The higher level functions provided in _err_fwd_hpp_ and
+_err_hpp_ (like `write_formatted_message()`) simply get the iterators to the
+underlying range of input before doing their work.  The lower-level functions
+provided in _err_fwd_hpp_ and _err_hpp_ (like `find_line_position()`) do not.
+Each function's API documentation specifies whether or not it does this
+"normalization" to underlying iterators.  If you use the lower-level API
+directly in your code, you can call one of the overloads of
+`normalize_iterators()` to get the underlying iterators in the token parsing
+case.
 
 [endsect]
 

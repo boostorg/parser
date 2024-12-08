@@ -264,7 +264,8 @@ namespace boost { namespace parser {
     {
         os << "[value: ";
         if (token.has_string_view()) {
-            os << '"' << token.get_string_view() << '"';
+            os << '"' << (token.get_string_view() | detail::text::as_utf8)
+               << '"';
         } else if (token.has_long_long()) {
             if (token.id() == character_id) {
                 os << "'" << (char)token.get_long_long() << "'";

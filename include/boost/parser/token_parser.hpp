@@ -38,33 +38,65 @@ namespace boost { namespace parser {
             }
         }
 
-        // TODO: This needs to use resolve(value_), and we need a test for
-        // that.
-        template<typename T>
+        template<typename Expected>
         struct token_with_value
         {
-            static_assert(std::integral<T> || std::floating_point<T>);
-            explicit token_with_value(T value) : value_(value) {}
-            bool matches(T value) const { return value == value_; }
-            T value_;
+            explicit constexpr token_with_value(Expected value) :
+                expected_(value)
+            {}
+
+            template<typename T, typename Context>
+            bool matches(T value, Context const & context) const
+            {
+                return value == detail::resolve(context, expected_);
+            }
+
+            Expected expected_;
         };
 
         template<typename Subrange>
         struct token_with_string_view
         {
-            explicit token_with_string_view(Subrange value) : value_(value) {}
+            explicit constexpr token_with_string_view(Subrange subrange) :
+                subrange_(subrange)
+            {}
 
-            template<typename CharType>
-            bool matches(std::basic_string_view<CharType> value) const
+            template<typename CharType, typename Context>
+            bool matches(
+                std::basic_string_view<CharType> value, Context const &) const
             {
-                // TODO: this is wrong.  We need to transcode both sides to
-                // UTF-32, when !same_as<CharType, char>.  (Need to write some
-                // tests, and evaluate whether this is a good idea.  If not,
-                // go change the docs on token_parser).
-                return std::ranges::equal(value, value_);
+                auto const value_cps =
+                    make_subrange<CharType>(value.begin(), value.end());
+                auto const subrange_cps =
+                    make_subrange<CharType>(subrange_.begin(), subrange_.end());
+                return std::ranges::equal(
+                    value_cps, subrange_cps, [](auto a, auto b) {
+                        return cast_char(a) == cast_char(b);
+                    });
             }
 
-            Subrange value_;
+            template<typename T>
+            static auto cast_char(T c)
+            {
+                if constexpr (std::same_as<T, char>) {
+                    return (unsigned char)c;
+                } else {
+                    return c;
+                }
+            }
+
+            template<typename CharType, typename I, typename S>
+            static auto make_subrange(I f, S l)
+            {
+                auto subrange = BOOST_PARSER_SUBRANGE(f, l);
+                if constexpr (std::is_same_v<CharType, char>) {
+                    return subrange;
+                } else {
+                    return subrange | detail::text::as_utf32;
+                }
+            }
+
+            Subrange subrange_;
         };
     }
 
@@ -142,7 +174,7 @@ namespace boost { namespace parser {
             if (use_expected || detail::gen_attrs(flags)) {
                 auto opt_attr = detail::token_as<attribute_type<Iter>>(x);
                 if constexpr (use_expected) {
-                    if (!opt_attr || !expected_.matches(*opt_attr)) {
+                    if (!opt_attr || !expected_.matches(*opt_attr, context)) {
                         success = false;
                         return;
                     }
@@ -157,7 +189,7 @@ namespace boost { namespace parser {
         /** Returns a `parser_interface` containing a `token_parser` that
             matches `value`. */
         template<typename T>
-            requires std::is_integral_v<T> || std::is_floating_point_v<T>
+            requires(!parsable_range_like<T>)
         constexpr auto operator()(T value) const noexcept
         {
             BOOST_PARSER_ASSERT(
@@ -191,10 +223,24 @@ namespace boost { namespace parser {
                  "token_spec, like 'token_spec(char-set)(char-set)'.  Quit "
                  "it!'"));
             auto expected =
-                detail::token_with_string_view{BOOST_PARSER_SUBRANGE(
-                    std::ranges::begin(r), std::ranges::end(r))};
+                detail::token_with_string_view{make_expected_range((R &&)r)};
             return parser_interface(
                 token_parser<token_spec, decltype(expected)>(expected));
+        }
+
+        template<typename R>
+        static constexpr auto make_expected_range(R && r)
+        {
+            using T = detail::remove_cv_ref_t<R>;
+            if constexpr (std::is_bounded_array_v<T>) {
+                constexpr auto n = std::extent_v<T>;
+                auto const offset = n && !r[n - 1] ? 1 : 0;
+                return BOOST_PARSER_SUBRANGE(
+                    std::ranges::begin(r), std::ranges::end(r) - offset);
+            } else {
+                return BOOST_PARSER_SUBRANGE(
+                    std::ranges::begin(r), std::ranges::end(r));
+            }
         }
 
         // TODO: Consider adding a special string_view-like type that can be

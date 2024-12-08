@@ -13,10 +13,195 @@
 namespace bp = boost::parser;
 
 constexpr auto true_false = bp::token_spec<"true|false", 0, bool>;
-constexpr auto identifier = bp::token_spec<"[a-zA-Z]\\w*", 1>;
+constexpr auto identifier = bp::token_spec<"\\p{L}+", 1>;
 
 int main()
 {
+    // token_parser
+    {
+        {
+            constexpr auto lexer = bp::lexer<char, int> | true_false |
+                                   identifier |
+                                   bp::token_chars<'=', ';', '#', '$', '%'>;
+            {
+                constexpr auto parser = true_false;
+                BOOST_TEST(bp::parse("true" | bp::to_tokens(lexer), parser));
+                BOOST_TEST(bp::parse("false" | bp::to_tokens(lexer), parser));
+                BOOST_TEST(!bp::parse("$" | bp::to_tokens(lexer), parser));
+            }
+            {
+                constexpr auto parser = true_false(false);
+                BOOST_TEST(!bp::parse("true" | bp::to_tokens(lexer), parser));
+                BOOST_TEST(bp::parse("false" | bp::to_tokens(lexer), parser));
+                BOOST_TEST(!bp::parse("$" | bp::to_tokens(lexer), parser));
+            }
+            {
+                bool b = true;
+                auto get_bool = [](auto & ctx) { return _globals(ctx); };
+                auto parser = bp::with_globals(true_false(get_bool), b);
+                BOOST_TEST(bp::parse("true" | bp::to_tokens(lexer), parser));
+                BOOST_TEST(!bp::parse("false" | bp::to_tokens(lexer), parser));
+                BOOST_TEST(!bp::parse("$" | bp::to_tokens(lexer), parser));
+            }
+        }
+        {
+            constexpr auto lexer = bp::lexer<char, int> | true_false |
+                                   identifier |
+                                   bp::token_chars<'=', ';', '#', '$', '%'>;
+            {
+                constexpr auto parser = identifier;
+                BOOST_TEST(bp::parse("func" | bp::to_tokens(lexer), parser));
+                BOOST_TEST(bp::parse("foo" | bp::to_tokens(lexer), parser));
+                BOOST_TEST(!bp::parse("$" | bp::to_tokens(lexer), parser));
+            }
+            {
+                constexpr auto parser = identifier("func");
+                BOOST_TEST(bp::parse("func" | bp::to_tokens(lexer), parser));
+                BOOST_TEST(!bp::parse("foo" | bp::to_tokens(lexer), parser));
+                BOOST_TEST(!bp::parse("$" | bp::to_tokens(lexer), parser));
+            }
+            {
+                constexpr auto parser = identifier("f\xC3\xBCnc");
+                constexpr auto parser_u8 = identifier(u8"fünc");
+                constexpr auto parser_u16 = identifier(u"fünc");
+                constexpr auto parser_u32 = identifier(U"fünc");
+
+                constexpr auto lexer_u8 =
+                    bp::lexer<char8_t, int> | true_false | identifier |
+                    bp::token_chars<'=', ';', '#', '$', '%'>;
+                constexpr auto lexer_u16 =
+                    bp::lexer<char16_t, int> | true_false | identifier |
+                    bp::token_chars<'=', ';', '#', '$', '%'>;
+                constexpr auto lexer_u32 =
+                    bp::lexer<char32_t, int> | true_false | identifier |
+                    bp::token_chars<'=', ';', '#', '$', '%'>;
+
+                // There appears to be a bug in CTRE, related to the use of
+                // char8_t.  It produces bad tokens, including appearances of
+                // the replacement character.  The exact same input here
+                // results in good tokens for all cases except char8_t input.
+#if 0
+                std::cout << "char tokens:\n";
+                for (auto tok : "fünc" | bp::to_tokens(lexer)) {
+                    std::cout << "tok=" << tok << "\n";
+                }
+                std::cout << "\n\n";
+
+                std::cout << "char tokens:\n";
+                for (auto tok : "f\xC3\xBCnc" | bp::to_tokens(lexer)) {
+                    std::cout << "tok=" << tok << "\n";
+                }
+                std::cout << "\n\n";
+
+                // BAD!
+                std::cout << "char8_t tokens:\n";
+                for (auto tok : u8"fünc" | bp::to_tokens(lexer_u8)) {
+                    std::cout << "tok=" << tok << "\n";
+                }
+                std::cout << "\n\n";
+
+                std::cout << "char16_t tokens:\n";
+                for (auto tok : u"fünc" | bp::to_tokens(lexer_u16)) {
+                    std::cout << "tok=" << tok << "\n";
+                }
+                std::cout << "\n\n";
+
+                std::cout << "char32_t tokens:\n";
+                for (auto tok : U"fünc" | bp::to_tokens(lexer_u32)) {
+                    std::cout << "tok=" << tok << "\n";
+                }
+                std::cout << "\n\n";
+#endif
+
+                // Range to match is sequence of char; no transcoding will be
+                // done.
+                BOOST_TEST(
+                    bp::parse("f\xC3\xBCnc" | bp::to_tokens(lexer), parser));
+#if 0
+                BOOST_TEST(
+                    bp::parse(u8"fünc" | bp::to_tokens(lexer_u8), parser));
+#endif
+                BOOST_TEST(
+                    bp::parse(u"fünc" | bp::to_tokens(lexer_u16), parser));
+                BOOST_TEST(
+                    bp::parse(U"fünc" | bp::to_tokens(lexer_u32), parser));
+
+                BOOST_TEST( // char input; no transcoding on this one.
+                    bp::parse("f\xC3\xBCnc" | bp::to_tokens(lexer), parser_u8));
+#if 0
+                BOOST_TEST(
+                    bp::parse(u8"fünc" | bp::to_tokens(lexer_u8), parser_u8));
+#endif
+                BOOST_TEST(
+                    bp::parse(u"fünc" | bp::to_tokens(lexer_u16), parser_u8));
+                BOOST_TEST(
+                    bp::parse(U"fünc" | bp::to_tokens(lexer_u32), parser_u8));
+
+                BOOST_TEST( // char input; no transcoding on this one.
+                    !bp::parse(
+                        "f\xC3\xBCnc" | bp::to_tokens(lexer), parser_u16));
+#if 0
+                BOOST_TEST(
+                    bp::parse(u8"fünc" | bp::to_tokens(lexer_u8), parser_u16));
+#endif
+                BOOST_TEST(
+                    bp::parse(u"fünc" | bp::to_tokens(lexer_u16), parser_u16));
+                BOOST_TEST(
+                    bp::parse(U"fünc" | bp::to_tokens(lexer_u32), parser_u16));
+
+                BOOST_TEST( // char input; no transcoding on this one.
+                    !bp::parse(
+                        "f\xC3\xBCnc" | bp::to_tokens(lexer), parser_u32));
+#if 0
+                BOOST_TEST(
+                    bp::parse(u8"fünc" | bp::to_tokens(lexer_u8), parser_u32));
+#endif
+                BOOST_TEST(
+                    bp::parse(u"fünc" | bp::to_tokens(lexer_u16), parser_u32));
+                BOOST_TEST(
+                    bp::parse(U"fünc" | bp::to_tokens(lexer_u32), parser_u32));
+
+                BOOST_TEST(!bp::parse("func" | bp::to_tokens(lexer), parser));
+                BOOST_TEST(
+                    !bp::parse(u8"func" | bp::to_tokens(lexer_u8), parser));
+                BOOST_TEST(
+                    !bp::parse(u"func" | bp::to_tokens(lexer_u16), parser));
+                BOOST_TEST(
+                    !bp::parse(U"func" | bp::to_tokens(lexer_u32), parser));
+
+                BOOST_TEST(
+                    !bp::parse("func" | bp::to_tokens(lexer), parser_u8));
+                BOOST_TEST(
+                    !bp::parse(u8"func" | bp::to_tokens(lexer_u8), parser_u8));
+                BOOST_TEST(
+                    !bp::parse(u"func" | bp::to_tokens(lexer_u16), parser_u8));
+                BOOST_TEST(
+                    !bp::parse(U"func" | bp::to_tokens(lexer_u32), parser_u8));
+
+                BOOST_TEST(
+                    !bp::parse("func" | bp::to_tokens(lexer), parser_u16));
+                BOOST_TEST(
+                    !bp::parse(u8"func" | bp::to_tokens(lexer_u8), parser_u16));
+                BOOST_TEST(
+                    !bp::parse(u"func" | bp::to_tokens(lexer_u16), parser_u16));
+                BOOST_TEST(
+                    !bp::parse(U"func" | bp::to_tokens(lexer_u32), parser_u16));
+
+                BOOST_TEST(
+                    !bp::parse("func" | bp::to_tokens(lexer), parser_u32));
+                BOOST_TEST(
+                    !bp::parse(u8"func" | bp::to_tokens(lexer_u8), parser_u32));
+                BOOST_TEST(
+                    !bp::parse(u"func" | bp::to_tokens(lexer_u16), parser_u32));
+                BOOST_TEST(
+                    !bp::parse(U"func" | bp::to_tokens(lexer_u32), parser_u32));
+
+                BOOST_TEST(!bp::parse("foo" | bp::to_tokens(lexer), parser));
+                BOOST_TEST(!bp::parse("$" | bp::to_tokens(lexer), parser));
+            }
+        }
+    }
+
     // basic
     {
         constexpr auto lexer = bp::lexer<char, int> | true_false | identifier |

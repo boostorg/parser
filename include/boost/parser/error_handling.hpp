@@ -263,8 +263,6 @@ namespace boost { namespace parser {
             return error_handler_result::fail;
         }
 
-        // TODO: Add a test that exercises this function when doing token
-        // parsing.
         template<typename Context, typename Iter>
         void diagnose(
             diagnostic_kind kind,

@@ -117,14 +117,6 @@ int main()
         BOOST_TEST(cache.size() == 2u);
     }
 
-    // TODO: Add tests exercising all terminal parsers (esp. character
-    // parsers) that are compat. w/token parsing.
-
-    // TODO: Adapt symbols for use with token parsing; test here.
-
-    // TODO: Adapt the string literal parser to match against
-    // string_view-providing tokens.
-
     // doc examples
     // clang-format off
     {

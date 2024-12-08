@@ -210,6 +210,27 @@ int main()
     assert(cache.size() == 2u);
     //]
     }
+
+    {
+    //[ tokens_string_in_character_vs_token_parsing
+    constexpr auto true_false = bp::token_spec<"true|false", 0, bool>;
+    constexpr auto identifier = bp::token_spec<"[a-zA-Z]\\w*", 1>;
+
+    constexpr auto lexer =
+        bp::lexer<char, int> | true_false | identifier | bp::token_chars<'=', ';'>;
+
+    auto parser = bp::string("=;");
+
+    // NOTE: Character parsing here.
+    auto character_parse_result = bp::parse("=;", parser);
+    assert(character_parse_result);
+    assert(*character_parse_result == "=;");
+
+    // NOTE: Token parsing here.
+    auto token_parse_result = bp::parse("=;" | bp::to_tokens(lexer), parser);
+    assert(!token_parse_result);
+    //]
+    }
     // clang-format on
 
     return boost::report_errors();

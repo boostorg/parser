@@ -532,11 +532,6 @@ int main()
         }
 
         {
-            // TODO: Document that bp::string(";=") will *not* match ";=" in
-            // the input, because the token boundaries form the tokens ";",
-            // "=", neither of which matches ";=".  Also, document that char
-            // parsers *only* match with char tokens, and bp::string *never*
-            // do.
             constexpr auto parser = bp::omit[*bp::string("ab")];
 
             {
@@ -2019,10 +2014,6 @@ int main()
         BOOST_TEST(bp::prefix_parse(first, r.end(), parser, result));
         BOOST_TEST(result == std::vector<uint32_t>({'a'}));
     }
-
-    // TODO: Document that ranges of UTF-16 input will never match the unicode
-    // cases of the character parsers, because they are examined CU-by-CU, and
-    // surrogate pairs are therefore never combined.
 
     // upper_
     {

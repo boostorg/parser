@@ -857,10 +857,6 @@ namespace boost { namespace parser {
         template<typename I, typename Context>
         friend struct detail::scoped_lexeme;
 
-        // TODO: Document that the token cache will grow without bound if the
-        // parser contains no sequence points.  Document this in the doc
-        // section that talks about the importance of sequence points.
-
         V base_ = V();
         Lexer lexer_;
         mutable std::ranges::iterator_t<V> latest_;
@@ -980,9 +976,6 @@ namespace boost { namespace parser {
                 parent_ = other.parent_;
                 token_offset_ = other.token_offset_;
             }
-
-            // TODO: Document that lexeme/skip cause re-tokenization;
-            // recommend using a token instead.
 
             iterator & operator++()
             {

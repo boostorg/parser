@@ -6,21 +6,20 @@ import path ;
 import doxygen ;
 import quickbook ;
 
+using auto-index ;
 using doxygen ;
 using quickbook ;
 using boostbook ;
-
-path-constant here : . ;
 
 rule run_doxygen ( files * : name : expand ? )
 {
 
     expand ?= <doxygen:param>EXPAND_ONLY_PREDEF=YES ;
 
-    doxygen parser_reference
-      :
-        $(files)
-      :
+doxygen parser_reference
+  :
+    $(files)
+  :
         <doxygen:param>EXTRACT_ALL=YES
         # note that there is no detail::unspecified -- this is a hack to get all
         # the SFINAE code out of the API docs.
@@ -35,23 +34,15 @@ rule run_doxygen ( files * : name : expand ? )
         <doxygen:param>SEARCH_INCLUDES=NO
         <doxygen:param>EXAMPLE_PATH=.
         <reftitle>$(name)
-      ;
+  ;
 
 }
 
-run_doxygen [ glob $(here)/../../../boost/parser/*.hpp : $(here)/../../../boost/parser/concepts.hpp ] : "Headers" ;
-
-install images_standalone : [ glob *.png ] : <location>html/parser/img ;
-explicit images_standalone ;
-
-install images_boostdoc : [ glob *.png ] : <location>../../../doc/html/parser/img ;
-explicit images_boostdoc ;
+run_doxygen [ glob ../include/boost/parser/*.hpp : ../include/boost/parser/concepts.hpp ] : "Reference" ;
 
 xml parser
     :
         parser.qbk
-    :
-        <dependency>parser_reference
     ;
 
 boostbook standalone
@@ -60,6 +51,8 @@ boostbook standalone
     :
         <dependency>css
         <dependency>images
+
+        <dependency>parser_reference
 
         # HTML options first:
         # Use graphics not text for navigation:
@@ -98,25 +91,18 @@ boostbook standalone
         # better use SVG's instead:
         # <xsl:param>admon.graphics.extension=".svg"
 
-        # <auto-index>on
-        # <auto-index-verbose>on
-        # <auto-index-internal>on
-        # <auto-index-script>parser.idx
-        # <quickbook-define>enable_index
-        # <auto-index-prefix>..
-        # <xsl:param>index.on.type=1
-
-        <dependency>images_standalone
+        <auto-index>on
+        <auto-index-verbose>on
+        <auto-index-internal>on
+        <auto-index-script>parser.idx
+        <quickbook-define>enable_index
+        <auto-index-prefix>..
+        <xsl:param>index.on.type=1
     ;
 
-install css : [ glob $(BOOST_ROOT)/doc/src/*.css ]
+install css : [ glob /home/tzlaine/boost_1_83_0/doc/src/*.css ]
     : <location>html ;
-install images : [ glob $(BOOST_ROOT)/doc/src/images/*.png ]
+install images : [ glob /home/tzlaine/boost_1_83_0/doc/src/images/*.png ]
     : <location>html/images ;
-
-alias boostdoc : parser : : : <dependency>images_boostdoc ;
-explicit boostdoc ;
-alias boostrelease ;
-explicit boostrelease ;
 explicit css ;
 explicit images ;

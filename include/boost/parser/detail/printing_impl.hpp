@@ -566,24 +566,37 @@ namespace boost { namespace parser { namespace detail {
         }
     };
 
-    template<typename Context, typename Expected, typename AttributeType>
+    template<
+        typename Context,
+        typename Expected,
+        typename AttributeType,
+        typename ParserMods>
     void print_parser(
         Context const & context,
-        char_parser<Expected, AttributeType> const & parser,
+        char_parser<Expected, AttributeType, ParserMods> const & parser,
         std::ostream & os,
         int components)
     {
-        if (std::is_same_v<AttributeType, uint32_t>)
-            os << "cp";
-        else if (std::is_same_v<AttributeType, char>)
-            os << "cu";
-        else
-            os << "char_";
-        if constexpr (!is_nope_v<Expected>) {
-            os << "(";
-            char_print_parser_impl<Context, Expected>::call(
-                context, os, parser.expected_);
-            os << ")";
+        if constexpr (parser.mods_.omit_attr) {
+            if constexpr (is_nope_v<Expected>) {
+                os << "omit[char_]";
+            } else {
+                char_print_parser_impl<Context, Expected>::call(
+                    context, os, parser.expected_);
+            }
+        } else {
+            if (std::is_same_v<AttributeType, uint32_t>)
+                os << "cp";
+            else if (std::is_same_v<AttributeType, char>)
+                os << "cu";
+            else
+                os << "char_";
+            if constexpr (!is_nope_v<Expected>) {
+                os << "(";
+                char_print_parser_impl<Context, Expected>::call(
+                    context, os, parser.expected_);
+                os << ")";
+            }
         }
     }
 
@@ -645,21 +658,6 @@ namespace boost { namespace parser { namespace detail {
         int components)
     {
         os << "upper";
-    }
-
-    template<typename Context, typename Expected, typename AttributeType>
-    void print_parser(
-        Context const & context,
-        omit_parser<char_parser<Expected, AttributeType>> const & parser,
-        std::ostream & os,
-        int components)
-    {
-        if constexpr (is_nope_v<Expected>) {
-            os << "omit[char_]";
-        } else {
-            char_print_parser_impl<Context, Expected>::call(
-                context, os, parser.parser_.expected_);
-        }
     }
 
     template<typename Context, typename StrIter, typename StrSentinel>

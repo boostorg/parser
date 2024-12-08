@@ -68,6 +68,12 @@ namespace boost { namespace parser {
         return BOOST_PARSER_SUBRANGE(ptr, detail::text::null_sentinel);
     }
 
+    template<bool OmitAttr = false>
+    struct parser_modifiers
+    {
+        static constexpr bool omit_attr = OmitAttr;
+    };
+
     namespace detail {
         template<typename T>
         constexpr bool is_optional_v = enable_optional<T>;
@@ -349,7 +355,10 @@ namespace boost { namespace parser {
         parse fails only if the parser is constructed with a specific set of
         expected code point values that does not include the matched code
         point. */
-    template<typename Expected, typename AttributeType = void>
+    template<
+        typename Expected,
+        typename AttributeType = void,
+        typename ParserMods = parser_modifiers<>>
     struct char_parser;
 
     /** Matches a single code point that is equal to one of the code points

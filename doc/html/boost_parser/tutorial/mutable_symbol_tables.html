@@ -1,0 +1,175 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Mutable Symbol Tables</title>
+<link rel="stylesheet" href="../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
+<link rel="up" href="../tutorial.html" title="Tutorial">
+<link rel="prev" href="symbol_tables.html" title="Symbol Tables">
+<link rel="next" href="the_parsers_and_their_uses.html" title="The Parsers And Their Uses">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="symbol_tables.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="the_parsers_and_their_uses.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_parser.tutorial.mutable_symbol_tables"></a><a class="link" href="mutable_symbol_tables.html" title="Mutable Symbol Tables">Mutable
+      Symbol Tables</a>
+</h3></div></div></div>
+<p>
+        The previous example showed how to use a symbol table as a fixed lookup table.
+        What if we want to add things to the table during the parse? We can do that,
+        but we need to do so within a semantic action. First, here is our symbol
+        table, already with a single value in it:
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="identifier">bp</span><span class="special">::</span><span class="identifier">symbols</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;</span> <span class="keyword">const</span> <span class="identifier">symbols</span> <span class="special">=</span> <span class="special">{{</span><span class="string">"c"</span><span class="special">,</span> <span class="number">8</span><span class="special">}};</span>
+<span class="identifier">assert</span><span class="special">(</span><span class="identifier">parse</span><span class="special">(</span><span class="string">"c"</span><span class="special">,</span> <span class="identifier">symbols</span><span class="special">));</span>
+</pre>
+<p>
+      </p>
+<p>
+        No surprise that it works to use the symbol table as a parser to parse the
+        one string in the symbol table. Now, here's our parser:
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">parser</span> <span class="special">=</span> <span class="special">(</span><span class="identifier">bp</span><span class="special">::</span><span class="identifier">char_</span> <span class="special">&gt;&gt;</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">int_</span><span class="special">)[</span><span class="identifier">add_symbol</span><span class="special">]</span> <span class="special">&gt;&gt;</span> <span class="identifier">symbols</span><span class="special">;</span>
+</pre>
+<p>
+      </p>
+<p>
+        Here, we've attached the semantic action not to a simple parser like <code class="computeroutput"><a class="link" href="../../boost/parser/double_.html" title="Global double_">double_</a></code>,
+        but to the sequence parser <code class="computeroutput"><span class="special">(</span><span class="identifier">bp</span><span class="special">::</span><span class="identifier">char_</span>
+        <span class="special">&gt;&gt;</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">int_</span><span class="special">)</span></code>. This sequence parser contains two parsers,
+        each with its own attribute, so it produces two attributes as a tuple.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">add_symbol</span> <span class="special">=</span> <span class="special">[&amp;</span><span class="identifier">symbols</span><span class="special">](</span><span class="keyword">auto</span> <span class="special">&amp;</span> <span class="identifier">ctx</span><span class="special">)</span> <span class="special">{</span>
+    <span class="keyword">using</span> <span class="keyword">namespace</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">literals</span><span class="special">;</span>
+    <span class="comment">// symbols::insert() requires a string, not a single character.</span>
+    <span class="keyword">char</span> <span class="identifier">chars</span><span class="special">[</span><span class="number">2</span><span class="special">]</span> <span class="special">=</span> <span class="special">{</span><span class="identifier">_attr</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">)[</span><span class="number">0</span><span class="identifier">_c</span><span class="special">],</span> <span class="number">0</span><span class="special">};</span>
+    <span class="identifier">symbols</span><span class="special">.</span><span class="identifier">insert</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">,</span> <span class="identifier">chars</span><span class="special">,</span> <span class="identifier">_attr</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">)[</span><span class="number">1</span><span class="identifier">_c</span><span class="special">]);</span>
+<span class="special">};</span>
+</pre>
+<p>
+      </p>
+<p>
+        Inside the semantic action, we can get the first element of the attribute
+        tuple using <a href="https://en.cppreference.com/w/cpp/language/user_literal" target="_top">UDLs</a>
+        provided by Boost.Hana, and <code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">hana</span><span class="special">::</span><span class="identifier">tuple</span><span class="special">::</span><span class="keyword">operator</span><span class="special">[]()</span></code>. The first attribute, from the <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a></code>,
+        is <code class="computeroutput"><span class="identifier">_attr</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">)[</span><span class="number">0</span><span class="identifier">_c</span><span class="special">]</span></code>, and
+        the second, from the <code class="computeroutput"><a class="link" href="../../boost/parser/int_.html" title="Global int_">int_</a></code>, is <code class="computeroutput"><span class="identifier">_attr</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">)[</span><span class="number">1</span><span class="identifier">_c</span><span class="special">]</span></code>
+        (if <code class="computeroutput"><a class="link" href="../../boost/parser/tuple.html" title="Type definition tuple">boost::parser::tuple</a></code>
+        aliases to <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">tuple</span></code>, you'd use <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span></code> or
+        <code class="computeroutput"><a class="link" href="../../boost/parser/get.html" title="Function template get">boost::parser::get</a></code>
+        instead). To add the symbol to the symbol table, we call <code class="computeroutput"><span class="identifier">insert</span><span class="special">()</span></code>.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">parser</span> <span class="special">=</span> <span class="special">(</span><span class="identifier">bp</span><span class="special">::</span><span class="identifier">char_</span> <span class="special">&gt;&gt;</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">int_</span><span class="special">)[</span><span class="identifier">add_symbol</span><span class="special">]</span> <span class="special">&gt;&gt;</span> <span class="identifier">symbols</span><span class="special">;</span>
+</pre>
+<p>
+      </p>
+<p>
+        During the parse, <code class="computeroutput"><span class="special">(</span><span class="string">"X"</span><span class="special">,</span> <span class="number">9</span><span class="special">)</span></code>
+        is parsed and added to the symbol table. Then, the second <code class="computeroutput"><span class="char">'X'</span></code>
+        is recognized by the symbol table parser. However:
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="identifier">assert</span><span class="special">(!</span><span class="identifier">parse</span><span class="special">(</span><span class="string">"X"</span><span class="special">,</span> <span class="identifier">symbols</span><span class="special">));</span>
+</pre>
+<p>
+      </p>
+<p>
+        If we parse again, we find that <code class="computeroutput"><span class="string">"X"</span></code>
+        did not stay in the symbol table. The fact that <code class="computeroutput"><span class="identifier">symbols</span></code>
+        was declared const might have given you a hint that this would happen.
+      </p>
+<p>
+        The full program:
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">parser</span><span class="special">/</span><span class="identifier">parser</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
+
+<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">iostream</span><span class="special">&gt;</span>
+<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">string</span><span class="special">&gt;</span>
+
+
+<span class="keyword">namespace</span> <span class="identifier">bp</span> <span class="special">=</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">parser</span><span class="special">;</span>
+
+<span class="keyword">int</span> <span class="identifier">main</span><span class="special">()</span>
+<span class="special">{</span>
+    <span class="identifier">bp</span><span class="special">::</span><span class="identifier">symbols</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;</span> <span class="keyword">const</span> <span class="identifier">symbols</span> <span class="special">=</span> <span class="special">{{</span><span class="string">"c"</span><span class="special">,</span> <span class="number">8</span><span class="special">}};</span>
+    <span class="identifier">assert</span><span class="special">(</span><span class="identifier">parse</span><span class="special">(</span><span class="string">"c"</span><span class="special">,</span> <span class="identifier">symbols</span><span class="special">));</span>
+
+    <span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">add_symbol</span> <span class="special">=</span> <span class="special">[&amp;</span><span class="identifier">symbols</span><span class="special">](</span><span class="keyword">auto</span> <span class="special">&amp;</span> <span class="identifier">ctx</span><span class="special">)</span> <span class="special">{</span>
+        <span class="keyword">using</span> <span class="keyword">namespace</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">literals</span><span class="special">;</span>
+        <span class="comment">// symbols::insert() requires a string, not a single character.</span>
+        <span class="keyword">char</span> <span class="identifier">chars</span><span class="special">[</span><span class="number">2</span><span class="special">]</span> <span class="special">=</span> <span class="special">{</span><span class="identifier">_attr</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">)[</span><span class="number">0</span><span class="identifier">_c</span><span class="special">],</span> <span class="number">0</span><span class="special">};</span>
+        <span class="identifier">symbols</span><span class="special">.</span><span class="identifier">insert</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">,</span> <span class="identifier">chars</span><span class="special">,</span> <span class="identifier">_attr</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">)[</span><span class="number">1</span><span class="identifier">_c</span><span class="special">]);</span>
+    <span class="special">};</span>
+    <span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">parser</span> <span class="special">=</span> <span class="special">(</span><span class="identifier">bp</span><span class="special">::</span><span class="identifier">char_</span> <span class="special">&gt;&gt;</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">int_</span><span class="special">)[</span><span class="identifier">add_symbol</span><span class="special">]</span> <span class="special">&gt;&gt;</span> <span class="identifier">symbols</span><span class="special">;</span>
+
+    <span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">result</span> <span class="special">=</span> <span class="identifier">parse</span><span class="special">(</span><span class="string">"X 9 X"</span><span class="special">,</span> <span class="identifier">parser</span><span class="special">,</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">ws</span><span class="special">);</span>
+    <span class="identifier">assert</span><span class="special">(</span><span class="identifier">result</span> <span class="special">&amp;&amp;</span> <span class="special">*</span><span class="identifier">result</span> <span class="special">==</span> <span class="number">9</span><span class="special">);</span>
+    <span class="special">(</span><span class="keyword">void</span><span class="special">)</span><span class="identifier">result</span><span class="special">;</span>
+
+    <span class="identifier">assert</span><span class="special">(!</span><span class="identifier">parse</span><span class="special">(</span><span class="string">"X"</span><span class="special">,</span> <span class="identifier">symbols</span><span class="special">));</span>
+<span class="special">}</span>
+</pre>
+<p>
+      </p>
+<div class="important"><table border="0" summary="Important">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Important]" src="../../images/important.png"></td>
+<th align="left">Important</th>
+</tr>
+<tr><td align="left" valign="top"><p>
+          <code class="computeroutput"><a class="link" href="../../boost/parser/symbols.html" title="Struct template symbols">symbols</a></code>
+          stores all its strings in UTF-32 internally. If you do Unicode or ASCII
+          parsing, this will not matter to you at all. If you do non-Unicode parsing
+          of a character encoding that is not a subset of Unicode (EBCDIC, for instance),
+          it could cause problems. See the section on <a class="link" href="unicode_support.html" title="Unicode Support">Unicode
+          Support</a> for more information.
+        </p></td></tr>
+</table></div>
+<p>
+        It is possible to add symbols to a <code class="computeroutput"><a class="link" href="../../boost/parser/symbols.html" title="Struct template symbols">symbols</a></code> permanently. To do
+        so, you have to use a mutable <code class="computeroutput"><a class="link" href="../../boost/parser/symbols.html" title="Struct template symbols">symbols</a></code> object <code class="computeroutput"><span class="identifier">s</span></code>, and add the symbols by calling <code class="computeroutput"><span class="identifier">s</span><span class="special">.</span><span class="identifier">insert_for_next_parse</span><span class="special">()</span></code>, instead of <code class="computeroutput"><span class="identifier">s</span><span class="special">.</span><span class="identifier">insert</span><span class="special">()</span></code>. These two operations are orthogonal, so
+        if you want to both add a symbol to the table for the current top-level parse,
+        and leave it in the table for subsequent top-level parses, you need to call
+        both functions.
+      </p>
+<p>
+        It is also possible to erase a single entry from the symbol table, or to
+        clear the symbol table entirely. Just as with insertion, there are versions
+        of erase and clear for the current parse, and another that applies only to
+        subsequent parses. The full set of operations can be found in the <code class="computeroutput"><a class="link" href="../../boost/parser/symbols.html" title="Struct template symbols">symbols</a></code>
+        API docs.
+      </p>
+<p>
+        [mpte There are two versions of each of the <code class="computeroutput"><a class="link" href="../../boost/parser/symbols.html" title="Struct template symbols">symbols</a></code> <code class="computeroutput"><span class="special">*</span><span class="identifier">_for_next_parse</span><span class="special">()</span></code>
+        functions — one that takes a context, and one that does not. The one
+        with the context is meant to be used within a semantic action. The one without
+        the context is for use outside of any parse.]
+      </p>
+</div>
+<div class="copyright-footer">Copyright © 2020 T. Zachary Laine<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+      </p>
+</div>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="symbol_tables.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="the_parsers_and_their_uses.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

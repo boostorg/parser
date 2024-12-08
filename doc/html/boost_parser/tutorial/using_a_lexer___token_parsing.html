@@ -1,0 +1,1554 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Using a Lexer / Token Parsing</title>
+<link rel="stylesheet" href="../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
+<link rel="up" href="../tutorial.html" title="Tutorial">
+<link rel="prev" href="error_handling_and_debugging.html" title="Error Handling and Debugging">
+<link rel="next" href="memory_allocation.html" title="Memory Allocation">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="error_handling_and_debugging.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="memory_allocation.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_parser.tutorial.using_a_lexer___token_parsing"></a><a class="link" href="using_a_lexer___token_parsing.html" title="Using a Lexer / Token Parsing">Using
+      a Lexer / Token Parsing</a>
+</h3></div></div></div>
+<p>
+        Boost.Parser has optional support for lexing before parsing. The optional
+        support is based on an external dependency, <a href="https://github.com/hanickadot/compile-time-regular-expressions" target="_top">CTRE</a>.
+        <a href="https://github.com/hanickadot/compile-time-regular-expressions" target="_top">CTRE</a>
+        produces a sequence of tokens by matching a set of regexes that you provide.
+        Each regex is used to match against the input to produce one token with an
+        ID associated with that regex. When you call <code class="computeroutput"><a class="link" href="../../boost/parser/parse_id2.html" title="Function template parse">parse()</a></code>,
+        you pass it a lazy range of tokens that adapts the input, and <code class="computeroutput"><a class="link" href="../../boost/parser/parse_id2.html" title="Function template parse">parse()</a></code> parses the tokens, not the
+        underlying characters. When you backtrack, you just move back to an earlier
+        token, not an earlier place in the underlying sequence of characters.
+      </p>
+<h5>
+<a name="boost_parser.tutorial.using_a_lexer___token_parsing.h0"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.using_a_lexer___token_parsing.a_basic_example"></a></span><a class="link" href="using_a_lexer___token_parsing.html#boost_parser.tutorial.using_a_lexer___token_parsing.a_basic_example">A
+        basic example</a>
+      </h5>
+<p>
+        Let's look at an example of how to do token parsing. First, you must include
+        the lexer header before the parser header.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">parser</span><span class="special">/</span><span class="identifier">lexer</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
+<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">parser</span><span class="special">/</span><span class="identifier">parser</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
+</pre>
+<p>
+      </p>
+<p>
+        The inclusion of this optional header is what enables token parsing. Character
+        parsing ("normal" parsing) is unaffected by this header inclusion
+        — you can always do character parsing.
+      </p>
+<div class="important"><table border="0" summary="Important">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Important]" src="../../images/important.png"></td>
+<th align="left">Important</th>
+</tr>
+<tr><td align="left" valign="top"><p>
+          <a href="https://github.com/hanickadot/compile-time-regular-expressions" target="_top">CTRE</a>
+          is a header-only library, and it can be included as a single header. It
+          requires C++20 or later, Boost.Parser's support for token parsing does
+          as well. Boost.Parser uses the single-header version with Unicode support,
+          <code class="computeroutput">ctre-unicode.hpp</code>.
+        </p></td></tr>
+</table></div>
+<p>
+        Then, you define a lexer and its tokens.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">foo</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">token_spec</span><span class="special">&lt;</span><span class="string">"foo"</span><span class="special">,</span> <span class="number">0</span><span class="special">&gt;;</span>
+<span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">bar</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">token_spec</span><span class="special">&lt;</span><span class="string">"b.r"</span><span class="special">,</span> <span class="number">1</span><span class="special">&gt;;</span>
+<span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">baz</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">token_spec</span><span class="special">&lt;</span><span class="string">"b.z"</span><span class="special">,</span> <span class="number">2</span><span class="special">&gt;;</span>
+
+<span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">lexer</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">lexer</span><span class="special">&lt;</span><span class="keyword">char</span><span class="special">,</span> <span class="keyword">int</span><span class="special">&gt;</span> <span class="special">|</span> <span class="identifier">foo</span> <span class="special">|</span> <span class="identifier">bar</span> <span class="special">|</span> <span class="identifier">baz</span><span class="special">;</span>
+</pre>
+<p>
+      </p>
+<p>
+        Here, we first see three <code class="computeroutput"><a class="link" href="../../boost/parser/token_spec_t.html" title="Struct template token_spec_t">boost::parser::token_spec_ts</a></code>. Each one consists
+        of an <a href="https://en.cppreference.com/w/cpp/language/template_parameters" target="_top">NTTP</a>
+        regex string literal and an <a href="https://en.cppreference.com/w/cpp/language/template_parameters" target="_top">NTTP</a>
+        token ID; the first one matches <code class="computeroutput">"foo"</code>, and has an
+        ID of <code class="computeroutput">0</code>, etc. <code class="computeroutput"><a class="link" href="../../boost/parser/lexer_t.html" title="Struct template lexer_t">boost::parser::lexer_t</a></code> takes two template
+        parameters. The first parameter indicates that the value type of the parsed
+        input sequence is <code class="computeroutput">char</code>. The second one indicates that the ID-type
+        of all subsequent <code class="computeroutput"><a class="link" href="../../boost/parser/token_spec_t.html" title="Struct template token_spec_t">boost::parser::token_spec_ts</a></code> will be <code class="computeroutput">int</code>.
+        We create a full lexer by starting with the <code class="computeroutput">lexer&lt;...&gt;</code>
+        expression, follwed by a piped-together sequence of <code class="computeroutput"><a class="link" href="../../boost/parser/token_spec_t.html" title="Struct template token_spec_t">boost::parser::token_spec_ts</a></code>.
+      </p>
+<p>
+        The final lexer <code class="computeroutput">lexer</code> has a combined regex string, <code class="computeroutput">"(foo)|(b.*r)|(b.+z)"</code>.
+        This string is built up at compile time, and is represented by an <a href="https://en.cppreference.com/w/cpp/language/template_parameters" target="_top">NTTP</a>.
+        It is the single regex given to <a href="https://github.com/hanickadot/compile-time-regular-expressions" target="_top">CTRE</a>,
+        which <a href="https://github.com/hanickadot/compile-time-regular-expressions" target="_top">CTRE</a>
+        uses to produce a sequence of matches from it.
+      </p>
+<p>
+        <code class="computeroutput">lexer</code> and <code class="computeroutput">token_spec</code> are variable templates; they
+        make variables from the templates <code class="computeroutput"><a class="link" href="../../boost/parser/lexer_t.html" title="Struct template lexer_t">boost::parser::lexer_t</a></code> and <code class="computeroutput"><a class="link" href="../../boost/parser/token_spec_t.html" title="Struct template token_spec_t">boost::parser::token_spec_t</a></code>, respectively.
+        The are provided as a notational convenience, just so you don't have to put
+        <code class="computeroutput">{}</code> after every lexer and token spec you write. <code class="computeroutput"><a class="link" href="../../boost/parser/lexer_t.html" title="Struct template lexer_t">boost::parser::lexer_t</a></code> and <code class="computeroutput"><a class="link" href="../../boost/parser/token_spec_t.html" title="Struct template token_spec_t">boost::parser::token_spec_t</a></code> are empty classes.
+        Their configury is stored in <a href="https://en.cppreference.com/w/cpp/language/template_parameters" target="_top">NTTPs</a>.
+      </p>
+<p>
+        Next, you create a range of <code class="computeroutput"><a class="link" href="../../boost/parser/token.html" title="Struct template token">boost::parser::tokens</a></code> from your input. This
+        range of tokens is what <code class="computeroutput"><a class="link" href="../../boost/parser/parse_id2.html" title="Function template parse">parse()</a></code>
+        will parse.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">auto</span> <span class="identifier">r</span> <span class="special">=</span> <span class="string">"foobazbar"</span> <span class="special">|</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">to_tokens</span><span class="special">(</span><span class="identifier">lexer</span><span class="special">);</span>
+</pre>
+<p>
+      </p>
+<p>
+        The input must model <code class="computeroutput">std::ranges::contiguous_range</code>. This is
+        due to the way <a href="https://github.com/hanickadot/compile-time-regular-expressions" target="_top">CTRE</a>
+        works; it produces a sequence of matches that are convertible to <code class="computeroutput">std::basic_string_view&lt;CharType&gt;</code>.
+        In our case, since we are lexing a sequence of <code class="computeroutput">char</code>, <a href="https://github.com/hanickadot/compile-time-regular-expressions" target="_top">CTRE</a>
+        will produce a sequence of <code class="computeroutput">std::basic_string</code> matches. Note that
+        the value type/character type we specified for <code class="computeroutput"><a class="link" href="../../boost/parser/lexer_t.html" title="Struct template lexer_t">boost::parser::lexer_t</a></code> above must match the
+        input sequence's value type/character type, or the program is ill-formed.
+        Also note that because we are lexing a contiguous range of characters, you
+        cannot use any of the <code class="computeroutput">boost::parser::as_utf*</code> range adaptors
+        when doing token parsing.
+      </p>
+<p>
+        Next, you define a parser.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">auto</span> <span class="identifier">parser</span> <span class="special">=</span> <span class="identifier">foo</span> <span class="special">&gt;&gt;</span> <span class="identifier">baz</span> <span class="special">&gt;&gt;</span> <span class="identifier">bar</span><span class="special">;</span>
+</pre>
+<p>
+      </p>
+<p>
+        This has the same semantics as the characater parsers you've seen in the
+        rest of the documentation. Each <code class="computeroutput"><a class="link" href="../../boost/parser/token_spec_t.html" title="Struct template token_spec_t">boost::parser::token_spec_t</a></code> has the same interface
+        as a parser, so it can be used with all the parser combining operations,
+        like <code class="computeroutput">operator&gt;&gt;</code>. However, unlike when doing character
+        parsing, when token parsing all the terminal parsers are restricted to a
+        subset of the terminal parsers that are available in character parsing (see
+        the full list in the table below). This is because most of the parsers in
+        Boost.Parser parse sequences of characters. For example, if you used <code class="computeroutput"><a class="link" href="../../boost/parser/int_.html" title="Global int_">int_</a>(42)</code>
+        above instead of <code class="computeroutput">foo</code>, the <code class="computeroutput"><a class="link" href="../../boost/parser/int_.html" title="Global int_">int_</a></code> parser would try to match
+        two consecutive values from the input sequence, and would expect them to
+        equal <code class="computeroutput">'4'</code> and <code class="computeroutput">'2'</code>, respectively. It would instead
+        see two tokens, and the comparisons would not even compile.
+      </p>
+<p>
+        Finally, you can put everything together in a call to <code class="computeroutput"><a class="link" href="../../boost/parser/parse_id2.html" title="Function template parse">parse()</a></code>.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">auto</span> <span class="identifier">result</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">parse</span><span class="special">(</span><span class="identifier">r</span><span class="special">,</span> <span class="identifier">parser</span><span class="special">);</span>
+<span class="identifier">assert</span><span class="special">(</span><span class="identifier">result</span><span class="special">);</span>
+<span class="identifier">assert</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span><span class="special">&lt;</span><span class="number">0</span><span class="special">&gt;(*</span><span class="identifier">result</span><span class="special">)</span> <span class="special">==</span> <span class="string">"foo"</span><span class="special">);</span>
+<span class="identifier">assert</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span><span class="special">&lt;</span><span class="number">1</span><span class="special">&gt;(*</span><span class="identifier">result</span><span class="special">)</span> <span class="special">==</span> <span class="string">"baz"</span><span class="special">);</span>
+<span class="identifier">assert</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span><span class="special">&lt;</span><span class="number">2</span><span class="special">&gt;(*</span><span class="identifier">result</span><span class="special">)</span> <span class="special">==</span> <span class="string">"bar"</span><span class="special">);</span>
+</pre>
+<p>
+      </p>
+<p>
+        As you can see, the parse succeeded, and we got three attributes out of it.
+        Each attribute has the type <code class="computeroutput">std::string_view</code>.
+      </p>
+<h5>
+<a name="boost_parser.tutorial.using_a_lexer___token_parsing.h1"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.using_a_lexer___token_parsing.capture_groups"></a></span><a class="link" href="using_a_lexer___token_parsing.html#boost_parser.tutorial.using_a_lexer___token_parsing.capture_groups">Capture
+        groups</a>
+      </h5>
+<p>
+        Capture groups are valid regex syntax, but you cannot use them in your <code class="computeroutput"><a class="link" href="../../boost/parser/token_spec_t.html" title="Struct template token_spec_t">boost::parser::token_spec_t</a></code>
+        regexes. For instance, <code class="computeroutput">bp::token_spec&lt;"(foo)+", 0&gt;</code>
+        (to match one or more consecutive <code class="computeroutput">"foo"</code>s) will compile
+        and run, and you will get garbage results. Boost.Parser relies on the exact
+        number and order of capture groups to do its token generation. If you want
+        to group a part of your regex, use a non-capture group, like <code class="computeroutput">"(?:foo)+"</code>.
+      </p>
+<h5>
+<a name="boost_parser.tutorial.using_a_lexer___token_parsing.h2"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.using_a_lexer___token_parsing.whitespace_in_token_parsing"></a></span><a class="link" href="using_a_lexer___token_parsing.html#boost_parser.tutorial.using_a_lexer___token_parsing.whitespace_in_token_parsing">Whitespace
+        in token parsing</a>
+      </h5>
+<p>
+        Using the parser above, what if we tried to parse the token range <code class="computeroutput">"foo
+        baz bar" | bp::to_tokens(lexer)</code> instead? Turns out, we get the
+        same answer. You cannot use am explicit skipper when parsing tokens. However,
+        parsers are much simpler when you have a notion of a skipper, especially
+        for whitespace. So, <code class="computeroutput"><a class="link" href="../../boost/parser/lexer_t.html" title="Struct template lexer_t">boost::parser::lexer_t</a></code> has one built in; it
+        uses <code class="computeroutput">"\\s+"</code> by default. Whitespace is matched, but
+        produces no tokens. If you want to change the whitespace/skipper regex, you
+        can provide it when specifying the lexer. For example, here is how you would
+        specify the whitespace/skipped tokens to be any sequence of whitespace charaters,
+        or any C++-style trailing comment (<code class="computeroutput">// ...</code>).
+      </p>
+<pre class="programlisting">bp::lexer&lt;char, int, "\\s+|\\/\\/.*$"&gt;
+</pre>
+<p>
+        If whitespace information is important in your parse, simply provide <code class="computeroutput">""</code>
+        or the more readable convenience constant <code class="computeroutput">bp::no_ws</code> to <code class="computeroutput">lexer&lt;&gt;</code>
+        as the whitespace regex, and make a regular token that matches whitespace.
+        That way, you'll see all the whitespace in the sequence of tokens that you
+        parse.
+      </p>
+<h5>
+<a name="boost_parser.tutorial.using_a_lexer___token_parsing.h3"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.using_a_lexer___token_parsing.token_attribute_types"></a></span><a class="link" href="using_a_lexer___token_parsing.html#boost_parser.tutorial.using_a_lexer___token_parsing.token_attribute_types">Token
+        attribute types</a>
+      </h5>
+<p>
+        The parser we looked at in the initial simple example produced three <code class="computeroutput">std::string_view</code>s,
+        one for each token we parsed. However, we may know that a particular token
+        is meant to match numbers. If this is the case, we can let Boost.Parser know
+        that we expect the token to be interpretable as a particular type of numeric
+        value. I'm using "numeric" for brevity, but this includes <code class="computeroutput">bool</code>
+        as well. For example:
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="identifier">true_false</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">token_spec</span><span class="special">&lt;</span><span class="string">"true|false"</span><span class="special">,</span> <span class="number">0</span><span class="special">,</span> <span class="keyword">bool</span><span class="special">&gt;;</span>
+<span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="identifier">identifier</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">token_spec</span><span class="special">&lt;</span><span class="string">"[a-zA-Z]\\w*"</span><span class="special">,</span> <span class="number">1</span><span class="special">&gt;;</span>
+<span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="identifier">number</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">token_spec</span><span class="special">&lt;</span><span class="string">"\\d+(?:\\.\\d*)?"</span><span class="special">,</span> <span class="number">2</span><span class="special">,</span> <span class="keyword">double</span><span class="special">&gt;;</span>
+</pre>
+<p>
+      </p>
+<p>
+        The attribute types for these tokens are <code class="computeroutput">bool</code>, <code class="computeroutput">std::string_view</code>,
+        and <code class="computeroutput">double</code>, respectively. <code class="computeroutput">identifier</code> has attribute
+        type <code class="computeroutput">std::string_view</code> because that is the default if you do
+        not specify a type.
+      </p>
+<p>
+        A <code class="computeroutput"><a class="link" href="../../boost/parser/token.html" title="Struct template token">boost::parser::token</a></code>
+        is essentially a variant of <code class="computeroutput">std::basic_string_view&lt;CharType&gt;</code>,
+        <code class="computeroutput">long long</code>, and <code class="computeroutput">long double</code>. The latter two types
+        were seleced because they can fit any value of an integral or floating-point
+        type, respectively. Even though <code class="computeroutput"><a class="link" href="../../boost/parser/token.html" title="Struct template token">boost::parser::token</a></code> effectively erases the
+        exact type when it is integral or floating-point, the token parser retains
+        the information of what the exact type is. This is why <code class="computeroutput">true_false</code>
+        above has an attribute type of <code class="computeroutput">bool</code> and not <code class="computeroutput">long long</code>.
+      </p>
+<p>
+        <a href="https://github.com/hanickadot/compile-time-regular-expressions" target="_top">CTRE</a>
+        produces a sequence of substrings. Each token produced by Boost.Parser gets
+        its numeric value (if it should have one) by parsing the substring from
+        <a href="https://github.com/hanickadot/compile-time-regular-expressions" target="_top">CTRE</a>
+        with — you guessed it — a Boost.Parser parser. The parser for
+        <code class="computeroutput">bool</code> is just <code class="computeroutput"><a class="link" href="../../boost/parser/bool_.html" title="Global bool_">bool_</a></code>; the one for <code class="computeroutput">int</code>
+        is <code class="computeroutput"><a class="link" href="../../boost/parser/int_.html" title="Global int_">int_</a></code>,
+        etc. The integral-type parsers all support a radix/base. If you specify an
+        integral value type for one of your tokens, you can also specify a base,
+        like <code class="computeroutput">bp::token_spec&lt;"\\d+", int, 16&gt;</code> to parse
+        hex-encoded <code class="computeroutput">int</code>s.
+      </p>
+<p>
+        Part of the advantage of doing lexing before parsing is that you don't have
+        to reparse everything over and over again. If the subsequence <code class="computeroutput">"1.23456789"</code>
+        is found in the input, you only lex it once. After that, it's already in
+        the right form as a floating-point number; backtracking will not provoke
+        reparsing of those ten characters.
+      </p>
+<h5>
+<a name="boost_parser.tutorial.using_a_lexer___token_parsing.h4"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.using_a_lexer___token_parsing.single_character_tokens"></a></span><a class="link" href="using_a_lexer___token_parsing.html#boost_parser.tutorial.using_a_lexer___token_parsing.single_character_tokens">Single-character
+        tokens</a>
+      </h5>
+<p>
+        Just about any parser above a certain size will have punctuation of some
+        sort — elements of the input, usually a single character, that delimit
+        other parts of the input, like commas and braces. To make it easier to specify
+        such tokens, Boost.Parser provides <code class="computeroutput"><a class="link" href="../../boost/parser/token_chars.html" title="Global token_chars">boost::parser::token_chars</a></code>. You can give
+        <code class="computeroutput"><a class="link" href="../../boost/parser/token_chars.html" title="Global token_chars">boost::parser::token_chars</a></code>
+        a list of individual characters, and it will create a separate, single-character
+        regex for each one, and add it to your lexer. Each such token will have the
+        special ID <code class="computeroutput"><a class="link" href="../../boost/parser/character_id.html" title="Global character_id">boost::parser::character_id</a></code>.
+      </p>
+<p>
+        Note that the single character you provide must be a <code class="computeroutput">char</code> in
+        the ASCII range (that is, less than <code class="computeroutput">128</code>). If you want to use
+        a single character that is outside the ASCII range, just make a normal <code class="computeroutput"><a class="link" href="../../boost/parser/token_spec_t.html" title="Struct template token_spec_t">boost::parser::token_spec_t</a></code>
+        for it. Here is an example using <code class="computeroutput"><a class="link" href="../../boost/parser/token_chars.html" title="Global token_chars">boost::parser::token_chars</a></code>.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="identifier">true_false</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">token_spec</span><span class="special">&lt;</span><span class="string">"true|false"</span><span class="special">,</span> <span class="number">0</span><span class="special">,</span> <span class="keyword">bool</span><span class="special">&gt;;</span>
+<span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="identifier">identifier</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">token_spec</span><span class="special">&lt;</span><span class="string">"[a-zA-Z]\\w*"</span><span class="special">,</span> <span class="number">1</span><span class="special">&gt;;</span>
+
+<span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="identifier">lexer</span> <span class="special">=</span>
+    <span class="identifier">bp</span><span class="special">::</span><span class="identifier">lexer</span><span class="special">&lt;</span><span class="keyword">char</span><span class="special">,</span> <span class="keyword">int</span><span class="special">&gt;</span> <span class="special">|</span> <span class="identifier">true_false</span> <span class="special">|</span> <span class="identifier">identifier</span> <span class="special">|</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">token_chars</span><span class="special">&lt;</span><span class="char">'='</span><span class="special">,</span> <span class="char">';'</span><span class="special">&gt;;</span>
+
+<span class="keyword">auto</span> <span class="identifier">parser</span> <span class="special">=</span> <span class="identifier">identifier</span> <span class="special">&gt;&gt;</span> <span class="char">'='</span> <span class="special">&gt;&gt;</span> <span class="identifier">true_false</span> <span class="special">&gt;&gt;</span> <span class="char">';'</span><span class="special">;</span>
+<span class="keyword">auto</span> <span class="identifier">r</span> <span class="special">=</span> <span class="string">"foo = false;"</span> <span class="special">|</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">to_tokens</span><span class="special">(</span><span class="identifier">lexer</span><span class="special">);</span>
+<span class="keyword">auto</span> <span class="identifier">result</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">parse</span><span class="special">(</span><span class="identifier">r</span><span class="special">,</span> <span class="identifier">parser</span><span class="special">);</span>
+<span class="identifier">assert</span><span class="special">(</span><span class="identifier">result</span><span class="special">);</span>
+<span class="identifier">assert</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span><span class="special">&lt;</span><span class="number">0</span><span class="special">&gt;(*</span><span class="identifier">result</span><span class="special">)</span> <span class="special">==</span> <span class="string">"foo"</span><span class="special">);</span>
+<span class="identifier">assert</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span><span class="special">&lt;</span><span class="number">1</span><span class="special">&gt;(*</span><span class="identifier">result</span><span class="special">)</span> <span class="special">==</span> <span class="keyword">false</span><span class="special">);</span>
+</pre>
+<p>
+      </p>
+<p>
+        Just like in a character parser, we can use character literals to match the
+        single-character tokens (<code class="computeroutput">'='</code> and <code class="computeroutput">';'</code> in the example
+        above). The character literals are turned into <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a></code> parsers. <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a></code>
+        parsers that you explicitly write may be used as well. They will only match
+        single-character tokens, though (that is, tokens with the ID <code class="computeroutput"><a class="link" href="../../boost/parser/character_id.html" title="Global character_id">boost::parser::character_id</a></code>).
+      </p>
+<h5>
+<a name="boost_parser.tutorial.using_a_lexer___token_parsing.h5"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.using_a_lexer___token_parsing.parsing_tokens_with_a_specific_value"></a></span><a class="link" href="using_a_lexer___token_parsing.html#boost_parser.tutorial.using_a_lexer___token_parsing.parsing_tokens_with_a_specific_value">Parsing
+        tokens with a specific value</a>
+      </h5>
+<p>
+        So far, we've only seen examples of parsing for a particular token. Sometimes
+        we want to match only occurrances of a given token with a particular value,
+        just like when we write something like <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a>('a', 'z')</code> in
+        a character parser.
+      </p>
+<p>
+        Just as with <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a></code>
+        and most other Boost.Parser parsers, you can just add the value to match
+        in parens after the token, like <code class="computeroutput">true_false(true)</code> or <code class="computeroutput">identifier("exact
+        string")</code>.
+      </p>
+<h5>
+<a name="boost_parser.tutorial.using_a_lexer___token_parsing.h6"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.using_a_lexer___token_parsing.token_ids_and_diagnostics"></a></span><a class="link" href="using_a_lexer___token_parsing.html#boost_parser.tutorial.using_a_lexer___token_parsing.token_ids_and_diagnostics">Token
+        IDs and diagnostics</a>
+      </h5>
+<p>
+        So far, we've only seen <code class="computeroutput">int</code> used as the token ID type. Any integral
+        type or enum can be used, though. There are limitations on the values you
+        can provide for IDs. First, the values must all be nonnegative; negative
+        values are reserved for use by Boost.Parser. Second, the values must not
+        exceed <code class="computeroutput">2^23-1</code>; no one is likely to have very many unique IDs,
+        and token storage can be reduced a bit by using 3 bytes for the ID instead
+        of 4.
+      </p>
+<p>
+        Using an enum has the advantage of making the code a lot clearer. For instance:
+      </p>
+<pre class="programlisting">enum class token_names { foo, bar };
+auto const foo = bp::token_spec&lt;"foo", token_names::foo&gt;;
+auto const bar = bp::token_spec&lt;"b.r", token_names::bar&gt;;
+</pre>
+<p>
+        ... reads a lot better than just using IDs like <code class="computeroutput">0</code> and <code class="computeroutput">1</code>.
+      </p>
+<p>
+        There is another important advantage related to diagnostic messages. Consider
+        this parse.
+      </p>
+<pre class="programlisting">constexpr auto lexer = bp::lexer&lt;char, token_names&gt; | foo;
+bp::parse("bar" | bp::to_tokens(lexer), bp::eps &gt; foo);
+</pre>
+<p>
+        Here is what the diagnostic looks like.
+      </p>
+<pre class="programlisting">1:0: error: Expected tok&lt;0&gt; here:
+bar
+^
+</pre>
+<p>
+        If we added a specific string value we expect, that would be included.
+      </p>
+<pre class="programlisting">bp::parse("bar" | bp::to_tokens(lexer), bp::eps &gt; foo("foo"));
+</pre>
+<pre class="programlisting">1:0: error: Expected tok&lt;0&gt;("foo") here:
+bar
+^
+</pre>
+<p>
+        Instead of <code class="computeroutput">"tok&lt;N&gt;"</code>, it might be nice to give
+        the failed expectation a user-friendly name. In character parsers we usually
+        do this by giving <code class="computeroutput"><a class="link" href="../../boost/parser/rule.html" title="Struct template rule">rules</a></code>
+        user-facing diagnostic text. This makes your parse failures much easier to
+        understand and correct. However, many <code class="computeroutput"><a class="link" href="../../boost/parser/token_spec_t.html" title="Struct template token_spec_t">boost::parser::token_spec_ts</a></code> may already have
+        a nice name, so why not use it? If you use enumerators for you token IDs,
+        and make their enumeration streamable, Boost.Parser will detect this, and
+        use the streamed enumerator instead of <code class="computeroutput">"tok&lt;N&gt;"</code>.
+        Here is what we could have written instead.
+      </p>
+<pre class="programlisting">enum class printable_tokens { foo, bar };
+std::ostream &amp; operator&lt;&lt;(std::ostream &amp; os, printable_tokens tok)
+{
+    switch (tok) {
+    case printable_tokens::foo: os &lt;&lt; "foo"; break;
+    case printable_tokens::bar: os &lt;&lt; "bar"; break;
+    }
+    return os;
+}
+
+auto const foo = bp::token_spec&lt;"foo", printable_tokens::foo&gt;;
+auto const bar = bp::token_spec&lt;"b.*r", printable_tokens::bar&gt;;
+
+constexpr auto lexer = bp::lexer&lt;char, printable_tokens&gt; | foo;
+bp::parse("bar" | bp::to_tokens(lexer), bp::eps &gt; foo);
+</pre>
+<p>
+        That results in the enumerator being printed instead.
+      </p>
+<pre class="programlisting">1:0: error: Expected foo here:
+bar
+^
+</pre>
+<div class="important"><table border="0" summary="Important">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Important]" src="../../images/important.png"></td>
+<th align="left">Important</th>
+</tr>
+<tr><td align="left" valign="top"><p>
+          If you provide a streamable enumeration as the token ID type, this enables
+          the alternate printing behavior described above. If you specify a particular
+          value for the token parser, that value is printed as the expected value.
+          So the diagnostic name for <code class="computeroutput">bp::token_spec&lt;"\\d+", 3&gt;(42)</code>
+          is <code class="computeroutput">tok&lt;3&gt;(42)</code> but the name for <code class="computeroutput">bp::token_spec&lt;"\\d+",
+          printable_tokens::foo&gt;(42)</code> is just <code class="computeroutput">42</code> (not <code class="computeroutput">foo</code>).
+        </p></td></tr>
+</table></div>
+<p>
+        The takeaway here is that you should use a streamable enumeration for your
+        ID type. It makes your code easier to read, and produces better diagnostics.
+      </p>
+<h5>
+<a name="boost_parser.tutorial.using_a_lexer___token_parsing.h7"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.using_a_lexer___token_parsing.token_caching"></a></span><a class="link" href="using_a_lexer___token_parsing.html#boost_parser.tutorial.using_a_lexer___token_parsing.token_caching">Token
+        caching</a>
+      </h5>
+<p>
+        Given that I told you earlier that we will make a sequence of tokens and
+        backtrack within those tokens, you may be wondering where the tokens are
+        stored. The <code class="computeroutput"><a class="link" href="../../boost/parser/tokens_view.html" title="Struct template tokens_view">boost::parser::tokens_view</a></code>
+        (the type created by the range adaptor <code class="computeroutput"><a class="link" href="../../boost/parser/to_tokens.html" title="Global to_tokens">boost::parser::to_tokens</a></code>) uses internal storage
+        or user-provided external storage to store the tokens as they are generated.
+        Here is an example of using external storage.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="identifier">true_false</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">token_spec</span><span class="special">&lt;</span><span class="string">"true|false"</span><span class="special">,</span> <span class="number">0</span><span class="special">,</span> <span class="keyword">bool</span><span class="special">&gt;;</span>
+<span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="identifier">identifier</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">token_spec</span><span class="special">&lt;</span><span class="string">"[a-zA-Z]\\w*"</span><span class="special">,</span> <span class="number">1</span><span class="special">&gt;;</span>
+
+<span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="identifier">lexer</span> <span class="special">=</span>
+    <span class="identifier">bp</span><span class="special">::</span><span class="identifier">lexer</span><span class="special">&lt;</span><span class="keyword">char</span><span class="special">,</span> <span class="keyword">int</span><span class="special">&gt;</span> <span class="special">|</span> <span class="identifier">true_false</span> <span class="special">|</span> <span class="identifier">identifier</span> <span class="special">|</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">token_chars</span><span class="special">&lt;</span><span class="char">'='</span><span class="special">,</span> <span class="char">';'</span><span class="special">&gt;;</span>
+
+<span class="keyword">auto</span> <span class="identifier">parser</span> <span class="special">=</span> <span class="identifier">identifier</span> <span class="special">&gt;&gt;</span> <span class="char">'='</span> <span class="special">&gt;&gt;</span> <span class="identifier">true_false</span> <span class="special">&gt;&gt;</span> <span class="char">';'</span><span class="special">;</span>
+<span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span><span class="special">&lt;</span><span class="identifier">bp</span><span class="special">::</span><span class="identifier">token</span><span class="special">&lt;</span><span class="keyword">char</span><span class="special">&gt;&gt;</span> <span class="identifier">cache</span><span class="special">;</span>
+<span class="keyword">auto</span> <span class="identifier">r</span> <span class="special">=</span> <span class="string">"foo = false;"</span> <span class="special">|</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">to_tokens</span><span class="special">(</span><span class="identifier">lexer</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">ref</span><span class="special">(</span><span class="identifier">cache</span><span class="special">));</span>
+<span class="keyword">auto</span> <span class="identifier">result</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">parse</span><span class="special">(</span><span class="identifier">r</span><span class="special">,</span> <span class="identifier">parser</span><span class="special">);</span>
+<span class="identifier">assert</span><span class="special">(</span><span class="identifier">result</span><span class="special">);</span>
+<span class="identifier">assert</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span><span class="special">&lt;</span><span class="number">0</span><span class="special">&gt;(*</span><span class="identifier">result</span><span class="special">)</span> <span class="special">==</span> <span class="string">"foo"</span><span class="special">);</span>
+<span class="identifier">assert</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span><span class="special">&lt;</span><span class="number">1</span><span class="special">&gt;(*</span><span class="identifier">result</span><span class="special">)</span> <span class="special">==</span> <span class="keyword">false</span><span class="special">);</span>
+<span class="identifier">assert</span><span class="special">(</span><span class="identifier">cache</span><span class="special">.</span><span class="identifier">size</span><span class="special">()</span> <span class="special">==</span> <span class="number">4u</span><span class="special">);</span>
+</pre>
+<p>
+      </p>
+<p>
+        The cache could have been a <code class="computeroutput">boost::container::small_vector&lt;bp::token,
+        N&gt;</code>, or even a <code class="computeroutput">static_vector</code> of appropriate size, to
+        reduce or eliminate memory allocations.
+      </p>
+<p>
+        Note the size of the cache after the parse; it still contains some tokens.
+        This is a special case of a more general phenomenon: the token cache grows
+        without bound when there are no expectation points. This is because, without
+        expectation points, backtracking is unbounded (refer to the <a class="link" href="backtracking.html#boost_parser.tutorial.backtracking.expectation_points">Expectation
+        points</a> section to see why). If you can go back arbitarily far in order
+        to backtrack, you need to be sure that there will be a token at the place
+        you backtrack to.
+      </p>
+<p>
+        However, if you use expectation points, the cache is trimmed. The prefix
+        of tokens before the expectation point is erased from the token cache.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">auto</span> <span class="identifier">parser</span> <span class="special">=</span> <span class="identifier">identifier</span> <span class="special">&gt;&gt;</span> <span class="char">'='</span> <span class="special">&gt;</span> <span class="identifier">true_false</span> <span class="special">&gt;&gt;</span> <span class="char">';'</span><span class="special">;</span>
+<span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span><span class="special">&lt;</span><span class="identifier">bp</span><span class="special">::</span><span class="identifier">token</span><span class="special">&lt;</span><span class="keyword">char</span><span class="special">&gt;&gt;</span> <span class="identifier">cache</span><span class="special">;</span>
+<span class="keyword">auto</span> <span class="identifier">r</span> <span class="special">=</span> <span class="string">"foo = false;"</span> <span class="special">|</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">to_tokens</span><span class="special">(</span><span class="identifier">lexer</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">ref</span><span class="special">(</span><span class="identifier">cache</span><span class="special">));</span>
+<span class="keyword">auto</span> <span class="identifier">result</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">parse</span><span class="special">(</span><span class="identifier">r</span><span class="special">,</span> <span class="identifier">parser</span><span class="special">);</span>
+<span class="identifier">assert</span><span class="special">(</span><span class="identifier">result</span><span class="special">);</span>
+<span class="identifier">assert</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span><span class="special">&lt;</span><span class="number">0</span><span class="special">&gt;(*</span><span class="identifier">result</span><span class="special">)</span> <span class="special">==</span> <span class="string">"foo"</span><span class="special">);</span>
+<span class="identifier">assert</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">get</span><span class="special">&lt;</span><span class="number">1</span><span class="special">&gt;(*</span><span class="identifier">result</span><span class="special">)</span> <span class="special">==</span> <span class="keyword">false</span><span class="special">);</span>
+<span class="identifier">assert</span><span class="special">(</span><span class="identifier">cache</span><span class="special">.</span><span class="identifier">size</span><span class="special">()</span> <span class="special">==</span> <span class="number">2u</span><span class="special">);</span>
+</pre>
+<p>
+      </p>
+<p>
+        Note the use of <code class="computeroutput">std::ref()</code> to pass a reference to <code class="computeroutput">cache</code>.
+        This is necessary because <code class="computeroutput"><a class="link" href="../../boost/parser/to_tokens.html" title="Global to_tokens">boost::parser::to_tokens</a></code> uses <code class="computeroutput">std::bind_back()</code>
+        (or a workalike in C++17 mode). As with the other binders in <code class="computeroutput">std</code>,
+        it does not gracefully propagate bare lvalue references, so you have to use
+        <code class="computeroutput">std::ref()</code>.
+      </p>
+<h5>
+<a name="boost_parser.tutorial.using_a_lexer___token_parsing.h8"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.using_a_lexer___token_parsing.lexing_failures"></a></span><a class="link" href="using_a_lexer___token_parsing.html#boost_parser.tutorial.using_a_lexer___token_parsing.lexing_failures">Lexing
+        failures</a>
+      </h5>
+<p>
+        Parse failures that fail the top-level parse happen only at expectation points.
+        Lexing failures that fail the top-level parse can happen at any point in
+        the input. If there is no token regex that matches the current point of the
+        input, we cannot continue to lex. Lexing failures are usually caused by bad
+        input, or failure to specify the correct set of <code class="computeroutput"><a class="link" href="../../boost/parser/token_spec_t.html" title="Struct template token_spec_t">boost::parser::token_spec_ts</a></code> to cover all
+        valid input. However, it may also be that you have written an impossible
+        <code class="computeroutput"><a class="link" href="../../boost/parser/token_spec_t.html" title="Struct template token_spec_t">boost::parser::token_spec_t</a></code>.
+        Consider this one.
+      </p>
+<pre class="programlisting">constexpr auto bad_token = bp::token_spec&lt;"foo", 0, int&gt;;
+</pre>
+<p>
+        This <code class="computeroutput"><a class="link" href="../../boost/parser/token_spec_t.html" title="Struct template token_spec_t">boost::parser::token_spec_t</a></code>
+        can never generate a valid token. It will match <code class="computeroutput">"foo"</code>
+        in the input, but then it will try to parse <code class="computeroutput">"foo"</code>
+        as an <code class="computeroutput">int</code>, which is guaranteed to fail.
+      </p>
+<p>
+        The takeaway here is that a lexing failure might be due to bad input, but
+        it can also be the sign of a bug in one or more of your <code class="computeroutput"><a class="link" href="../../boost/parser/token_spec_t.html" title="Struct template token_spec_t">boost::parser::token_spec_ts</a></code>.
+      </p>
+<h5>
+<a name="boost_parser.tutorial.using_a_lexer___token_parsing.h9"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.using_a_lexer___token_parsing.tradeoffs_of_token__vs__character_parsing"></a></span><a class="link" href="using_a_lexer___token_parsing.html#boost_parser.tutorial.using_a_lexer___token_parsing.tradeoffs_of_token__vs__character_parsing">Tradeoffs
+        of token- vs. character-parsing</a>
+      </h5>
+<p>
+        TODO
+      </p>
+<h5>
+<a name="boost_parser.tutorial.using_a_lexer___token_parsing.h10"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.using_a_lexer___token_parsing.the_token_parsers"></a></span><a class="link" href="using_a_lexer___token_parsing.html#boost_parser.tutorial.using_a_lexer___token_parsing.the_token_parsers">The
+        token parsers</a>
+      </h5>
+<p>
+        Many of the parsers that work in character parsing do not work in token parsing,
+        because they try to parse individual characters from the input. Token parsing
+        only provides tokens, not characters. This table describes all the parsers
+        compatible with token parsing.
+      </p>
+<p>
+        This table lists all the Boost.Parser parsers usable during token parsing.
+        For the callable parsers, a separate entry exists for each possible arity
+        of arguments. For a parser <code class="computeroutput">p</code>, if there is no entry for <code class="computeroutput">p</code>
+        without arguments, <code class="computeroutput">p</code> is a function, and cannot itself be used
+        as a parser; it must be called. In the table below:
+      </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+            each entry is a global object usable directly in your parsers, unless
+            otherwise noted;
+          </li>
+<li class="listitem">
+            "code point" is used to refer to the elements of the input
+            range, which assumes that the parse is being done in the Unicode-aware
+            code path (if the parse is being done in the non-Unicode code path, read
+            "code point" as "<code class="computeroutput">char</code>");
+          </li>
+<li class="listitem">
+            <span class="emphasis"><em><code class="literal">RESOLVE</code></em></span><code class="computeroutput"><span class="special">()</span></code>
+            is a notional macro that expands to the resolution of parse argument
+            or evaluation of a parse predicate (see <a class="link" href="the_parsers_and_their_uses.html" title="The Parsers And Their Uses">The
+            Parsers And Their Uses</a>);
+          </li>
+<li class="listitem">
+            "<code class="computeroutput"><span class="emphasis"><em><code class="literal">RESOLVE</code></em></span>(pred) ==
+            true</code>" is a shorthand notation for "<code class="computeroutput"><span class="emphasis"><em><code class="literal">RESOLVE</code></em></span>(pred)</code>
+            is contextually convertible to <code class="computeroutput">bool</code> and <code class="computeroutput">true</code>";
+            likewise for <code class="computeroutput">false</code>;
+          </li>
+<li class="listitem">
+            <code class="computeroutput">c</code> is a character of some character type;
+          </li>
+<li class="listitem">
+            <code class="computeroutput">str</code> is a string literal of type <code class="computeroutput">CharType const[]</code>,
+            for some character type <code class="computeroutput">Char\Type</code>;
+          </li>
+<li class="listitem">
+            <code class="computeroutput">pred</code> is a parse predicate;
+          </li>
+<li class="listitem">
+            <code class="computeroutput">arg0</code>, <code class="computeroutput">arg1</code>, <code class="computeroutput">arg2</code>, ... are parse
+            arguments;
+          </li>
+<li class="listitem">
+            <code class="computeroutput">a</code> is a semantic action;
+          </li>
+<li class="listitem">
+            <code class="computeroutput">r</code> is an object whose type models <code class="computeroutput">parsable_range</code>;
+          </li>
+<li class="listitem">
+            <code class="computeroutput">tok</code> is a token parser created using <code class="computeroutput"><a class="link" href="../../boost/parser/token_spec_t.html" title="Struct template token_spec_t">boost::parser::token_spec_t</a></code>; and
+          </li>
+<li class="listitem">
+            <code class="computeroutput">p</code>, <code class="computeroutput">p1</code>, <code class="computeroutput">p2</code>, ... are parsers.
+          </li>
+</ul></div>
+<div class="note"><table border="0" summary="Note">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../images/note.png"></td>
+<th align="left">Note</th>
+</tr>
+<tr><td align="left" valign="top">
+<p>
+          The definition of <code class="computeroutput">parsable_range</code> is:
+        </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> <span class="identifier">T</span><span class="special">&gt;</span>
+<span class="identifier">concept</span> <span class="identifier">parsable_range</span> <span class="special">=</span> <span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">ranges</span><span class="special">::</span><span class="identifier">forward_range</span><span class="special">&lt;</span><span class="identifier">T</span><span class="special">&gt;</span> <span class="special">&amp;&amp;</span>
+                          <span class="identifier">code_unit</span><span class="special">&lt;</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">ranges</span><span class="special">::</span><span class="identifier">range_value_t</span><span class="special">&lt;</span><span class="identifier">T</span><span class="special">&gt;&gt;)</span> <span class="special">||</span>
+                         <span class="identifier">detail</span><span class="special">::</span><span class="identifier">is_tokens_view_v</span><span class="special">&lt;</span><span class="identifier">T</span><span class="special">&gt;;</span>
+</pre>
+<p>
+        </p>
+</td></tr>
+</table></div>
+<div class="note"><table border="0" summary="Note">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../images/note.png"></td>
+<th align="left">Note</th>
+</tr>
+<tr><td align="left" valign="top"><p>
+          Some of the parsers in this table consume no input. All parsers consume
+          the input they match unless otherwise stated in the table below.
+        </p></td></tr>
+</table></div>
+<div class="table">
+<a name="boost_parser.tutorial.using_a_lexer___token_parsing.t0"></a><p class="title"><b>Table 1.11. Token Parsers and Their Semantics</b></p>
+<div class="table-contents"><table class="table" summary="Token Parsers and Their Semantics">
+<colgroup>
+<col>
+<col>
+<col>
+<col>
+</colgroup>
+<thead><tr>
+<th>
+                <p>
+                  Parser
+                </p>
+              </th>
+<th>
+                <p>
+                  Semantics
+                </p>
+              </th>
+<th>
+                <p>
+                  Attribute Type
+                </p>
+              </th>
+<th>
+                <p>
+                  Notes
+                </p>
+              </th>
+</tr></thead>
+<tbody>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput">tok</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches any token with the same ID as <code class="computeroutput">tok</code>.
+                </p>
+              </td>
+<td>
+                <p>
+                  The attribute type given when specifying <code class="computeroutput">tok</code>, or a
+                  string view if unspecified. The attribute type must be a specialization
+                  of <code class="computeroutput">std::basic_string_view</code>, an integral type, or a
+                  floating point type.
+                </p>
+              </td>
+<td>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput">tok(arg0)</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches exactly the value <code class="computeroutput"><span class="emphasis"><em><code class="literal">RESOLVE</code></em></span>(arg0)</code>.
+                </p>
+              </td>
+<td>
+                <p>
+                  The attribute type given when specifying <code class="computeroutput">tok</code>. The
+                  attribute type must be a an integral type or a floating point type.
+                </p>
+              </td>
+<td>
+                <p>
+                  This case applies only when <code class="computeroutput">arg0</code> is <span class="bold"><strong>not</strong></span>
+                  a range.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput">tok(r)</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches exactly the value <code class="computeroutput">r</code>.
+                </p>
+              </td>
+<td>
+                <p>
+                  The attribute type given when specifying <code class="computeroutput">tok</code>. The
+                  attribute type must be a specialization of <code class="computeroutput">std::basic_string_view</code>.
+                </p>
+              </td>
+<td>
+                <p>
+                  This overload does <span class="bold"><strong>not</strong></span> take parse
+                  arguments.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/eps.html" title="Global eps">eps</a></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches <span class="emphasis"><em>epsilon</em></span>, the empty string. Always
+                  matches, and consumes no input.
+                </p>
+              </td>
+<td>
+                <p>
+                  None.
+                </p>
+              </td>
+<td>
+                <p>
+                  Matching <code class="computeroutput"><a class="link" href="../../boost/parser/eps.html" title="Global eps">eps</a></code>
+                  an unlimited number of times creates an infinite loop, which is
+                  undefined behavior in C++. Boost.Parser will assert in debug mode
+                  when it encounters <code class="computeroutput">*<a class="link" href="../../boost/parser/eps.html" title="Global eps">eps</a></code>, <code class="computeroutput">+<a class="link" href="../../boost/parser/eps.html" title="Global eps">eps</a></code>,
+                  etc (this applies to unconditional <code class="computeroutput"><a class="link" href="../../boost/parser/eps.html" title="Global eps">eps</a></code> only).
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/eps.html" title="Global eps">eps</a>(pred)</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Fails to match the input if <code class="computeroutput"><span class="emphasis"><em><code class="literal">RESOLVE</code></em></span>(pred)
+                  == false</code>. Otherwise, the semantics are those of <code class="computeroutput"><a class="link" href="../../boost/parser/eps.html" title="Global eps">eps</a></code>.
+                </p>
+              </td>
+<td>
+                <p>
+                  None.
+                </p>
+              </td>
+<td>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/ws.html" title="Global ws">ws</a></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches a single whitespace code point (see note), according to
+                  the Unicode White_Space property.
+                </p>
+              </td>
+<td>
+                <p>
+                  None.
+                </p>
+              </td>
+<td>
+                <p>
+                  For more info, see the <a href="https://www.unicode.org/Public/UCD/latest/ucd/PropList.txt" target="_top">Unicode
+                  properties</a>. <code class="computeroutput"><a class="link" href="../../boost/parser/ws.html" title="Global ws">ws</a></code> may consume one
+                  code point or two. It only consumes two code points when it matches
+                  <code class="computeroutput">"\r\n"</code>.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/eol.html" title="Global eol">eol</a></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches a single newline (see note), following the "hard"
+                  line breaks in the Unicode line breaking algorithm.
+                </p>
+              </td>
+<td>
+                <p>
+                  None.
+                </p>
+              </td>
+<td>
+                <p>
+                  For more info, see the <a href="https://unicode.org/reports/tr14" target="_top">Unicode
+                  Line Breaking Algorithm</a>. <code class="computeroutput"><a class="link" href="../../boost/parser/eol.html" title="Global eol">eol</a></code> may consume
+                  one code point or two. It only consumes two code points when it
+                  matches <code class="computeroutput">"\r\n"</code>.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/eoi.html" title="Global eoi">eoi</a></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches only at the end of input, and consumes no input.
+                </p>
+              </td>
+<td>
+                <p>
+                  None.
+                </p>
+              </td>
+<td>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/attr.html" title="Function template attr">attr</a></code><code class="computeroutput">(arg0)</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Always matches, and consumes no input. Generates the attribute
+                  <code class="computeroutput"><span class="emphasis"><em><code class="literal">RESOLVE</code></em></span>(arg0)</code>.
+                </p>
+              </td>
+<td>
+                <p>
+                  <code class="computeroutput">decltype(<span class="emphasis"><em><code class="literal">RESOLVE</code></em></span>(arg0))</code>.
+                </p>
+              </td>
+<td>
+                <p>
+                  An important use case for <code class="computeroutput"><a class="link" href="../../boost/parser/attribute.html" title="Struct template attribute">attribute</a></code>
+                  is to provide a default attribute value as a trailing alternative.
+                  For instance, an <span class="bold"><strong>optional</strong></span> comma-delmited
+                  list is: <code class="computeroutput">int_ % ',' | attr(std::vector&lt;int&gt;)</code>.
+                  Without the "<code class="computeroutput">| attr(...)</code>", at least one
+                  <code class="computeroutput">int_</code> match would be required.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches any single code point.
+                </p>
+              </td>
+<td>
+                <p>
+                  The code point type in Unicode parsing, or <code class="computeroutput">char</code> in
+                  non-Unicode parsing. See <a class="link" href="attribute_generation.html" title="Attribute Generation">Attribute
+                  Generation</a>.
+                </p>
+              </td>
+<td>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a>(arg0)</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches exactly the code point <code class="computeroutput"><span class="emphasis"><em><code class="literal">RESOLVE</code></em></span>(arg0)</code>.
+                </p>
+              </td>
+<td>
+                <p>
+                  The code point type in Unicode parsing, or <code class="computeroutput">char</code> in
+                  non-Unicode parsing. See <a class="link" href="attribute_generation.html" title="Attribute Generation">Attribute
+                  Generation</a>.
+                </p>
+              </td>
+<td>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a>(arg0,
+                  arg1)</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches the next code point <code class="computeroutput">n</code> in the input, if <code class="computeroutput"><span class="emphasis"><em><code class="literal">RESOLVE</code></em></span>(arg0)
+                  &lt;= n &amp;&amp; n &lt;= <span class="emphasis"><em><code class="literal">RESOLVE</code></em></span>(arg1)</code>.
+                </p>
+              </td>
+<td>
+                <p>
+                  The code point type in Unicode parsing, or <code class="computeroutput">char</code> in
+                  non-Unicode parsing. See <a class="link" href="attribute_generation.html" title="Attribute Generation">Attribute
+                  Generation</a>.
+                </p>
+              </td>
+<td>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a>(r)</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches the next code point <code class="computeroutput">n</code> in the input, if <code class="computeroutput">n</code>
+                  is one of the code points in <code class="computeroutput">r</code>.
+                </p>
+              </td>
+<td>
+                <p>
+                  The code point type in Unicode parsing, or <code class="computeroutput">char</code> in
+                  non-Unicode parsing. See <a class="link" href="attribute_generation.html" title="Attribute Generation">Attribute
+                  Generation</a>.
+                </p>
+              </td>
+<td>
+                <p>
+                  <code class="computeroutput">r</code> is taken to be in a UTF encoding. The exact UTF
+                  used depends on <code class="computeroutput">r</code>'s element type. If you do not pass
+                  UTF encoded ranges for <code class="computeroutput">r</code>, the behavior of <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a></code>
+                  is undefined. Note that ASCII is a subset of UTF-8, so ASCII is
+                  fine. EBCDIC is not. <code class="computeroutput">r</code> is not copied; a reference
+                  to it is taken. The lifetime of <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a>(r)</code>
+                  must be within the lifetime of <code class="computeroutput">r</code>. This overload of
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a></code>
+                  does <span class="bold"><strong>not</strong></span> take parse arguments.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/cp.html" title="Global cp">cp</a></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches a single code point.
+                </p>
+              </td>
+<td>
+                <p>
+                  <code class="computeroutput">char32_t</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Similar to <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a></code>, but with
+                  a fixed <code class="computeroutput">char32_t</code> attribute type; <code class="computeroutput"><a class="link" href="../../boost/parser/cp.html" title="Global cp">cp</a></code> has all the same
+                  call operator overloads as <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a></code>, though they
+                  are not repeated here, for brevity.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/cu.html" title="Global cu">cu</a></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches a single code point.
+                </p>
+              </td>
+<td>
+                <p>
+                  <code class="computeroutput">char</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Similar to <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a></code>, but with
+                  a fixed <code class="computeroutput">char</code> attribute type; <code class="computeroutput"><a class="link" href="../../boost/parser/cu.html" title="Global cu">cu</a></code> has all the same
+                  call operator overloads as <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a></code>, though they
+                  are not repeated here, for brevity. Even though the name "<code class="computeroutput">cu</code>"
+                  suggests that this parser match at the code unit level, it does
+                  not. The name refers to the attribute type generated, much like
+                  the names <code class="computeroutput"><a class="link" href="../../boost/parser/int_.html" title="Global int_">int_</a></code>
+                  versus <code class="computeroutput"><a class="link" href="../../boost/parser/uint_.html" title="Global uint_">uint_</a></code>.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/blank.html" title="Global blank">blank</a></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Equivalent to <code class="computeroutput"><a class="link" href="../../boost/parser/ws.html" title="Global ws">ws</a> - <a class="link" href="../../boost/parser/eol.html" title="Global eol">eol</a></code>.
+                </p>
+              </td>
+<td>
+                <p>
+                  The code point type in Unicode parsing, or <code class="computeroutput">char</code> in
+                  non-Unicode parsing. See the entry for <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a></code>.
+                </p>
+              </td>
+<td>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/control.html" title="Global control">control</a></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches a single control-character code point.
+                </p>
+              </td>
+<td>
+                <p>
+                  The code point type in Unicode parsing, or <code class="computeroutput">char</code> in
+                  non-Unicode parsing. See the entry for <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a></code>.
+                </p>
+              </td>
+<td>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/digit.html" title="Global digit">digit</a></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches a single decimal digit code point.
+                </p>
+              </td>
+<td>
+                <p>
+                  The code point type in Unicode parsing, or <code class="computeroutput">char</code> in
+                  non-Unicode parsing. See the entry for <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a></code>.
+                </p>
+              </td>
+<td>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/punct.html" title="Global punct">punct</a></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches a single punctuation code point.
+                </p>
+              </td>
+<td>
+                <p>
+                  The code point type in Unicode parsing, or <code class="computeroutput">char</code> in
+                  non-Unicode parsing. See the entry for <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a></code>.
+                </p>
+              </td>
+<td>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/hex_digit.html" title="Global hex_digit">hex_digit</a></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches a single hexidecimal digit code point.
+                </p>
+              </td>
+<td>
+                <p>
+                  The code point type in Unicode parsing, or <code class="computeroutput">char</code> in
+                  non-Unicode parsing. See the entry for <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a></code>.
+                </p>
+              </td>
+<td>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/lower.html" title="Global lower">lower</a></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches a single lower-case code point.
+                </p>
+              </td>
+<td>
+                <p>
+                  The code point type in Unicode parsing, or <code class="computeroutput">char</code> in
+                  non-Unicode parsing. See the entry for <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a></code>.
+                </p>
+              </td>
+<td>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/upper.html" title="Global upper">upper</a></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches a single upper-case code point.
+                </p>
+              </td>
+<td>
+                <p>
+                  The code point type in Unicode parsing, or <code class="computeroutput">char</code> in
+                  non-Unicode parsing. See the entry for <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a></code>.
+                </p>
+              </td>
+<td>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/lit_id9.html" title="Function lit">lit</a></code><code class="computeroutput">(c)</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches exactly the given code point <code class="computeroutput">c</code>.
+                </p>
+              </td>
+<td>
+                <p>
+                  None.
+                </p>
+              </td>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/lit_id9.html" title="Function lit">lit()</a></code> does <span class="bold"><strong>not</strong></span> take parse arguments.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput">c_l</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches exactly the given code point <code class="computeroutput">c</code>.
+                </p>
+              </td>
+<td>
+                <p>
+                  None.
+                </p>
+              </td>
+<td>
+                <p>
+                  This is a <a href="https://en.cppreference.com/w/cpp/language/user_literal" target="_top">UDL</a>
+                  that represents <code class="computeroutput"><a class="link" href="../../boost/parser/lit_id9.html" title="Function lit">lit</a>(c)</code>,
+                  for example <code class="computeroutput">'F'_l</code>.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/lit_id9.html" title="Function lit">lit</a></code><code class="computeroutput">(r)</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches exactly the given string <code class="computeroutput">r</code>.
+                </p>
+              </td>
+<td>
+                <p>
+                  None.
+                </p>
+              </td>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/lit_id9.html" title="Function lit">lit()</a></code> does <span class="bold"><strong>not</strong></span> take parse arguments.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput">str_l</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches exactly the given string <code class="computeroutput">str</code>.
+                </p>
+              </td>
+<td>
+                <p>
+                  None.
+                </p>
+              </td>
+<td>
+                <p>
+                  This is a <a href="https://en.cppreference.com/w/cpp/language/user_literal" target="_top">UDL</a>
+                  that represents <code class="computeroutput"><a class="link" href="../../boost/parser/lit_id9.html" title="Function lit">lit</a>(s)</code>,
+                  for example <code class="computeroutput">"a string"_l</code>.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/string.html" title="Function template string">string</a>(r)</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches exactly <code class="computeroutput">r</code>, and generates the match as an attribute.
+                </p>
+              </td>
+<td>
+                <p>
+                  <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/string.html" title="Function template string">string()</a></code> does <span class="bold"><strong>not</strong></span> take parse arguments.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput">str_p</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches exactly <code class="computeroutput">str</code>, and generates the match as an
+                  attribute.
+                </p>
+              </td>
+<td>
+                <p>
+                  <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  This is a <a href="https://en.cppreference.com/w/cpp/language/user_literal" target="_top">UDL</a>
+                  that represents <code class="computeroutput"><a class="link" href="../../boost/parser/string.html" title="Function template string">string</a>(s)</code>,
+                  for example <code class="computeroutput">"a string"_p</code>.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/repeat_id13.html" title="Function template repeat">repeat</a>(arg0)[p]</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches iff <code class="computeroutput">p</code> matches exactly <code class="computeroutput"><span class="emphasis"><em><code class="literal">RESOLVE</code></em></span>(arg0)</code>
+                  times.
+                </p>
+              </td>
+<td>
+                <p>
+                  <code class="computeroutput">std::string</code> if <code class="computeroutput"><span class="emphasis"><em><code class="literal">ATTR</code></em></span>(p)</code>
+                  is <code class="computeroutput">char</code> or <code class="computeroutput">char32_t</code>, otherwise <code class="computeroutput">std::vector&lt;<span class="emphasis"><em><code class="literal">ATTR</code></em></span>(p)&gt;</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  The special value <code class="computeroutput"><a class="link" href="../../boost/parser/Inf.html" title="Global Inf">Inf</a></code> may be used;
+                  it indicates unlimited repetition. <code class="computeroutput">decltype(<span class="emphasis"><em><code class="literal">RESOLVE</code></em></span>(arg0))</code>
+                  must be implicitly convertible to <code class="computeroutput">int64_t</code>. Matching
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/eps.html" title="Global eps">eps</a></code>
+                  an unlimited number of times creates an infinite loop, which is
+                  undefined behavior in C++. Boost.Parser will assert in debug mode
+                  when it encounters <code class="computeroutput"><a class="link" href="../../boost/parser/repeat_id13.html" title="Function template repeat">repeat</a>(<a class="link" href="../../boost/parser/Inf.html" title="Global Inf">Inf</a>)[<a class="link" href="../../boost/parser/eps.html" title="Global eps">eps</a>]</code>
+                  (this applies to unconditional <code class="computeroutput"><a class="link" href="../../boost/parser/eps.html" title="Global eps">eps</a></code> only).
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/repeat_id13.html" title="Function template repeat">repeat</a>(arg0,
+                  arg1)[p]</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Matches iff <code class="computeroutput">p</code> matches between <code class="computeroutput"><span class="emphasis"><em><code class="literal">RESOLVE</code></em></span>(arg0)</code>
+                  and <code class="computeroutput"><span class="emphasis"><em><code class="literal">RESOLVE</code></em></span>(arg1)</code>
+                  times, inclusively.
+                </p>
+              </td>
+<td>
+                <p>
+                  <code class="computeroutput">std::string</code> if <code class="computeroutput"><span class="emphasis"><em><code class="literal">ATTR</code></em></span>(p)</code>
+                  is <code class="computeroutput">char</code> or <code class="computeroutput">char32_t</code>, otherwise <code class="computeroutput">std::vector&lt;<span class="emphasis"><em><code class="literal">ATTR</code></em></span>(p)&gt;</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  The special value <code class="computeroutput"><a class="link" href="../../boost/parser/Inf.html" title="Global Inf">Inf</a></code> may be used
+                  for the upper bound; it indicates unlimited repetition. <code class="computeroutput">decltype(<span class="emphasis"><em><code class="literal">RESOLVE</code></em></span>(arg0))</code>
+                  and <code class="computeroutput">decltype(<span class="emphasis"><em><code class="literal">RESOLVE</code></em></span>(arg1))</code>
+                  each must be implicitly convertible to <code class="computeroutput">int64_t</code>. Matching
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/eps.html" title="Global eps">eps</a></code>
+                  an unlimited number of times creates an infinite loop, which is
+                  undefined behavior in C++. Boost.Parser will assert in debug mode
+                  when it encounters <code class="computeroutput"><a class="link" href="../../boost/parser/repeat_id13.html" title="Function template repeat">repeat</a>(n, <a class="link" href="../../boost/parser/Inf.html" title="Global Inf">Inf</a>)[<a class="link" href="../../boost/parser/eps.html" title="Global eps">eps</a>]</code>
+                  (this applies to unconditional <code class="computeroutput"><a class="link" href="../../boost/parser/eps.html" title="Global eps">eps</a></code> only).
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/if_.html" title="Function template if_">if_</a>(pred)[p]</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Equivalent to <code class="computeroutput"><a class="link" href="../../boost/parser/eps.html" title="Global eps">eps</a>(pred) &gt;&gt;
+                  p</code>.
+                </p>
+              </td>
+<td>
+                <p>
+                  <code class="computeroutput">std::optional&lt;<span class="emphasis"><em><code class="literal">ATTR</code></em></span>(p)&gt;</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  It is an error to write <code class="computeroutput"><a class="link" href="../../boost/parser/if_.html" title="Function template if_">if_</a>(pred)</code>.
+                  That is, it is an error to omit the conditionally matched parser
+                  <code class="computeroutput">p</code>.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/switch_.html" title="Function template switch_">switch_</a>(arg0)(arg1,
+                  p1)(arg2, p2) ...</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Equivalent to <code class="computeroutput">p1</code> when <code class="computeroutput"><span class="emphasis"><em><code class="literal">RESOLVE</code></em></span>(arg0)
+                  == <span class="emphasis"><em><code class="literal">RESOLVE</code></em></span>(arg1)</code>,
+                  <code class="computeroutput">p2</code> when <code class="computeroutput"><span class="emphasis"><em><code class="literal">RESOLVE</code></em></span>(arg0)
+                  == <span class="emphasis"><em><code class="literal">RESOLVE</code></em></span>(arg2)</code>,
+                  etc. If there is such no <code class="computeroutput">argN</code>, the behavior of <code class="computeroutput"><a class="link" href="../../boost/parser/switch_.html" title="Function template switch_">switch_()</a></code> is undefined.
+                </p>
+              </td>
+<td>
+                <p>
+                  <code class="computeroutput">std::variant&lt;<span class="emphasis"><em><code class="literal">ATTR</code></em></span>(p1),
+                  <span class="emphasis"><em><code class="literal">ATTR</code></em></span>(p2), ...&gt;</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  It is an error to write <code class="computeroutput"><a class="link" href="../../boost/parser/switch_.html" title="Function template switch_">switch_</a>(arg0)</code>.
+                  That is, it is an error to omit the conditionally matched parsers
+                  <code class="computeroutput">p1</code>, <code class="computeroutput">p2</code>, ....
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/symbols.html" title="Struct template symbols">symbols&lt;T&gt;</a></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/symbols.html" title="Struct template symbols">symbols</a></code>
+                  is an associative container of key, value pairs. Each key is a
+                  <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span></code> and each value has type
+                  <code class="computeroutput">T</code>. In the Unicode parsing path, the strings are considered
+                  to be UTF-8 encoded; in the non-Unicode path, no encoding is assumed.
+                  <code class="computeroutput"><a class="link" href="../../boost/parser/symbols.html" title="Struct template symbols">symbols</a></code>
+                  Matches the longest prefix <code class="computeroutput">pre</code> of the input that is
+                  equal to one of the keys <code class="computeroutput">k</code>. If the length <code class="computeroutput">len</code>
+                  of <code class="computeroutput">pre</code> is zero, and there is no zero-length key, it
+                  does not match the input. If <code class="computeroutput">len</code> is positive, the
+                  generated attribute is the value associated with <code class="computeroutput">k</code>.
+                </p>
+              </td>
+<td>
+                <p>
+                  <code class="computeroutput">T</code>
+                </p>
+              </td>
+<td>
+                <p>
+                  Unlike the other entries in this table, <code class="computeroutput"><a class="link" href="../../boost/parser/symbols.html" title="Struct template symbols">symbols</a></code> is a type,
+                  not an object.
+                </p>
+              </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<br class="table-break"><h5>
+<a name="boost_parser.tutorial.using_a_lexer___token_parsing.h11"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.using_a_lexer___token_parsing.directives_and_token_parsing"></a></span><a class="link" href="using_a_lexer___token_parsing.html#boost_parser.tutorial.using_a_lexer___token_parsing.directives_and_token_parsing">Directives
+        and token parsing</a>
+      </h5>
+<p>
+        One directive that works in character parsing does not work in token parsing
+        — the argument form of <code class="computeroutput"><a class="link" href="../../boost/parser/skip.html" title="Global skip">skip[]</a></code>.
+        The argument to <code class="computeroutput"><a class="link" href="../../boost/parser/skip.html" title="Global skip">skip[]</a></code> is a new skipper, and this
+        cannot be changed in the middle of tokenization. The set of tokens and their
+        regexes are fixed at compile time. The nullary form of <code class="computeroutput"><a class="link" href="../../boost/parser/skip.html" title="Global skip">skip[]</a></code>
+        works fine; all it does is re-enable skipping that has been turned off by
+        <code class="computeroutput"><a class="link" href="../../boost/parser/lexeme.html" title="Global lexeme">lexeme[]</a></code>.
+      </p>
+<h5>
+<a name="boost_parser.tutorial.using_a_lexer___token_parsing.h12"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.using_a_lexer___token_parsing.the_token_parsing_api"></a></span><a class="link" href="using_a_lexer___token_parsing.html#boost_parser.tutorial.using_a_lexer___token_parsing.the_token_parsing_api">The
+        token parsing API</a>
+      </h5>
+<p>
+        Not all the <code class="computeroutput"><a class="link" href="../../boost/parser/parse_id2.html" title="Function template parse">parse()</a></code> and <code class="computeroutput"><a class="link" href="../../boost/parser/callback_parse_id6.html" title="Function template callback_parse">callback_parse()</a></code>
+        overloads can do token parsing, because some of them cannot accept a <code class="computeroutput"><a class="link" href="../../boost/parser/tokens_view.html" title="Struct template tokens_view">boost::parser::tokens_view</a></code>
+        as input. In particular, the overloads that take a skipper are precluded,
+        since the skipper must be built into the lexer itself (see the section above
+        about whitespace handling for details).
+      </p>
+<h5>
+<a name="boost_parser.tutorial.using_a_lexer___token_parsing.h13"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.using_a_lexer___token_parsing._ulink_url__https___github_com_hanickadot_compile_time_regular_expressions__ctre__ulink__particulars"></a></span><a class="link" href="using_a_lexer___token_parsing.html#boost_parser.tutorial.using_a_lexer___token_parsing._ulink_url__https___github_com_hanickadot_compile_time_regular_expressions__ctre__ulink__particulars">CTRE
+        particulars</a>
+      </h5>
+<p>
+        There are a few details you might want to know about how <a href="https://github.com/hanickadot/compile-time-regular-expressions" target="_top">CTRE</a>
+        works.
+      </p>
+<p>
+        <a href="https://github.com/hanickadot/compile-time-regular-expressions" target="_top">CTRE</a>
+        uses <a href="https://www.pcre.org" target="_top">PCRE</a> as its regex grammar.
+      </p>
+<p>
+        "Maximum munch" appears not to be the way <a href="https://github.com/hanickadot/compile-time-regular-expressions" target="_top">CTRE</a>
+        tokenizes input. For instance, if you have <code class="computeroutput"><a class="link" href="../../boost/parser/token_spec_t.html" title="Struct template token_spec_t">boost::parser::token_spec_t</a></code> A that matches
+        <code class="computeroutput">"&lt;=="</code> and <code class="computeroutput"><a class="link" href="../../boost/parser/token_spec_t.html" title="Struct template token_spec_t">boost::parser::token_spec_t</a></code> B that matches
+        <code class="computeroutput">"&lt;|&gt;|&lt;=|&gt;=|==|!="</code>, the input characters
+        <code class="computeroutput">"&lt;=="</code> will be tokenized as <code class="computeroutput">"&lt;=="</code>
+        if the lexer includes <code class="computeroutput">A | B</code>, but will be parsed as <code class="computeroutput">"&lt;"</code>
+        followed by <code class="computeroutput">"=="</code> if the lexer includes <code class="computeroutput">B | A</code>.
+      </p>
+<p>
+        <a href="https://github.com/hanickadot/compile-time-regular-expressions" target="_top">CTRE</a>
+        uses <code class="computeroutput">char32_t</code> for all its compile time strings. If you give
+        it a regex string literal like <code class="computeroutput">bp::token_spec&lt;"foo", 0&gt;</code>
+        (that is, an array of <code class="computeroutput">char</code>), it will be interpreted in one of
+        two ways. By default, the <code class="computeroutput">char</code>s are copied into an array of
+        <code class="computeroutput">char32_t</code>, unmodified. This is fine if you provide an ASCII regex,
+        or a regex in a non-Unicode encoding. However, if you define <code class="computeroutput">CTRE_STRING_IS_UTF8</code>
+        before including <code class="computeroutput">&lt;boost/parser/lexer.hpp&gt;</code>, the array of
+        <code class="computeroutput">char</code> will be interpreted as UTF-8, and will be transcoded to
+        UTF-32 before being stored in the array of <code class="computeroutput">char32_t</code>. All the
+        <code class="computeroutput">charN_t</code> character types will be interpreted as UTF-N encoded,
+        and will be transcoded to UTF-32 if needed. <code class="computeroutput">wchar_t</code> is taken
+        to mean UTF-32 <span class="bold"><strong>even on Windows</strong></span>. Again, all
+        of this trancoding happens at compile time.
+      </p>
+<h5>
+<a name="boost_parser.tutorial.using_a_lexer___token_parsing.h14"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.using_a_lexer___token_parsing.error_handling_details"></a></span><a class="link" href="using_a_lexer___token_parsing.html#boost_parser.tutorial.using_a_lexer___token_parsing.error_handling_details">Error
+        handling details</a>
+      </h5>
+<p>
+        TODO: Describe how it mostly just works, but that if you use the error reporting
+        API you need to know which functions require token iterators and which do
+        not, and how to get from token iterators down to the underlying input iterators.
+      </p>
+<p>
+        TODO: Note on the error handling-specific page that some error handling functions
+        require normalize_iterators, and some apply it themselves. Also note that
+        all the error handlers appply it.
+      </p>
+</div>
+<div class="copyright-footer">Copyright © 2020 T. Zachary Laine<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+      </p>
+</div>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="error_handling_and_debugging.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="memory_allocation.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

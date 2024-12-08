@@ -1,0 +1,87 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Struct template tokens_view</title>
+<link rel="stylesheet" href="../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
+<link rel="up" href="../../header/boost/parser/lexer_hpp.html" title="Header &lt;boost/parser/lexer.hpp&gt;">
+<link rel="prev" href="token_spec_t.html" title="Struct template token_spec_t">
+<link rel="next" href="no_ws.html" title="Global no_ws">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="token_spec_t.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../../header/boost/parser/lexer_hpp.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="no_ws.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+<div class="refentry">
+<a name="boost.parser.tokens_view"></a><div class="titlepage"></div>
+<div class="refnamediv">
+<h2><span class="refentrytitle">Struct template tokens_view</span></h2>
+<p>boost::parser::tokens_view</p>
+</div>
+<h2 class="refsynopsisdiv-title">Synopsis</h2>
+<div class="refsynopsisdiv"><pre class="synopsis"><span class="comment">// In header: &lt;<a class="link" href="../../header/boost/parser/lexer_hpp.html" title="Header &lt;boost/parser/lexer.hpp&gt;">boost/parser/lexer.hpp</a>&gt;
+
+</span><span class="keyword">template</span><span class="special">&lt;</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">ranges</span><span class="special">::</span><span class="identifier">contiguous_range</span> V<span class="special">,</span> <span class="keyword">typename</span> Lexer<span class="special">,</span> <span class="keyword">typename</span> TokenCache<span class="special">&gt;</span> 
+<span class="keyword">struct</span> <a class="link" href="tokens_view.html" title="Struct template tokens_view">tokens_view</a> <span class="special">:</span>
+  <span class="keyword">public</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">ranges</span><span class="special">::</span><span class="identifier">view_interface</span><span class="special">&lt;</span> <span class="identifier">tokens_view</span><span class="special">&lt;</span> <span class="identifier">V</span><span class="special">,</span> <span class="identifier">Lexer</span><span class="special">,</span> <span class="identifier">TokenCache</span> <span class="special">&gt;</span> <span class="special">&gt;</span>
+<span class="special">{</span>
+  <span class="comment">// types</span>
+  <span class="keyword">typedef</span> <span class="keyword">typename</span> <span class="identifier">Lexer</span><span class="special">::</span><span class="identifier">token_type</span> <a name="boost.parser.tokens_view.token_type"></a><span class="identifier">token_type</span><span class="special">;</span>
+
+  <span class="comment">// <a class="link" href="tokens_view.html#boost.parser.tokens_viewconstruct-copy-destruct">construct/copy/destruct</a></span>
+  <a class="link" href="tokens_view.html#id105-bb"><span class="identifier">tokens_view</span></a><span class="special">(</span><span class="special">)</span><span class="special">;</span>
+  <span class="keyword">explicit</span> <a class="link" href="tokens_view.html#id106-bb"><span class="identifier">tokens_view</span></a><span class="special">(</span><span class="identifier">V</span><span class="special">,</span> <span class="identifier">Lexer</span><span class="special">)</span><span class="special">;</span>
+  <span class="keyword">explicit</span> <a class="link" href="tokens_view.html#id107-bb"><span class="identifier">tokens_view</span></a><span class="special">(</span><span class="identifier">V</span><span class="special">,</span> <span class="identifier">Lexer</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">reference_wrapper</span><span class="special">&lt;</span> <span class="identifier">TokenCache</span> <span class="special">&gt;</span><span class="special">)</span><span class="special">;</span>
+
+  <span class="comment">// <a class="link" href="tokens_view.html#id108-bb">public member functions</a></span>
+  <span class="keyword">constexpr</span> <span class="identifier">V</span> <a class="link" href="tokens_view.html#id109-bb"><span class="identifier">base</span></a><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+  <span class="keyword">constexpr</span> <span class="identifier">V</span> <a class="link" href="tokens_view.html#id110-bb"><span class="identifier">base</span></a><span class="special">(</span><span class="special">)</span><span class="special">;</span>
+  <span class="keyword">constexpr</span> <span class="identifier">Lexer</span> <a class="link" href="tokens_view.html#id111-bb"><span class="identifier">lexer</span></a><span class="special">(</span><span class="special">)</span><span class="special">;</span>
+  <span class="keyword">constexpr</span> <span class="identifier">iterator</span><span class="special">&lt;</span> <span class="keyword">false</span> <span class="special">&gt;</span> <a class="link" href="tokens_view.html#id112-bb"><span class="identifier">begin</span></a><span class="special">(</span><span class="special">)</span><span class="special">;</span>
+  <span class="keyword">constexpr</span> <span class="identifier">iterator</span><span class="special">&lt;</span> <span class="keyword">true</span> <span class="special">&gt;</span> <a class="link" href="tokens_view.html#id113-bb"><span class="identifier">begin</span></a><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+  <span class="keyword">constexpr</span> <span class="identifier">sentinel</span><span class="special">&lt;</span> <span class="keyword">false</span> <span class="special">&gt;</span> <a class="link" href="tokens_view.html#id114-bb"><span class="identifier">end</span></a><span class="special">(</span><span class="special">)</span><span class="special">;</span>
+  <span class="keyword">constexpr</span> <span class="identifier">sentinel</span><span class="special">&lt;</span> <span class="keyword">true</span> <span class="special">&gt;</span> <a class="link" href="tokens_view.html#id115-bb"><span class="identifier">end</span></a><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+<span class="special">}</span><span class="special">;</span></pre></div>
+<div class="refsect1">
+<a name="id34537"></a><h2>Description</h2>
+<p>A <code class="computeroutput">std::views</code>-compatible view that provides the tokens from the given contiguous range, using the given lexer and optional token cache. You should typically not need to use this type directly; use <code class="computeroutput">boost::parser::to_tokens</code> instead. </p>
+<div class="refsect2">
+<a name="id34542"></a><h3>
+<a name="boost.parser.tokens_viewconstruct-copy-destruct"></a><code class="computeroutput">tokens_view</code> 
+        public
+       construct/copy/destruct</h3>
+<div class="orderedlist"><ol class="orderedlist" type="1">
+<li class="listitem"><pre class="literallayout"><a name="id105-bb"></a><span class="identifier">tokens_view</span><span class="special">(</span><span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">explicit</span> <a name="id106-bb"></a><span class="identifier">tokens_view</span><span class="special">(</span><span class="identifier">V</span> base<span class="special">,</span> <span class="identifier">Lexer</span> lexer<span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">explicit</span> <a name="id107-bb"></a><span class="identifier">tokens_view</span><span class="special">(</span><span class="identifier">V</span> base<span class="special">,</span> <span class="identifier">Lexer</span> lexer<span class="special">,</span> 
+                     <span class="identifier">std</span><span class="special">::</span><span class="identifier">reference_wrapper</span><span class="special">&lt;</span> <span class="identifier">TokenCache</span> <span class="special">&gt;</span> external_cache<span class="special">)</span><span class="special">;</span></pre></li>
+</ol></div>
+</div>
+<div class="refsect2">
+<a name="id34586"></a><h3>
+<a name="id108-bb"></a><code class="computeroutput">tokens_view</code> public member functions</h3>
+<div class="orderedlist"><ol class="orderedlist" type="1">
+<li class="listitem"><pre class="literallayout"><span class="keyword">constexpr</span> <span class="identifier">V</span> <a name="id109-bb"></a><span class="identifier">base</span><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">constexpr</span> <span class="identifier">V</span> <a name="id110-bb"></a><span class="identifier">base</span><span class="special">(</span><span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">constexpr</span> <span class="identifier">Lexer</span> <a name="id111-bb"></a><span class="identifier">lexer</span><span class="special">(</span><span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">constexpr</span> <span class="identifier">iterator</span><span class="special">&lt;</span> <span class="keyword">false</span> <span class="special">&gt;</span> <a name="id112-bb"></a><span class="identifier">begin</span><span class="special">(</span><span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">constexpr</span> <span class="identifier">iterator</span><span class="special">&lt;</span> <span class="keyword">true</span> <span class="special">&gt;</span> <a name="id113-bb"></a><span class="identifier">begin</span><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">constexpr</span> <span class="identifier">sentinel</span><span class="special">&lt;</span> <span class="keyword">false</span> <span class="special">&gt;</span> <a name="id114-bb"></a><span class="identifier">end</span><span class="special">(</span><span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">constexpr</span> <span class="identifier">sentinel</span><span class="special">&lt;</span> <span class="keyword">true</span> <span class="special">&gt;</span> <a name="id115-bb"></a><span class="identifier">end</span><span class="special">(</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
+</ol></div>
+</div>
+</div>
+</div>
+<div class="copyright-footer">Copyright © 2020 T. Zachary Laine<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+      </p>
+</div>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="token_spec_t.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../../header/boost/parser/lexer_hpp.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="no_ws.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Function template parse</title>
+<link rel="stylesheet" href="../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
+<link rel="up" href="../../header/boost/parser/parser_hpp.html" title="Header &lt;boost/parser/parser.hpp&gt;">
+<link rel="prev" href="prefix_parse_id16.html" title="Function template prefix_parse">
+<link rel="next" href="prefix_parse_id17.html" title="Function template prefix_parse">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="prefix_parse_id16.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../../header/boost/parser/parser_hpp.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="prefix_parse_id17.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+<div class="refentry">
+<a name="boost.parser.parse_id3"></a><div class="titlepage"></div>
+<div class="refnamediv">
+<h2><span class="refentrytitle">Function template parse</span></h2>
+<p>boost::parser::parse</p>
+</div>
+<h2 class="refsynopsisdiv-title">Synopsis</h2>
+<div class="refsynopsisdiv"><pre class="synopsis"><span class="comment">// In header: &lt;<a class="link" href="../../header/boost/parser/parser_hpp.html" title="Header &lt;boost/parser/parser.hpp&gt;">boost/parser/parser.hpp</a>&gt;
+
+</span>
+<span class="keyword">template</span><span class="special">&lt;</span><span class="identifier">parsable_range</span> R<span class="special">,</span> <span class="keyword">typename</span> Parser<span class="special">,</span> <span class="keyword">typename</span> GlobalState<span class="special">,</span> 
+         <span class="keyword">typename</span> ErrorHandler<span class="special">&gt;</span> 
+  <span class="keyword">auto</span> <span class="identifier">parse</span><span class="special">(</span><span class="identifier">R</span> <span class="keyword">const</span> <span class="special">&amp;</span> r<span class="special">,</span> 
+             <a class="link" href="parser_interface.html" title="Struct template parser_interface">parser_interface</a><span class="special">&lt;</span> <span class="identifier">Parser</span><span class="special">,</span> <span class="identifier">GlobalState</span><span class="special">,</span> <span class="identifier">ErrorHandler</span> <span class="special">&gt;</span> <span class="keyword">const</span> <span class="special">&amp;</span> parser<span class="special">,</span> 
+             <span class="identifier">trace</span> trace_mode <span class="special">=</span> <span class="identifier">trace</span><span class="special">::</span><span class="identifier">off</span><span class="special">)</span><span class="special">;</span></pre></div>
+<div class="refsect1">
+<a name="id43844"></a><h2>Description</h2>
+<p>Parses <code class="computeroutput">r</code> using <code class="computeroutput">parser</code>. Returns a <code class="computeroutput">std::optional</code> containing the attribute produced by <code class="computeroutput">parser</code> on parse success, and <code class="computeroutput">std::nullopt</code> on parse failure. The entire input range <code class="computeroutput">r</code> must be consumed for the parse to be considered successful. If <code class="computeroutput">trace_mode == trace::on</code>, a verbose trace of the parse will be streamed to <code class="computeroutput">std::cout</code>.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0" class="variablelist compact">
+<colgroup>
+<col align="left" valign="top">
+<col>
+</colgroup>
+<tbody><tr>
+<td><p><span class="term">Template Parameters:</span></p></td>
+<td><div class="variablelist"><table border="0" class="variablelist compact">
+<colgroup>
+<col align="left" valign="top">
+<col>
+</colgroup>
+<tbody><tr>
+<td><p><span class="term"><code class="computeroutput">ErrorHandler</code></span></p></td>
+<td><p>Constrained by <code class="computeroutput">error_handler&lt;ErrorHandler,std::ranges::iterator_t&lt;decltype(subrange_of(r))&gt;, std::ranges::sentinel_t&lt;decltype(subrange_of(r))&gt;, GlobalState&gt;</code>, where <code class="computeroutput">subrange_of</code> is an implementation detail that: creates subranges out of pointers; trims trailing zeros off of bounded arrays (such as string literals); and transcodes to UTF-32 if the input is non-<code class="computeroutput">char</code>. </p></td>
+</tr></tbody>
+</table></div></td>
+</tr></tbody>
+</table></div>
+</div>
+</div>
+<div class="copyright-footer">Copyright © 2020 T. Zachary Laine<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+      </p>
+</div>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="prefix_parse_id16.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../../header/boost/parser/parser_hpp.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="prefix_parse_id17.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

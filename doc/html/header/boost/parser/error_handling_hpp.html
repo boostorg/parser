@@ -1,0 +1,61 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Header &lt;boost/parser/error_handling.hpp&gt;</title>
+<link rel="stylesheet" href="../../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../../index.html" title="Chapter 1. Boost.Parser">
+<link rel="up" href="../../../reference.html" title="Reference">
+<link rel="prev" href="../../../BOOST_PARSER_DIAGNOST_id36.html" title="Macro BOOST_PARSER_DIAGNOSTIC_POP">
+<link rel="next" href="../../../boost/parser/callback_error_handler.html" title="Struct callback_error_handler">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="../../../BOOST_PARSER_DIAGNOST_id36.html"><img src="../../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../../../reference.html"><img src="../../../images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../images/home.png" alt="Home"></a><a accesskey="n" href="../../../boost/parser/callback_error_handler.html"><img src="../../../images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="header.boost.parser.error_handling_hpp"></a>Header &lt;<a href="../../../../../boost/parser/error_handling.hpp" target="_top">boost/parser/error_handling.hpp</a>&gt;</h3></div></div></div>
+<pre class="synopsis"><span class="keyword">namespace</span> <span class="identifier">boost</span> <span class="special">{</span>
+  <span class="keyword">namespace</span> <span class="identifier">parser</span> <span class="special">{</span>
+    <span class="keyword">struct</span> <a class="link" href="../../../boost/parser/callback_error_handler.html" title="Struct callback_error_handler">callback_error_handler</a><span class="special">;</span>
+    <span class="keyword">struct</span> <a class="link" href="../../../boost/parser/rethrow_error_handler.html" title="Struct rethrow_error_handler">rethrow_error_handler</a><span class="special">;</span>
+    <span class="keyword">struct</span> <a class="link" href="../../../boost/parser/vs_output_error_handler.html" title="Struct vs_output_error_handler">vs_output_error_handler</a><span class="special">;</span>
+    <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iter<span class="special">,</span> <span class="keyword">typename</span> Sentinel<span class="special">&gt;</span> 
+      <span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span> <span class="special">&amp;</span> 
+      <a class="link" href="../../../boost/parser/write_formatted_messa_id37.html" title="Function template write_formatted_message"><span class="identifier">write_formatted_message</span></a><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span> <span class="special">&amp;</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span><span class="special">,</span> <span class="identifier">Iter</span><span class="special">,</span> <span class="identifier">Iter</span><span class="special">,</span> 
+                              <span class="identifier">Sentinel</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span><span class="special">,</span> <span class="identifier">int64_t</span> <span class="special">=</span> <span class="number">80</span><span class="special">,</span> 
+                              <span class="identifier">int64_t</span> <span class="special">=</span> <span class="number">40</span><span class="special">)</span><span class="special">;</span>
+    <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iter<span class="special">,</span> <span class="keyword">typename</span> Sentinel<span class="special">,</span> 
+             <span class="keyword">template</span><span class="special">&lt;</span> <span class="keyword">class</span> <span class="special">&gt;</span> <span class="keyword">class</span> Exception<span class="special">&gt;</span> 
+      <span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span> <span class="special">&amp;</span> 
+      <a class="link" href="../../../boost/parser/write_formatted_expec_id38.html" title="Function template write_formatted_expectation_failure_error_message"><span class="identifier">write_formatted_expectation_failure_error_message</span></a><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">ostream</span> <span class="special">&amp;</span><span class="special">,</span> 
+                                                        <span class="identifier">std</span><span class="special">::</span><span class="identifier">string_view</span><span class="special">,</span> 
+                                                        <span class="identifier">Iter</span><span class="special">,</span> <span class="identifier">Sentinel</span><span class="special">,</span> 
+                                                        <span class="identifier">Exception</span><span class="special">&lt;</span> <span class="identifier">Iter</span> <span class="special">&gt;</span> <span class="keyword">const</span> <span class="special">&amp;</span><span class="special">,</span> 
+                                                        <span class="identifier">int64_t</span> <span class="special">=</span> <span class="number">80</span><span class="special">,</span> 
+                                                        <span class="identifier">int64_t</span> <span class="special">=</span> <span class="number">40</span><span class="special">)</span><span class="special">;</span>
+    <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> I<span class="special">,</span> <span class="keyword">typename</span> S<span class="special">&gt;</span> <span class="keyword">auto</span> <a class="link" href="../../../boost/parser/normalize_iterators_id39.html" title="Function template normalize_iterators"><span class="identifier">normalize_iterators</span></a><span class="special">(</span><span class="identifier">I</span><span class="special">,</span> <span class="identifier">I</span><span class="special">,</span> <span class="identifier">S</span><span class="special">)</span><span class="special">;</span>
+    <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> I<span class="special">,</span> <span class="keyword">typename</span> S<span class="special">&gt;</span> 
+      <span class="keyword">auto</span> <a class="link" href="../../../boost/parser/normalize_iterators_id40.html" title="Function template normalize_iterators"><span class="identifier">normalize_iterators</span></a><span class="special">(</span><span class="identifier">I</span><span class="special">,</span> <a class="link" href="../../../boost/parser/parse_error.html" title="Struct template parse_error">parse_error</a><span class="special">&lt;</span> <span class="identifier">I</span> <span class="special">&gt;</span><span class="special">,</span> <span class="identifier">S</span><span class="special">)</span><span class="special">;</span>
+    <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> I<span class="special">,</span> <span class="keyword">typename</span> S<span class="special">&gt;</span> 
+      <span class="keyword">auto</span> <a class="link" href="../../../boost/parser/normalize_iterators_id41.html" title="Function template normalize_iterators"><span class="identifier">normalize_iterators</span></a><span class="special">(</span><span class="identifier">I</span><span class="special">,</span> <a class="link" href="../../../boost/parser/lex_error.html" title="Struct template lex_error">lex_error</a><span class="special">&lt;</span> <span class="identifier">I</span> <span class="special">&gt;</span><span class="special">,</span> <span class="identifier">S</span><span class="special">)</span><span class="special">;</span>
+    <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iter<span class="special">&gt;</span> 
+      <a class="link" href="../../../boost/parser/line_position.html" title="Struct template line_position">line_position</a><span class="special">&lt;</span> <span class="identifier">Iter</span> <span class="special">&gt;</span> <a class="link" href="../../../boost/parser/find_line_position.html" title="Function template find_line_position"><span class="identifier">find_line_position</span></a><span class="special">(</span><span class="identifier">Iter</span><span class="special">,</span> <span class="identifier">Iter</span><span class="special">)</span><span class="special">;</span>
+    <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iter<span class="special">,</span> <span class="keyword">typename</span> Sentinel<span class="special">&gt;</span> 
+      <span class="identifier">Iter</span> <a class="link" href="../../../boost/parser/find_line_end.html" title="Function template find_line_end"><span class="identifier">find_line_end</span></a><span class="special">(</span><span class="identifier">Iter</span><span class="special">,</span> <span class="identifier">Sentinel</span><span class="special">)</span><span class="special">;</span>
+  <span class="special">}</span>
+<span class="special">}</span></pre>
+</div>
+<div class="copyright-footer">Copyright © 2020 T. Zachary Laine<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+      </p>
+</div>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="../../../BOOST_PARSER_DIAGNOST_id36.html"><img src="../../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../../../reference.html"><img src="../../../images/up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../images/home.png" alt="Home"></a><a accesskey="n" href="../../../boost/parser/callback_error_handler.html"><img src="../../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

@@ -1,0 +1,267 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Symbol Tables</title>
+<link rel="stylesheet" href="../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
+<link rel="up" href="../tutorial.html" title="Tutorial">
+<link rel="prev" href="backtracking.html" title="Backtracking">
+<link rel="next" href="mutable_symbol_tables.html" title="Mutable Symbol Tables">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="backtracking.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="mutable_symbol_tables.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_parser.tutorial.symbol_tables"></a><a class="link" href="symbol_tables.html" title="Symbol Tables">Symbol Tables</a>
+</h3></div></div></div>
+<p>
+        When writing a parser, it often comes up that there is a set of strings that,
+        when parsed, are associated with a set of values one-to-one. It is tedious
+        to write parsers that recognize all the possible input strings when you have
+        to associate each one with an attribute via a semantic action. Instead, we
+        can use a symbol table.
+      </p>
+<p>
+        Say we want to parse Roman numerals, one of the most common work-related
+        parsing problems. We want to recognize numbers that start with any number
+        of "M"s, representing thousands, followed by the hundreds, the
+        tens, and the ones. Any of these may be absent from the input, but not all.
+        Here are three symbol Boost.Parser tables that we can use to recognize ones,
+        tens, and hundreds values, respectively:
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="identifier">bp</span><span class="special">::</span><span class="identifier">symbols</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;</span> <span class="keyword">const</span> <span class="identifier">ones</span> <span class="special">=</span> <span class="special">{</span>
+    <span class="special">{</span><span class="string">"I"</span><span class="special">,</span> <span class="number">1</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"II"</span><span class="special">,</span> <span class="number">2</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"III"</span><span class="special">,</span> <span class="number">3</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"IV"</span><span class="special">,</span> <span class="number">4</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"V"</span><span class="special">,</span> <span class="number">5</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"VI"</span><span class="special">,</span> <span class="number">6</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"VII"</span><span class="special">,</span> <span class="number">7</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"VIII"</span><span class="special">,</span> <span class="number">8</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"IX"</span><span class="special">,</span> <span class="number">9</span><span class="special">}};</span>
+
+<span class="identifier">bp</span><span class="special">::</span><span class="identifier">symbols</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;</span> <span class="keyword">const</span> <span class="identifier">tens</span> <span class="special">=</span> <span class="special">{</span>
+    <span class="special">{</span><span class="string">"X"</span><span class="special">,</span> <span class="number">10</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"XX"</span><span class="special">,</span> <span class="number">20</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"XXX"</span><span class="special">,</span> <span class="number">30</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"XL"</span><span class="special">,</span> <span class="number">40</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"L"</span><span class="special">,</span> <span class="number">50</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"LX"</span><span class="special">,</span> <span class="number">60</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"LXX"</span><span class="special">,</span> <span class="number">70</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"LXXX"</span><span class="special">,</span> <span class="number">80</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"XC"</span><span class="special">,</span> <span class="number">90</span><span class="special">}};</span>
+
+<span class="identifier">bp</span><span class="special">::</span><span class="identifier">symbols</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;</span> <span class="keyword">const</span> <span class="identifier">hundreds</span> <span class="special">=</span> <span class="special">{</span>
+    <span class="special">{</span><span class="string">"C"</span><span class="special">,</span> <span class="number">100</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"CC"</span><span class="special">,</span> <span class="number">200</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"CCC"</span><span class="special">,</span> <span class="number">300</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"CD"</span><span class="special">,</span> <span class="number">400</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"D"</span><span class="special">,</span> <span class="number">500</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"DC"</span><span class="special">,</span> <span class="number">600</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"DCC"</span><span class="special">,</span> <span class="number">700</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"DCCC"</span><span class="special">,</span> <span class="number">800</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"CM"</span><span class="special">,</span> <span class="number">900</span><span class="special">}};</span>
+</pre>
+<p>
+      </p>
+<p>
+        A <code class="computeroutput"><a class="link" href="../../boost/parser/symbols.html" title="Struct template symbols">symbols</a></code>
+        maps strings of <code class="computeroutput"><span class="keyword">char</span></code> to their
+        associated attributes. The type of the attribute must be specified as a template
+        parameter to <code class="computeroutput"><a class="link" href="../../boost/parser/symbols.html" title="Struct template symbols">symbols</a></code>
+        — in this case, <code class="computeroutput"><span class="keyword">int</span></code>.
+      </p>
+<p>
+        Any "M"s we encounter should add 1000 to the result, and all other
+        values come from the symbol tables. Here are the semantic actions we'll need
+        to do that:
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">int</span> <span class="identifier">result</span> <span class="special">=</span> <span class="number">0</span><span class="special">;</span>
+<span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">add_1000</span> <span class="special">=</span> <span class="special">[&amp;</span><span class="identifier">result</span><span class="special">](</span><span class="keyword">auto</span> <span class="special">&amp;</span> <span class="identifier">ctx</span><span class="special">)</span> <span class="special">{</span> <span class="identifier">result</span> <span class="special">+=</span> <span class="number">1000</span><span class="special">;</span> <span class="special">};</span>
+<span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">add</span> <span class="special">=</span> <span class="special">[&amp;</span><span class="identifier">result</span><span class="special">](</span><span class="keyword">auto</span> <span class="special">&amp;</span> <span class="identifier">ctx</span><span class="special">)</span> <span class="special">{</span> <span class="identifier">result</span> <span class="special">+=</span> <span class="identifier">_attr</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">);</span> <span class="special">};</span>
+</pre>
+<p>
+      </p>
+<p>
+        <code class="computeroutput"><span class="identifier">add_1000</span></code> just adds <code class="computeroutput"><span class="number">1000</span></code> to <code class="computeroutput"><span class="identifier">result</span></code>.
+        <code class="computeroutput"><span class="identifier">add</span></code> adds whatever attribute
+        is produced by its parser to <code class="computeroutput"><span class="identifier">result</span></code>.
+      </p>
+<p>
+        Now we just need to put the pieces together to make a parser:
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">literals</span><span class="special">;</span>
+<span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">parser</span> <span class="special">=</span>
+    <span class="special">*</span><span class="char">'M'</span><span class="identifier">_l</span><span class="special">[</span><span class="identifier">add_1000</span><span class="special">]</span> <span class="special">&gt;&gt;</span> <span class="special">-</span><span class="identifier">hundreds</span><span class="special">[</span><span class="identifier">add</span><span class="special">]</span> <span class="special">&gt;&gt;</span> <span class="special">-</span><span class="identifier">tens</span><span class="special">[</span><span class="identifier">add</span><span class="special">]</span> <span class="special">&gt;&gt;</span> <span class="special">-</span><span class="identifier">ones</span><span class="special">[</span><span class="identifier">add</span><span class="special">];</span>
+</pre>
+<p>
+      </p>
+<p>
+        We've got a few new bits in play here, so let's break it down. <code class="computeroutput"><span class="char">'M'</span><span class="identifier">_l</span></code> is a
+        <span class="emphasis"><em>literal parser</em></span>. That is, it is a parser that parses
+        a literal <code class="computeroutput"><span class="keyword">char</span></code>, code point,
+        or string. In this case, a <code class="computeroutput"><span class="keyword">char</span></code>
+        <code class="computeroutput"><span class="char">'M'</span></code> is being parsed. The <code class="computeroutput"><span class="identifier">_l</span></code> bit at the end is a <a href="https://en.cppreference.com/w/cpp/language/user_literal" target="_top">UDL</a>
+        suffix that you can put after any <code class="computeroutput"><span class="keyword">char</span></code>,
+        <code class="computeroutput"><span class="keyword">char32_t</span></code>, or <code class="computeroutput"><span class="keyword">char</span>
+        <span class="keyword">const</span> <span class="special">*</span></code>
+        to form a literal parser. You can also make a literal parser by writing
+        <code class="computeroutput"><a class="link" href="../../boost/parser/lit_id9.html" title="Function lit">lit()</a></code>, passing an argument of
+        one of the previously mentioned types.
+      </p>
+<p>
+        Why do we need any of this, considering that we just used a literal <code class="computeroutput"><span class="char">','</span></code> in our previous example? The reason is that
+        <code class="computeroutput"><span class="char">'M'</span></code> is not used in an expression
+        with another Boost.Parser parser. It is used within <code class="computeroutput"><span class="special">*</span><span class="char">'M'</span><span class="identifier">_l</span><span class="special">[</span><span class="identifier">add_1000</span><span class="special">]</span></code>.
+        If we'd written <code class="computeroutput"><span class="special">*</span><span class="char">'M'</span><span class="special">[</span><span class="identifier">add_1000</span><span class="special">]</span></code>, clearly that would be ill-formed; <code class="computeroutput"><span class="keyword">char</span></code> has no <code class="computeroutput"><span class="keyword">operator</span><span class="special">*</span></code>, nor an <code class="computeroutput"><span class="keyword">operator</span><span class="special">[]</span></code>, associated with it.
+      </p>
+<div class="tip"><table border="0" summary="Tip">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Tip]" src="../../images/tip.png"></td>
+<th align="left">Tip</th>
+</tr>
+<tr><td align="left" valign="top"><p>
+          Any time you want to use a <code class="computeroutput"><span class="keyword">char</span></code>,
+          <code class="computeroutput"><span class="keyword">char32_t</span></code>, or string literal
+          in a Boost.Parser parser, write it as-is if it is combined with a preexisting
+          Boost.Parser subparser <code class="computeroutput"><span class="identifier">p</span></code>,
+          as in <code class="computeroutput"><span class="char">'x'</span> <span class="special">&gt;&gt;</span>
+          <span class="identifier">p</span></code>. Otherwise, you need to wrap
+          it in a call to <code class="computeroutput"><a class="link" href="../../boost/parser/lit_id9.html" title="Function lit">lit()</a></code>, or use the <code class="computeroutput"><span class="identifier">_l</span></code> <a href="https://en.cppreference.com/w/cpp/language/user_literal" target="_top">UDL</a>
+          suffix.
+        </p></td></tr>
+</table></div>
+<p>
+        On to the next bit: <code class="computeroutput"><span class="special">-</span><span class="identifier">hundreds</span><span class="special">[</span><span class="identifier">add</span><span class="special">]</span></code>.
+        By now, the use of the index operator should be pretty familiar; it associates
+        the semantic action <code class="computeroutput"><span class="identifier">add</span></code> with
+        the parser <code class="computeroutput"><span class="identifier">hundreds</span></code>. The
+        <code class="computeroutput"><span class="keyword">operator</span><span class="special">-</span></code>
+        at the beginning is new. It means that the parser it is applied to is optional.
+        You can read it as "zero or one". So, if <code class="computeroutput"><span class="identifier">hundreds</span></code>
+        is not successfully parsed after <code class="computeroutput"><span class="special">*</span><span class="char">'M'</span><span class="special">[</span><span class="identifier">add_1000</span><span class="special">]</span></code>, nothing happens, because <code class="computeroutput"><span class="identifier">hundreds</span></code> is allowed to be missing —
+        it's optional. If <code class="computeroutput"><span class="identifier">hundreds</span></code>
+        is parsed successfully, say by matching <code class="computeroutput"><span class="string">"CC"</span></code>,
+        the resulting attribute, <code class="computeroutput"><span class="number">200</span></code>,
+        is added to <code class="computeroutput"><span class="identifier">result</span></code> inside
+        <code class="computeroutput"><span class="identifier">add</span></code>.
+      </p>
+<p>
+        Here is the full listing of the program. Notice that it would have been inappropriate
+        to use a whitespace skipper here, since the entire parse is a single number,
+        so it was removed.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">parser</span><span class="special">/</span><span class="identifier">parser</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
+
+<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">iostream</span><span class="special">&gt;</span>
+<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">string</span><span class="special">&gt;</span>
+
+
+<span class="keyword">namespace</span> <span class="identifier">bp</span> <span class="special">=</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">parser</span><span class="special">;</span>
+
+<span class="keyword">int</span> <span class="identifier">main</span><span class="special">()</span>
+<span class="special">{</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"Enter a number using Roman numerals. "</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="identifier">input</span><span class="special">;</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">getline</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">cin</span><span class="special">,</span> <span class="identifier">input</span><span class="special">);</span>
+
+    <span class="identifier">bp</span><span class="special">::</span><span class="identifier">symbols</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;</span> <span class="keyword">const</span> <span class="identifier">ones</span> <span class="special">=</span> <span class="special">{</span>
+        <span class="special">{</span><span class="string">"I"</span><span class="special">,</span> <span class="number">1</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"II"</span><span class="special">,</span> <span class="number">2</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"III"</span><span class="special">,</span> <span class="number">3</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"IV"</span><span class="special">,</span> <span class="number">4</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"V"</span><span class="special">,</span> <span class="number">5</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"VI"</span><span class="special">,</span> <span class="number">6</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"VII"</span><span class="special">,</span> <span class="number">7</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"VIII"</span><span class="special">,</span> <span class="number">8</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"IX"</span><span class="special">,</span> <span class="number">9</span><span class="special">}};</span>
+
+    <span class="identifier">bp</span><span class="special">::</span><span class="identifier">symbols</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;</span> <span class="keyword">const</span> <span class="identifier">tens</span> <span class="special">=</span> <span class="special">{</span>
+        <span class="special">{</span><span class="string">"X"</span><span class="special">,</span> <span class="number">10</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"XX"</span><span class="special">,</span> <span class="number">20</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"XXX"</span><span class="special">,</span> <span class="number">30</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"XL"</span><span class="special">,</span> <span class="number">40</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"L"</span><span class="special">,</span> <span class="number">50</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"LX"</span><span class="special">,</span> <span class="number">60</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"LXX"</span><span class="special">,</span> <span class="number">70</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"LXXX"</span><span class="special">,</span> <span class="number">80</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"XC"</span><span class="special">,</span> <span class="number">90</span><span class="special">}};</span>
+
+    <span class="identifier">bp</span><span class="special">::</span><span class="identifier">symbols</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;</span> <span class="keyword">const</span> <span class="identifier">hundreds</span> <span class="special">=</span> <span class="special">{</span>
+        <span class="special">{</span><span class="string">"C"</span><span class="special">,</span> <span class="number">100</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"CC"</span><span class="special">,</span> <span class="number">200</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"CCC"</span><span class="special">,</span> <span class="number">300</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"CD"</span><span class="special">,</span> <span class="number">400</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"D"</span><span class="special">,</span> <span class="number">500</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"DC"</span><span class="special">,</span> <span class="number">600</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"DCC"</span><span class="special">,</span> <span class="number">700</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"DCCC"</span><span class="special">,</span> <span class="number">800</span><span class="special">},</span>
+        <span class="special">{</span><span class="string">"CM"</span><span class="special">,</span> <span class="number">900</span><span class="special">}};</span>
+
+    <span class="keyword">int</span> <span class="identifier">result</span> <span class="special">=</span> <span class="number">0</span><span class="special">;</span>
+    <span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">add_1000</span> <span class="special">=</span> <span class="special">[&amp;</span><span class="identifier">result</span><span class="special">](</span><span class="keyword">auto</span> <span class="special">&amp;</span> <span class="identifier">ctx</span><span class="special">)</span> <span class="special">{</span> <span class="identifier">result</span> <span class="special">+=</span> <span class="number">1000</span><span class="special">;</span> <span class="special">};</span>
+    <span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">add</span> <span class="special">=</span> <span class="special">[&amp;</span><span class="identifier">result</span><span class="special">](</span><span class="keyword">auto</span> <span class="special">&amp;</span> <span class="identifier">ctx</span><span class="special">)</span> <span class="special">{</span> <span class="identifier">result</span> <span class="special">+=</span> <span class="identifier">_attr</span><span class="special">(</span><span class="identifier">ctx</span><span class="special">);</span> <span class="special">};</span>
+
+    <span class="keyword">using</span> <span class="keyword">namespace</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">literals</span><span class="special">;</span>
+    <span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">parser</span> <span class="special">=</span>
+        <span class="special">*</span><span class="char">'M'</span><span class="identifier">_l</span><span class="special">[</span><span class="identifier">add_1000</span><span class="special">]</span> <span class="special">&gt;&gt;</span> <span class="special">-</span><span class="identifier">hundreds</span><span class="special">[</span><span class="identifier">add</span><span class="special">]</span> <span class="special">&gt;&gt;</span> <span class="special">-</span><span class="identifier">tens</span><span class="special">[</span><span class="identifier">add</span><span class="special">]</span> <span class="special">&gt;&gt;</span> <span class="special">-</span><span class="identifier">ones</span><span class="special">[</span><span class="identifier">add</span><span class="special">];</span>
+
+    <span class="keyword">if</span> <span class="special">(</span><span class="identifier">bp</span><span class="special">::</span><span class="identifier">parse</span><span class="special">(</span><span class="identifier">input</span><span class="special">,</span> <span class="identifier">parser</span><span class="special">)</span> <span class="special">&amp;&amp;</span> <span class="identifier">result</span> <span class="special">!=</span> <span class="number">0</span><span class="special">)</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"That's "</span> <span class="special">&lt;&lt;</span> <span class="identifier">result</span> <span class="special">&lt;&lt;</span> <span class="string">" in Arabic numerals.\n"</span><span class="special">;</span>
+    <span class="keyword">else</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"That's not a Roman number.\n"</span><span class="special">;</span>
+<span class="special">}</span>
+</pre>
+<p>
+      </p>
+<div class="important"><table border="0" summary="Important">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Important]" src="../../images/important.png"></td>
+<th align="left">Important</th>
+</tr>
+<tr><td align="left" valign="top"><p>
+          <code class="computeroutput"><a class="link" href="../../boost/parser/symbols.html" title="Struct template symbols">symbols</a></code>
+          stores all its strings in UTF-32 internally. If you do Unicode or ASCII
+          parsing, this will not matter to you at all. If you do non-Unicode parsing
+          of a character encoding that is not a subset of Unicode (EBCDIC, for instance),
+          it could cause problems. See the section on <a class="link" href="unicode_support.html" title="Unicode Support">Unicode
+          Support</a> for more information.
+        </p></td></tr>
+</table></div>
+<h5>
+<a name="boost_parser.tutorial.symbol_tables.h0"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.symbol_tables.diagnostic_messages"></a></span><a class="link" href="symbol_tables.html#boost_parser.tutorial.symbol_tables.diagnostic_messages">Diagnostic
+        messages</a>
+      </h5>
+<p>
+        Just like with a <code class="computeroutput"><a class="link" href="../../boost/parser/rule.html" title="Struct template rule">rule</a></code>,
+        you can give a <code class="computeroutput"><a class="link" href="../../boost/parser/symbols.html" title="Struct template symbols">symbols</a></code>
+        a bit of diagnostic text that will be used in error messages generated by
+        Boost.Parser when the parse fails at an expectation point, as described in
+        <a class="link" href="error_handling_and_debugging.html" title="Error Handling and Debugging">Error
+        Handling and Debugging</a>. See the <code class="computeroutput"><a class="link" href="../../boost/parser/symbols.html" title="Struct template symbols">symbols</a></code> constructors for details.
+      </p>
+</div>
+<div class="copyright-footer">Copyright © 2020 T. Zachary Laine<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+      </p>
+</div>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="backtracking.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="mutable_symbol_tables.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

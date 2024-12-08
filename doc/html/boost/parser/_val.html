@@ -1,0 +1,43 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Function _val</title>
+<link rel="stylesheet" href="../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
+<link rel="up" href="../../header/boost/parser/parser_fwd_hpp.html" title="Header &lt;boost/parser/parser_fwd.hpp&gt;">
+<link rel="prev" href="null_term.html" title="Function template null_term">
+<link rel="next" href="_attr.html" title="Function template _attr">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="null_term.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../../header/boost/parser/parser_fwd_hpp.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="_attr.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+<div class="refentry">
+<a name="boost.parser._val"></a><div class="titlepage"></div>
+<div class="refnamediv">
+<h2><span class="refentrytitle">Function _val</span></h2>
+<p>boost::parser::_val</p>
+</div>
+<h2 class="refsynopsisdiv-title">Synopsis</h2>
+<div class="refsynopsisdiv"><pre class="synopsis"><span class="comment">// In header: &lt;<a class="link" href="../../header/boost/parser/parser_fwd_hpp.html" title="Header &lt;boost/parser/parser_fwd.hpp&gt;">boost/parser/parser_fwd.hpp</a>&gt;
+
+</span>
+<span class="keyword">decltype</span><span class="special">(</span><span class="keyword">auto</span><span class="special">)</span> <span class="identifier">_val</span><span class="special">(</span><span class="identifier">Context</span> <span class="keyword">const</span> <span class="special">&amp;</span> context<span class="special">)</span><span class="special">;</span></pre></div>
+<div class="refsect1">
+<a name="id46248"></a><h2>Description</h2>
+<p>Returns a reference to the attribute(s) (i.e. return value) of the bottommost parser; multiple attributes will be stored within a <code class="computeroutput">parser::tuple</code>. You may write to this value in a semantic action to control what attribute value(s) the associated parser produces. Returns <code class="computeroutput">none</code> if the bottommost parser does produce an attribute. </p>
+</div>
+</div>
+<div class="copyright-footer">Copyright © 2020 T. Zachary Laine<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+      </p>
+</div>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="null_term.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../../header/boost/parser/parser_fwd_hpp.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="_attr.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

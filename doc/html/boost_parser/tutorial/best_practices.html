@@ -1,0 +1,150 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Best Practices</title>
+<link rel="stylesheet" href="../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
+<link rel="up" href="../tutorial.html" title="Tutorial">
+<link rel="prev" href="memory_allocation.html" title="Memory Allocation">
+<link rel="next" href="writing_your_own_parsers.html" title="Writing Your Own Parsers">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="memory_allocation.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="writing_your_own_parsers.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_parser.tutorial.best_practices"></a><a class="link" href="best_practices.html" title="Best Practices">Best Practices</a>
+</h3></div></div></div>
+<h5>
+<a name="boost_parser.tutorial.best_practices.h0"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.best_practices.parse_unicode_from_the_start"></a></span><a class="link" href="best_practices.html#boost_parser.tutorial.best_practices.parse_unicode_from_the_start">Parse
+        unicode from the start</a>
+      </h5>
+<p>
+        If you want to parse ASCII, using the Unicode parsing API will not actually
+        cost you anything. Your input will be parsed, <code class="computeroutput">char</code> by <code class="computeroutput">char</code>,
+        and compared to values that are Unicode code points (which are <code class="computeroutput">char32_t</code>s).
+        One caveat is that there may be an extra branch on each char, if the input
+        is UTF-8. If your performance requirements can tolerate this, your life will
+        be much easier if you just start with Unicode and stick with it.
+      </p>
+<p>
+        Starting with Unicode support and UTF-8 input will allow you to properly
+        handle unexpected input, like non-ASCII languages (that's most of them),
+        with no additional effort on your part.
+      </p>
+<h5>
+<a name="boost_parser.tutorial.best_practices.h1"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.best_practices.write_rules__and_test_them_in_isolation"></a></span><a class="link" href="best_practices.html#boost_parser.tutorial.best_practices.write_rules__and_test_them_in_isolation">Write
+        rules, and test them in isolation</a>
+      </h5>
+<p>
+        Treat rules as the unit of work in your parser. Write a rule, test its corners,
+        and then use it to build larger rules or parsers. This allows you to get
+        better coverage with less work, since exercising all the code paths of your
+        rules, one by one, keeps the combinatorial number of paths through your code
+        manageable.
+      </p>
+<h5>
+<a name="boost_parser.tutorial.best_practices.h2"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.best_practices.prefer_auto_generated_attributes_to_semantic_actions"></a></span><a class="link" href="best_practices.html#boost_parser.tutorial.best_practices.prefer_auto_generated_attributes_to_semantic_actions">Prefer
+        auto-generated attributes to semantic actions</a>
+      </h5>
+<p>
+        There are multiple ways to get attributes out of a parser. You can:
+      </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+            use whatever attribute the parser generates;
+          </li>
+<li class="listitem">
+            provide an attribute out-argument to <code class="computeroutput"><a class="link" href="../../boost/parser/parse_id2.html" title="Function template parse">parse()</a></code>
+            for the parser to fill in;
+          </li>
+<li class="listitem">
+            use one or more semantic actions to assign attributes from the parser
+            to variables outside the parser;
+          </li>
+<li class="listitem">
+            use callback parsing to provide attributes via callback calls.
+          </li>
+</ul></div>
+<p>
+        All of these are fairly similar in how much effort they require, except for
+        the semantic action method. For the semantic action approach, you need to
+        have values to fill in from your parser, and keep them in scope for the duration
+        of the parse.
+      </p>
+<p>
+        It is much more straight forward, and leads to more reusable parsers, to
+        have the parsers produce the attributes of the parse directly as a result
+        of the parse.
+      </p>
+<p>
+        This does not mean that you should never use semantic actions. They are sometimes
+        necessary. However, you should default to using the other non-semantic action
+        methods, and only use semantic actions with a good reason.
+      </p>
+<h5>
+<a name="boost_parser.tutorial.best_practices.h3"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.best_practices.if_your_parser_takes_end_user_input__give_rules_names_that_you_would_want_an_end_user_to_see"></a></span><a class="link" href="best_practices.html#boost_parser.tutorial.best_practices.if_your_parser_takes_end_user_input__give_rules_names_that_you_would_want_an_end_user_to_see">If
+        your parser takes end-user input, give rules names that you would want an
+        end-user to see</a>
+      </h5>
+<p>
+        A typical error message produced by Boost.Parser will say something like,
+        "Expected FOO here", where FOO is some rule or parser. Give your
+        rules names that will read well in error messages like this. For instance,
+        the JSON examples have these rules:
+      </p>
+<pre class="programlisting">bp::rule&lt;class escape_seq, uint32_t&gt; const escape_seq =
+    "\\uXXXX hexadecimal escape sequence";
+bp::rule&lt;class escape_double_seq, uint32_t, double_escape_locals&gt; const
+    escape_double_seq = "\\uXXXX hexadecimal escape sequence";
+bp::rule&lt;class single_escaped_char, uint32_t&gt; const single_escaped_char =
+    "'\"', '\\', '/', 'b', 'f', 'n', 'r', or 't'";
+</pre>
+<p>
+        Some things to note:
+      </p>
+<p>
+        - <code class="computeroutput">escape_seq</code> and <code class="computeroutput">escape_double_seq</code> have the same
+        name-string. To an end-user who is trying to figure out why their input failed
+        to parse, it doesn't matter which kind of result a parser rule generates.
+        They just want to know how to fix their input. For either rule, the fix is
+        the same: put a hexadecimal escape sequence there.
+      </p>
+<p>
+        - <code class="computeroutput">single_escaped_char</code> has a terrible-looking name. However,
+        it's not really used as a name anywhere per se. In error messages, it works
+        nicely, though. The error will be "Expected '"', '', '/', 'b',
+        'f', 'n', 'r', or 't' here", which is pretty helpful.
+      </p>
+<h5>
+<a name="boost_parser.tutorial.best_practices.h4"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.best_practices.have_a_simple_test_that_you_can_run_to_find_ill_formed_code_as_asserts"></a></span><a class="link" href="best_practices.html#boost_parser.tutorial.best_practices.have_a_simple_test_that_you_can_run_to_find_ill_formed_code_as_asserts">Have
+        a simple test that you can run to find ill-formed-code-as-asserts</a>
+      </h5>
+<p>
+        Most of these errors are found at parser construction time, so no actual
+        parsing is even necessary. For instance, a test case might look like this:
+      </p>
+<pre class="programlisting">TEST(my_parser_tests, my_rule_test) {
+    my_rule r;
+}
+</pre>
+</div>
+<div class="copyright-footer">Copyright © 2020 T. Zachary Laine<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+      </p>
+</div>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="memory_allocation.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="writing_your_own_parsers.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

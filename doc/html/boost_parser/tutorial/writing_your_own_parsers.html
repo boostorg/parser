@@ -1,0 +1,312 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Writing Your Own Parsers</title>
+<link rel="stylesheet" href="../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
+<link rel="up" href="../tutorial.html" title="Tutorial">
+<link rel="prev" href="best_practices.html" title="Best Practices">
+<link rel="next" href="../extended_examples.html" title="Extended Examples">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="best_practices.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="../extended_examples.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_parser.tutorial.writing_your_own_parsers"></a><a class="link" href="writing_your_own_parsers.html" title="Writing Your Own Parsers">Writing
+      Your Own Parsers</a>
+</h3></div></div></div>
+<p>
+        You should probably never need to write your own low-level parser. You have
+        primitives like <code class="computeroutput"><a class="link" href="../../boost/parser/char_.html" title="Global char_">char_</a></code>
+        from which to build up the parsers that you need. It is unlikely that you're
+        going to need to do things on a lower level than a single character.
+      </p>
+<p>
+        However. Some people are obsessed with writing everything for themselves.
+        We call them C++ programmers. This section is for them. However, this section
+        is not an in-depth tutorial. It is a basic orientation to get you familiar
+        enough with all the moving parts of writing a parser that you can then learn
+        by reading the Boost.Parser code.
+      </p>
+<p>
+        Each parser must provide two overloads of a function <code class="computeroutput">call()</code>.
+        One overload parses, producing an attribute (which may be the special no-attribute
+        type <code class="computeroutput">detail::nope</code>). The other one parses, filling in a given
+        attribute. The type of the given attribute is a template parameter, so it
+        can take any type that you can form a reference to.
+      </p>
+<p>
+        Let's take a look at a Boost.Parser parser, <code class="computeroutput">opt_parser</code>. This
+        is the parser produced by use of <code class="computeroutput">operator-</code>. First, here is the
+        beginning of its definition.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> <span class="identifier">Parser</span><span class="special">&gt;</span>
+<span class="keyword">struct</span> <span class="identifier">opt_parser</span>
+<span class="special">{</span>
+</pre>
+<p>
+      </p>
+<p>
+        The end of its definition is:
+      </p>
+<p>
+</p>
+<pre class="programlisting">    <span class="identifier">Parser</span> <span class="identifier">parser_</span><span class="special">;</span>
+<span class="special">};</span>
+</pre>
+<p>
+      </p>
+<p>
+        As you can see, <code class="computeroutput">opt_parser</code>'s only data member is the parser
+        it adapts, <code class="computeroutput">parser_</code>. Here is its attribute-generating overload
+        to <code class="computeroutput">call()</code>.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">template</span><span class="special">&lt;</span>
+    <span class="keyword">typename</span> <span class="identifier">Iter</span><span class="special">,</span>
+    <span class="keyword">typename</span> <span class="identifier">Sentinel</span><span class="special">,</span>
+    <span class="keyword">typename</span> <span class="identifier">Context</span><span class="special">,</span>
+    <span class="keyword">typename</span> <span class="identifier">SkipParser</span><span class="special">&gt;</span>
+<span class="keyword">auto</span> <span class="identifier">call</span><span class="special">(</span>
+    <span class="identifier">Iter</span> <span class="special">&amp;</span> <span class="identifier">first</span><span class="special">,</span>
+    <span class="identifier">Sentinel</span> <span class="identifier">last</span><span class="special">,</span>
+    <span class="identifier">Context</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">context</span><span class="special">,</span>
+    <span class="identifier">SkipParser</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">skip</span><span class="special">,</span>
+    <span class="identifier">detail</span><span class="special">::</span><span class="identifier">flags</span> <span class="identifier">flags</span><span class="special">,</span>
+    <span class="keyword">bool</span> <span class="special">&amp;</span> <span class="identifier">success</span><span class="special">)</span> <span class="keyword">const</span>
+<span class="special">{</span>
+    <span class="keyword">using</span> <span class="identifier">attr_t</span> <span class="special">=</span> <span class="keyword">decltype</span><span class="special">(</span><span class="identifier">parser_</span><span class="special">.</span><span class="identifier">call</span><span class="special">(</span>
+        <span class="identifier">first</span><span class="special">,</span> <span class="identifier">last</span><span class="special">,</span> <span class="identifier">context</span><span class="special">,</span> <span class="identifier">skip</span><span class="special">,</span> <span class="identifier">flags</span><span class="special">,</span> <span class="identifier">success</span><span class="special">));</span>
+    <span class="identifier">detail</span><span class="special">::</span><span class="identifier">optional_of</span><span class="special">&lt;</span><span class="identifier">attr_t</span><span class="special">&gt;</span> <span class="identifier">retval</span><span class="special">;</span>
+    <span class="identifier">call</span><span class="special">(</span><span class="identifier">first</span><span class="special">,</span> <span class="identifier">last</span><span class="special">,</span> <span class="identifier">context</span><span class="special">,</span> <span class="identifier">skip</span><span class="special">,</span> <span class="identifier">flags</span><span class="special">,</span> <span class="identifier">success</span><span class="special">,</span> <span class="identifier">retval</span><span class="special">);</span>
+    <span class="keyword">return</span> <span class="identifier">retval</span><span class="special">;</span>
+<span class="special">}</span>
+</pre>
+<p>
+      </p>
+<p>
+        First, let's look at the template and function parameters.
+      </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+            <code class="computeroutput">Iter &amp; first</code> is the iterator. It is taken as an out-param.
+            It is the responsibility of <code class="computeroutput">call()</code> to advance <code class="computeroutput">first</code>
+            if and only if the parse succeeds.
+          </li>
+<li class="listitem">
+            <code class="computeroutput">Sentinel last</code> is the sentinel. If the parse has not yet
+            succeeded within <code class="computeroutput">call()</code>, and <code class="computeroutput">first == last</code>
+            is <code class="computeroutput">true</code>, <code class="computeroutput">call()</code> must fail (by setting <code class="computeroutput">bool
+            &amp; success</code> to <code class="computeroutput">false</code>).
+          </li>
+<li class="listitem">
+            <code class="computeroutput">Context const &amp; context</code> is the parse context. It will
+            be some specialization of <code class="computeroutput">detail::parse_context</code>. The context
+            is used in any call to a subparser's <code class="computeroutput">call()</code>, and in some
+            cases a new context should be created, and the new context passed to
+            a subparser instead; more on that below.
+          </li>
+<li class="listitem">
+            <code class="computeroutput">SkipParser const &amp; skip</code> is the current skip parser.
+            <code class="computeroutput">skip</code> should be used at the beginning of the parse, and in
+            between any two uses of any subparser(s).
+          </li>
+<li class="listitem">
+            <code class="computeroutput">detail::flags flags</code> are a collection of flags indicating
+            various things about the current state of the parse. <code class="computeroutput">flags</code>
+            is concerned with whether to produce attributes at all; whether to apply
+            the skip parser <code class="computeroutput">skip</code>; whether to produce a verbose trace
+            (as when <code class="computeroutput"><a class="link" href="../../boost/parser/trace.html" title="Type trace">boost::parser::trace</a>::on</code>
+            is passed at the top level); and whether we are currently inside the
+            utility function <code class="computeroutput">detail::apply_parser</code>.
+          </li>
+<li class="listitem">
+            <code class="computeroutput">bool &amp; success</code> is the final function parameter. It should
+            be set to <code class="computeroutput">true</code> if the parse succeeds, and <code class="computeroutput">false</code>
+            otherwise.
+          </li>
+</ul></div>
+<p>
+        Now the body of the function. Notice that it just dispatches to the other
+        <code class="computeroutput">call()</code> overload. This is really common, since both overloads
+        need to to the same parsing; only the attribute may differ. The first line
+        of the body defines <code class="computeroutput">attr_t</code>, the default attribute type of our
+        wrapped parser <code class="computeroutput">parser_</code>. It does this by getting the <code class="computeroutput">decltype()</code>
+        of a use of <code class="computeroutput">parser_.call()</code>. (This is the logic represented by
+        <span class="emphasis"><em><code class="literal">ATTR</code></em></span><code class="computeroutput"><span class="special">()</span></code>
+        in the rest of the documentation.) Since <code class="computeroutput">opt_parser</code> represents
+        an optional value, the natural type for its attribute is <code class="computeroutput">std::optional&lt;<span class="emphasis"><em><code class="literal">ATTR</code></em></span>(parser)&gt;</code>.
+        However, this does not work for all cases. In particular, it does not work
+        for the "no-attribute" type <code class="computeroutput">detail::nope</code>, nor for
+        <code class="computeroutput">std::optional&lt;T&gt;</code> — <code class="computeroutput"><span class="emphasis"><em><code class="literal">ATTR</code></em></span>(--p)</code>
+        is just <code class="computeroutput"><span class="emphasis"><em><code class="literal">ATTR</code></em></span>(-p)</code>. So,
+        the second line uses an alias that takes care of those details, <code class="computeroutput">detail::optional_of&lt;&gt;</code>.
+        The third line just calls the other overload of <code class="computeroutput">call()</code>, passing
+        <code class="computeroutput">retval</code> as the out-param. Finally, <code class="computeroutput">retval</code> is returned
+        on the last line.
+      </p>
+<p>
+        Now, on to the other overload.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">template</span><span class="special">&lt;</span>
+    <span class="keyword">typename</span> <span class="identifier">Iter</span><span class="special">,</span>
+    <span class="keyword">typename</span> <span class="identifier">Sentinel</span><span class="special">,</span>
+    <span class="keyword">typename</span> <span class="identifier">Context</span><span class="special">,</span>
+    <span class="keyword">typename</span> <span class="identifier">SkipParser</span><span class="special">,</span>
+    <span class="keyword">typename</span> <span class="identifier">Attribute</span><span class="special">&gt;</span>
+<span class="keyword">void</span> <span class="identifier">call</span><span class="special">(</span>
+    <span class="identifier">Iter</span> <span class="special">&amp;</span> <span class="identifier">first</span><span class="special">,</span>
+    <span class="identifier">Sentinel</span> <span class="identifier">last</span><span class="special">,</span>
+    <span class="identifier">Context</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">context</span><span class="special">,</span>
+    <span class="identifier">SkipParser</span> <span class="keyword">const</span> <span class="special">&amp;</span> <span class="identifier">skip</span><span class="special">,</span>
+    <span class="identifier">detail</span><span class="special">::</span><span class="identifier">flags</span> <span class="identifier">flags</span><span class="special">,</span>
+    <span class="keyword">bool</span> <span class="special">&amp;</span> <span class="identifier">success</span><span class="special">,</span>
+    <span class="identifier">Attribute</span> <span class="special">&amp;</span> <span class="identifier">retval</span><span class="special">)</span> <span class="keyword">const</span>
+<span class="special">{</span>
+    <span class="special">[[</span><span class="identifier">maybe_unused</span><span class="special">]]</span> <span class="keyword">auto</span> <span class="identifier">_</span> <span class="special">=</span> <span class="identifier">detail</span><span class="special">::</span><span class="identifier">scoped_trace</span><span class="special">(</span>
+        <span class="special">*</span><span class="keyword">this</span><span class="special">,</span> <span class="identifier">first</span><span class="special">,</span> <span class="identifier">last</span><span class="special">,</span> <span class="identifier">context</span><span class="special">,</span> <span class="identifier">flags</span><span class="special">,</span> <span class="identifier">retval</span><span class="special">);</span>
+
+    <span class="identifier">detail</span><span class="special">::</span><span class="identifier">skip</span><span class="special">(</span><span class="identifier">first</span><span class="special">,</span> <span class="identifier">last</span><span class="special">,</span> <span class="identifier">skip</span><span class="special">,</span> <span class="identifier">flags</span><span class="special">);</span>
+
+    <span class="keyword">if</span> <span class="special">(!</span><span class="identifier">detail</span><span class="special">::</span><span class="identifier">gen_attrs</span><span class="special">(</span><span class="identifier">flags</span><span class="special">))</span> <span class="special">{</span>
+        <span class="identifier">parser_</span><span class="special">.</span><span class="identifier">call</span><span class="special">(</span><span class="identifier">first</span><span class="special">,</span> <span class="identifier">last</span><span class="special">,</span> <span class="identifier">context</span><span class="special">,</span> <span class="identifier">skip</span><span class="special">,</span> <span class="identifier">flags</span><span class="special">,</span> <span class="identifier">success</span><span class="special">);</span>
+        <span class="identifier">success</span> <span class="special">=</span> <span class="keyword">true</span><span class="special">;</span>
+        <span class="keyword">return</span><span class="special">;</span>
+    <span class="special">}</span>
+
+    <span class="identifier">parser_</span><span class="special">.</span><span class="identifier">call</span><span class="special">(</span><span class="identifier">first</span><span class="special">,</span> <span class="identifier">last</span><span class="special">,</span> <span class="identifier">context</span><span class="special">,</span> <span class="identifier">skip</span><span class="special">,</span> <span class="identifier">flags</span><span class="special">,</span> <span class="identifier">success</span><span class="special">,</span> <span class="identifier">retval</span><span class="special">);</span>
+    <span class="identifier">success</span> <span class="special">=</span> <span class="keyword">true</span><span class="special">;</span>
+<span class="special">}</span>
+</pre>
+<p>
+      </p>
+<p>
+        The template and function parameters here are identical to the ones from
+        the other overload, except that we have <code class="computeroutput">Attribute &amp; retval</code>,
+        our out-param.
+      </p>
+<p>
+        Let's look at the implementation a bit at a time.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="special">[[</span><span class="identifier">maybe_unused</span><span class="special">]]</span> <span class="keyword">auto</span> <span class="identifier">_</span> <span class="special">=</span> <span class="identifier">detail</span><span class="special">::</span><span class="identifier">scoped_trace</span><span class="special">(</span>
+    <span class="special">*</span><span class="keyword">this</span><span class="special">,</span> <span class="identifier">first</span><span class="special">,</span> <span class="identifier">last</span><span class="special">,</span> <span class="identifier">context</span><span class="special">,</span> <span class="identifier">flags</span><span class="special">,</span> <span class="identifier">retval</span><span class="special">);</span>
+</pre>
+<p>
+      </p>
+<p>
+        This defines a RAII trace object that will produce the verbose trace requested
+        by the user if they passed <code class="computeroutput"><a class="link" href="../../boost/parser/trace.html" title="Type trace">boost::parser::trace</a>::on</code> to the top-level
+        parse. It only has effect if <code class="computeroutput">detail::enable_trace(flags)</code> is
+        <code class="computeroutput">true</code>. If trace is enabled, it will show the state of the parse
+        at the point at which it is defined, and then again when it goes out of scope.
+      </p>
+<div class="important"><table border="0" summary="Important">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Important]" src="../../images/important.png"></td>
+<th align="left">Important</th>
+</tr>
+<tr><td align="left" valign="top"><p>
+          For the tracing code to work, you must define an overload of <code class="computeroutput">detail::print_parser</code>
+          for your new parser type/template. See <code class="computeroutput">&lt;boost/parser/detail/printing.hpp&gt;</code>
+          for examples.
+        </p></td></tr>
+</table></div>
+<p>
+</p>
+<pre class="programlisting"><span class="identifier">detail</span><span class="special">::</span><span class="identifier">skip</span><span class="special">(</span><span class="identifier">first</span><span class="special">,</span> <span class="identifier">last</span><span class="special">,</span> <span class="identifier">skip</span><span class="special">,</span> <span class="identifier">flags</span><span class="special">);</span>
+</pre>
+<p>
+      </p>
+<p>
+        This one is pretty simple; it just applies the skip parser. <code class="computeroutput">opt_parser</code>
+        only has one subparser, but if it had more than one, or if it had one that
+        it applied more than once, it would need to repeat this line using <code class="computeroutput">skip</code>
+        between every pair of uses of any subparser.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">if</span> <span class="special">(!</span><span class="identifier">detail</span><span class="special">::</span><span class="identifier">gen_attrs</span><span class="special">(</span><span class="identifier">flags</span><span class="special">))</span> <span class="special">{</span>
+    <span class="identifier">parser_</span><span class="special">.</span><span class="identifier">call</span><span class="special">(</span><span class="identifier">first</span><span class="special">,</span> <span class="identifier">last</span><span class="special">,</span> <span class="identifier">context</span><span class="special">,</span> <span class="identifier">skip</span><span class="special">,</span> <span class="identifier">flags</span><span class="special">,</span> <span class="identifier">success</span><span class="special">);</span>
+    <span class="identifier">success</span> <span class="special">=</span> <span class="keyword">true</span><span class="special">;</span>
+    <span class="keyword">return</span><span class="special">;</span>
+<span class="special">}</span>
+</pre>
+<p>
+      </p>
+<p>
+        This path accounts for the case where we don't want to generate attributes
+        at all, perhaps because this parser sits inside an <code class="computeroutput"><a class="link" href="../../boost/parser/omit.html" title="Global omit">omit[]</a></code>
+        directive.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="identifier">parser_</span><span class="special">.</span><span class="identifier">call</span><span class="special">(</span><span class="identifier">first</span><span class="special">,</span> <span class="identifier">last</span><span class="special">,</span> <span class="identifier">context</span><span class="special">,</span> <span class="identifier">skip</span><span class="special">,</span> <span class="identifier">flags</span><span class="special">,</span> <span class="identifier">success</span><span class="special">,</span> <span class="identifier">retval</span><span class="special">);</span>
+<span class="identifier">success</span> <span class="special">=</span> <span class="keyword">true</span><span class="special">;</span>
+</pre>
+<p>
+      </p>
+<p>
+        This is the other, typical, path. Here, we do want to generate attributes,
+        and so we do the same call to <code class="computeroutput">parser_.call()</code>, except that we
+        also pass <code class="computeroutput">retval</code>.
+      </p>
+<p>
+        Note that we set <code class="computeroutput">success</code> to <code class="computeroutput">true</code> after the call
+        to <code class="computeroutput">parser_.call()</code> in both code paths. Since <code class="computeroutput">opt_parser</code>
+        is zero-or-one, if the subparser fails, <code class="computeroutput">opt_parse</code> still succeeds.
+      </p>
+<h5>
+<a name="boost_parser.tutorial.writing_your_own_parsers.h0"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.writing_your_own_parsers.when_to_make_a_new_parse_context"></a></span><a class="link" href="writing_your_own_parsers.html#boost_parser.tutorial.writing_your_own_parsers.when_to_make_a_new_parse_context">When
+        to make a new parse context</a>
+      </h5>
+<p>
+        Sometimes, you need to change something about the parse context before calling
+        a subparser. For instance, <code class="computeroutput">rule_parser</code> sets up the value, locals,
+        etc., that are available for that rule. <code class="computeroutput">action_parser</code> adds the
+        generated attribute to the context (available as <code class="computeroutput">_attr(ctx)</code>).
+        Contexts are immutable in Boost.Parser. To "modify" one for a subparser,
+        you create a new one with the appropriate call to <code class="computeroutput">detail::make_context()</code>.
+      </p>
+<h5>
+<a name="boost_parser.tutorial.writing_your_own_parsers.h1"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.writing_your_own_parsers._code_detail__apply_parser____code_"></a></span><a class="link" href="writing_your_own_parsers.html#boost_parser.tutorial.writing_your_own_parsers._code_detail__apply_parser____code_"><code class="computeroutput">detail::apply_parser()</code></a>
+      </h5>
+<p>
+        Sometimes a parser needs to operate on an out-param that is not exactly the
+        same as its default attribute, but that is compatible in some way. To do
+        this, it's often useful for the parser to call itself, but with slightly
+        different parameters. <code class="computeroutput">detail::apply_parser()</code> helps with this.
+        See the out-param overload of <code class="computeroutput">repeat_parser::call()</code> for an example.
+        Note that since this creates a new scope for the ersatz parser, the <code class="computeroutput">scoped_trace</code>
+        object needs to know whether we're inside <code class="computeroutput">detail::apply_parser</code>
+        or not.
+      </p>
+<p>
+        That's a lot, I know. Again, this section is not meant to be an in-depth
+        tutorial. You know enough now that the parsers in <code class="computeroutput">parser.hpp</code>
+        are at least readable.
+      </p>
+</div>
+<div class="copyright-footer">Copyright © 2020 T. Zachary Laine<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+      </p>
+</div>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="best_practices.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="../extended_examples.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

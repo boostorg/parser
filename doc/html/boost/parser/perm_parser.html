@@ -1,0 +1,92 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Struct template perm_parser</title>
+<link rel="stylesheet" href="../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
+<link rel="up" href="../../header/boost/parser/parser_hpp.html" title="Header &lt;boost/parser/parser.hpp&gt;">
+<link rel="prev" href="parser_interface.html" title="Struct template parser_interface">
+<link rel="next" href="quoted_string_parser.html" title="Struct template quoted_string_parser">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="parser_interface.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../../header/boost/parser/parser_hpp.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="quoted_string_parser.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+<div class="refentry">
+<a name="boost.parser.perm_parser"></a><div class="titlepage"></div>
+<div class="refnamediv">
+<h2><span class="refentrytitle">Struct template perm_parser</span></h2>
+<p>boost::parser::perm_parser</p>
+</div>
+<h2 class="refsynopsisdiv-title">Synopsis</h2>
+<div class="refsynopsisdiv"><pre class="synopsis"><span class="comment">// In header: &lt;<a class="link" href="../../header/boost/parser/parser_hpp.html" title="Header &lt;boost/parser/parser.hpp&gt;">boost/parser/parser.hpp</a>&gt;
+
+</span><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> ParserTuple<span class="special">&gt;</span> 
+<span class="keyword">struct</span> <a class="link" href="perm_parser.html" title="Struct template perm_parser">perm_parser</a> <span class="special">{</span>
+  <span class="comment">// <a class="link" href="perm_parser.html#boost.parser.perm_parserconstruct-copy-destruct">construct/copy/destruct</a></span>
+  <a class="link" href="perm_parser.html#id239-bb"><span class="identifier">perm_parser</span></a><span class="special">(</span><span class="identifier">ParserTuple</span><span class="special">)</span><span class="special">;</span>
+
+  <span class="comment">// <a class="link" href="perm_parser.html#id240-bb">public member functions</a></span>
+  <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iter<span class="special">,</span> <span class="keyword">typename</span> Sentinel<span class="special">,</span> <span class="keyword">typename</span> Context<span class="special">,</span> 
+           <span class="keyword">typename</span> SkipParser<span class="special">&gt;</span> 
+    <span class="keyword">auto</span> <a class="link" href="perm_parser.html#id241-bb"><span class="identifier">call</span></a><span class="special">(</span><span class="identifier">Iter</span> <span class="special">&amp;</span><span class="special">,</span> <span class="identifier">Sentinel</span><span class="special">,</span> <span class="identifier">Context</span> <span class="keyword">const</span> <span class="special">&amp;</span><span class="special">,</span> <span class="identifier">SkipParser</span> <span class="keyword">const</span> <span class="special">&amp;</span><span class="special">,</span> 
+              <span class="emphasis"><em><span class="identifier">unspecified</span></em></span><span class="special">,</span> <span class="keyword">bool</span> <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+  <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iter<span class="special">,</span> <span class="keyword">typename</span> Sentinel<span class="special">,</span> <span class="keyword">typename</span> Context<span class="special">,</span> 
+           <span class="keyword">typename</span> SkipParser<span class="special">,</span> <span class="keyword">typename</span> Attribute<span class="special">&gt;</span> 
+    <span class="keyword">void</span> <a class="link" href="perm_parser.html#id242-bb"><span class="identifier">call</span></a><span class="special">(</span><span class="identifier">Iter</span> <span class="special">&amp;</span><span class="special">,</span> <span class="identifier">Sentinel</span><span class="special">,</span> <span class="identifier">Context</span> <span class="keyword">const</span> <span class="special">&amp;</span><span class="special">,</span> <span class="identifier">SkipParser</span> <span class="keyword">const</span> <span class="special">&amp;</span><span class="special">,</span> 
+              <span class="emphasis"><em><span class="identifier">unspecified</span></em></span><span class="special">,</span> <span class="keyword">bool</span> <span class="special">&amp;</span><span class="special">,</span> <span class="identifier">Attribute</span> <span class="special">&amp;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+  <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iter<span class="special">,</span> <span class="keyword">typename</span> Sentinel<span class="special">,</span> <span class="keyword">typename</span> Context<span class="special">,</span> 
+           <span class="keyword">typename</span> SkipParser<span class="special">,</span> <span class="keyword">typename</span><span class="special">...</span> Ts<span class="special">,</span> <span class="keyword">int</span><span class="special">...</span> Is<span class="special">&gt;</span> 
+    <span class="keyword">void</span> <a class="link" href="perm_parser.html#id243-bb"><span class="identifier">call_impl</span></a><span class="special">(</span><span class="identifier">Iter</span> <span class="special">&amp;</span><span class="special">,</span> <span class="identifier">Sentinel</span><span class="special">,</span> <span class="identifier">Context</span> <span class="keyword">const</span> <span class="special">&amp;</span><span class="special">,</span> <span class="identifier">SkipParser</span> <span class="keyword">const</span> <span class="special">&amp;</span><span class="special">,</span> 
+                   <span class="emphasis"><em><span class="identifier">unspecified</span></em></span><span class="special">,</span> <span class="keyword">bool</span> <span class="special">&amp;</span><span class="special">,</span> <span class="identifier">tuple</span><span class="special">&lt;</span> <span class="identifier">Ts</span><span class="special">...</span> <span class="special">&gt;</span> <span class="special">&amp;</span><span class="special">,</span> 
+                   <span class="identifier">std</span><span class="special">::</span><span class="identifier">integer_sequence</span><span class="special">&lt;</span> <span class="keyword">int</span><span class="special">,</span> <span class="identifier">Is</span><span class="special">...</span> <span class="special">&gt;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+
+  <span class="comment">// public data members</span>
+  <span class="identifier">ParserTuple</span> <span class="identifier">parsers_</span><span class="special">;</span>
+<span class="special">}</span><span class="special">;</span></pre></div>
+<div class="refsect1">
+<a name="id40355"></a><h2>Description</h2>
+<p>Applies each parsers in <code class="computeroutput">ParserTuple</code>, an any order, stopping after all of them have matched the input. The parse succeeds iff all the parsers match, regardless of the order in which they do. The attribute produced is a <code class="computeroutput">parser::tuple</code> containing the attributes of the subparsers, in their order of the parsers' appearance in <code class="computeroutput">ParserTuple</code>, not the order of the parsers' matches. It is an error to specialize <code class="computeroutput"><a class="link" href="perm_parser.html" title="Struct template perm_parser">perm_parser</a></code> with a <code class="computeroutput">ParserTuple</code> template parameter that includes an <code class="computeroutput"><a class="link" href="eps_parser.html" title="Struct template eps_parser">eps_parser</a></code>. </p>
+<div class="refsect2">
+<a name="id40366"></a><h3>
+<a name="boost.parser.perm_parserconstruct-copy-destruct"></a><code class="computeroutput">perm_parser</code> 
+        public
+       construct/copy/destruct</h3>
+<div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><pre class="literallayout"><a name="id239-bb"></a><span class="identifier">perm_parser</span><span class="special">(</span><span class="identifier">ParserTuple</span> parsers<span class="special">)</span><span class="special">;</span></pre></li></ol></div>
+</div>
+<div class="refsect2">
+<a name="id40380"></a><h3>
+<a name="id240-bb"></a><code class="computeroutput">perm_parser</code> public member functions</h3>
+<div class="orderedlist"><ol class="orderedlist" type="1">
+<li class="listitem"><pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iter<span class="special">,</span> <span class="keyword">typename</span> Sentinel<span class="special">,</span> <span class="keyword">typename</span> Context<span class="special">,</span> 
+         <span class="keyword">typename</span> SkipParser<span class="special">&gt;</span> 
+  <span class="keyword">auto</span> <a name="id241-bb"></a><span class="identifier">call</span><span class="special">(</span><span class="identifier">Iter</span> <span class="special">&amp;</span> first_<span class="special">,</span> <span class="identifier">Sentinel</span> last<span class="special">,</span> <span class="identifier">Context</span> <span class="keyword">const</span> <span class="special">&amp;</span> context<span class="special">,</span> 
+            <span class="identifier">SkipParser</span> <span class="keyword">const</span> <span class="special">&amp;</span> skip<span class="special">,</span> <span class="emphasis"><em><span class="identifier">unspecified</span></em></span> flags<span class="special">,</span> <span class="keyword">bool</span> <span class="special">&amp;</span> success<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iter<span class="special">,</span> <span class="keyword">typename</span> Sentinel<span class="special">,</span> <span class="keyword">typename</span> Context<span class="special">,</span> 
+         <span class="keyword">typename</span> SkipParser<span class="special">,</span> <span class="keyword">typename</span> Attribute<span class="special">&gt;</span> 
+  <span class="keyword">void</span> <a name="id242-bb"></a><span class="identifier">call</span><span class="special">(</span><span class="identifier">Iter</span> <span class="special">&amp;</span> first_<span class="special">,</span> <span class="identifier">Sentinel</span> last<span class="special">,</span> <span class="identifier">Context</span> <span class="keyword">const</span> <span class="special">&amp;</span> context<span class="special">,</span> 
+            <span class="identifier">SkipParser</span> <span class="keyword">const</span> <span class="special">&amp;</span> skip<span class="special">,</span> <span class="emphasis"><em><span class="identifier">unspecified</span></em></span> flags<span class="special">,</span> <span class="keyword">bool</span> <span class="special">&amp;</span> success<span class="special">,</span> 
+            <span class="identifier">Attribute</span> <span class="special">&amp;</span> retval<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> Iter<span class="special">,</span> <span class="keyword">typename</span> Sentinel<span class="special">,</span> <span class="keyword">typename</span> Context<span class="special">,</span> 
+         <span class="keyword">typename</span> SkipParser<span class="special">,</span> <span class="keyword">typename</span><span class="special">...</span> Ts<span class="special">,</span> <span class="keyword">int</span><span class="special">...</span> Is<span class="special">&gt;</span> 
+  <span class="keyword">void</span> <a name="id243-bb"></a><span class="identifier">call_impl</span><span class="special">(</span><span class="identifier">Iter</span> <span class="special">&amp;</span> first<span class="special">,</span> <span class="identifier">Sentinel</span> last<span class="special">,</span> <span class="identifier">Context</span> <span class="keyword">const</span> <span class="special">&amp;</span> context<span class="special">,</span> 
+                 <span class="identifier">SkipParser</span> <span class="keyword">const</span> <span class="special">&amp;</span> skip<span class="special">,</span> <span class="emphasis"><em><span class="identifier">unspecified</span></em></span> flags<span class="special">,</span> <span class="keyword">bool</span> <span class="special">&amp;</span> success<span class="special">,</span> 
+                 <span class="identifier">tuple</span><span class="special">&lt;</span> <span class="identifier">Ts</span><span class="special">...</span> <span class="special">&gt;</span> <span class="special">&amp;</span> retval<span class="special">,</span> 
+                 <span class="identifier">std</span><span class="special">::</span><span class="identifier">integer_sequence</span><span class="special">&lt;</span> <span class="keyword">int</span><span class="special">,</span> <span class="identifier">Is</span><span class="special">...</span> <span class="special">&gt;</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
+</ol></div>
+</div>
+</div>
+</div>
+<div class="copyright-footer">Copyright © 2020 T. Zachary Laine<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+      </p>
+</div>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="parser_interface.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../../header/boost/parser/parser_hpp.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="quoted_string_parser.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

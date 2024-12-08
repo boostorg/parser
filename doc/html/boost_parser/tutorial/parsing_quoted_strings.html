@@ -1,0 +1,153 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Parsing Quoted Strings</title>
+<link rel="stylesheet" href="../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
+<link rel="up" href="../tutorial.html" title="Tutorial">
+<link rel="prev" href="alternative_parsers.html" title="Alternative Parsers">
+<link rel="next" href="parsing_in_detail.html" title="Parsing In Detail">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="alternative_parsers.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="parsing_in_detail.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_parser.tutorial.parsing_quoted_strings"></a><a class="link" href="parsing_quoted_strings.html" title="Parsing Quoted Strings">Parsing
+      Quoted Strings</a>
+</h3></div></div></div>
+<p>
+        It is very common to need to parse quoted strings. Quoted strings are slightly
+        tricky, though, when using a skipper (and you should be using a skipper 99%
+        of the time). You don't want to allow arbitrary whitespace in the middle
+        of your strings, and you also don't want to remove all whitespace from your
+        strings. Both of these things will happen with the typical skipper, <code class="computeroutput"><a class="link" href="../../boost/parser/ws.html" title="Global ws">ws</a></code>.
+      </p>
+<p>
+        So, here is how most people would write a quoted string parser:
+      </p>
+<pre class="programlisting"><span class="keyword">namespace</span> <span class="identifier">bp</span> <span class="special">=</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">parser</span><span class="special">;</span>
+<span class="keyword">const</span> <span class="keyword">auto</span> <span class="identifier">string</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">lexeme</span><span class="special">[</span><span class="char">'"'</span> <span class="special">&gt;&gt;</span> <span class="special">*(</span><span class="identifier">bp</span><span class="special">::</span><span class="identifier">char_</span> <span class="special">-</span> <span class="char">'"'</span><span class="special">)</span> <span class="special">&gt;</span> <span class="char">'"'</span><span class="special">];</span>
+</pre>
+<p>
+        Some things to note:
+      </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+            the result is a string;
+          </li>
+<li class="listitem">
+            the quotes are not included in the result;
+          </li>
+<li class="listitem">
+            there is an expectation point before the close-quote;
+          </li>
+<li class="listitem">
+            the use of <code class="computeroutput"><a class="link" href="../../boost/parser/lexeme.html" title="Global lexeme">lexeme[]</a></code> disables skipping in the
+            parser, and it must be written around the quotes, not around the <code class="computeroutput"><span class="keyword">operator</span><span class="special">*</span></code>
+            expression; and
+          </li>
+<li class="listitem">
+            there's no way to write a quote in the middle of the string.
+          </li>
+</ul></div>
+<p>
+        This is a very common pattern. I have written a quoted string parser like
+        this dozens of times. The parser above is the quick-and-dirty version. A
+        more robust version would be able to handle escaped quotes within the string,
+        and then would immediately also need to support escaped escape characters.
+      </p>
+<p>
+        Boost.Parser provides <code class="computeroutput"><a class="link" href="../../boost/parser/quoted_string.html" title="Global quoted_string">quoted_string</a></code> to use in place
+        of this very common pattern. It supports quote- and escaped-character-escaping,
+        using backslash as the escape character.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">namespace</span> <span class="identifier">bp</span> <span class="special">=</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">parser</span><span class="special">;</span>
+
+<span class="keyword">auto</span> <span class="identifier">result1</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">parse</span><span class="special">(</span><span class="string">"\"some text\""</span><span class="special">,</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">quoted_string</span><span class="special">,</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">ws</span><span class="special">);</span>
+<span class="identifier">assert</span><span class="special">(</span><span class="identifier">result1</span><span class="special">);</span>
+<span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="special">*</span><span class="identifier">result1</span> <span class="special">&lt;&lt;</span> <span class="string">"\n"</span><span class="special">;</span> <span class="comment">// Prints: some text</span>
+
+<span class="keyword">auto</span> <span class="identifier">result2</span> <span class="special">=</span>
+    <span class="identifier">bp</span><span class="special">::</span><span class="identifier">parse</span><span class="special">(</span><span class="string">"\"some \\\"text\\\"\""</span><span class="special">,</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">quoted_string</span><span class="special">,</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">ws</span><span class="special">);</span>
+<span class="identifier">assert</span><span class="special">(</span><span class="identifier">result2</span><span class="special">);</span>
+<span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="special">*</span><span class="identifier">result2</span> <span class="special">&lt;&lt;</span> <span class="string">"\n"</span><span class="special">;</span> <span class="comment">// Prints: some "text"</span>
+</pre>
+<p>
+      </p>
+<p>
+        As common as this use case is, there are very similar use cases that it does
+        not cover. So, <code class="computeroutput"><a class="link" href="../../boost/parser/quoted_string.html" title="Global quoted_string">quoted_string</a></code> has some options.
+        If you call it with a single character, it returns a <code class="computeroutput"><a class="link" href="../../boost/parser/quoted_string.html" title="Global quoted_string">quoted_string</a></code> that uses that
+        single character as the quote-character.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">auto</span> <span class="identifier">result3</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">parse</span><span class="special">(</span><span class="string">"!some text!"</span><span class="special">,</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">quoted_string</span><span class="special">(</span><span class="char">'!'</span><span class="special">),</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">ws</span><span class="special">);</span>
+<span class="identifier">assert</span><span class="special">(</span><span class="identifier">result3</span><span class="special">);</span>
+<span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="special">*</span><span class="identifier">result3</span> <span class="special">&lt;&lt;</span> <span class="string">"\n"</span><span class="special">;</span> <span class="comment">// Prints: some text</span>
+</pre>
+<p>
+      </p>
+<p>
+        You can also supply a range of characters. One of the characters from the
+        range must quote both ends of the string; mismatches are not allowed. Think
+        of how Python allows you to quote a string with either <code class="computeroutput"><span class="char">'"'</span></code>
+        or <code class="computeroutput"><span class="char">'\''</span></code>, but the same character
+        must be used on both sides.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">auto</span> <span class="identifier">result4</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">parse</span><span class="special">(</span><span class="string">"'some text'"</span><span class="special">,</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">quoted_string</span><span class="special">(</span><span class="string">"'\""</span><span class="special">),</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">ws</span><span class="special">);</span>
+<span class="identifier">assert</span><span class="special">(</span><span class="identifier">result4</span><span class="special">);</span>
+<span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="special">*</span><span class="identifier">result4</span> <span class="special">&lt;&lt;</span> <span class="string">"\n"</span><span class="special">;</span> <span class="comment">// Prints: some text</span>
+</pre>
+<p>
+      </p>
+<p>
+        Another common thing to do in a quoted string parser is to recognize escape
+        sequences. If you have simple escape sequencecs that do not require any real
+        parsing, like say the simple escape sequences from C++, you can provide a
+        <code class="computeroutput"><a class="link" href="../../boost/parser/symbols.html" title="Struct template symbols">symbols</a></code>
+        object as well. The template parameter <code class="computeroutput"><span class="identifier">T</span></code>
+        to <code class="computeroutput"><a class="link" href="../../boost/parser/symbols.html" title="Struct template symbols">symbols&lt;T&gt;</a></code>
+        must be <code class="computeroutput"><span class="keyword">char</span></code> or <code class="computeroutput"><span class="keyword">char32_t</span></code>. You don't need to include the escaped
+        backslash or the escaped quote character, since those always work.
+      </p>
+<p>
+</p>
+<pre class="programlisting"><span class="comment">// the c++ simple escapes</span>
+<span class="identifier">bp</span><span class="special">::</span><span class="identifier">symbols</span><span class="special">&lt;</span><span class="keyword">char</span><span class="special">&gt;</span> <span class="keyword">const</span> <span class="identifier">escapes</span> <span class="special">=</span> <span class="special">{</span>
+    <span class="special">{</span><span class="string">"'"</span><span class="special">,</span> <span class="char">'\''</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"?"</span><span class="special">,</span> <span class="char">'\?'</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"a"</span><span class="special">,</span> <span class="char">'\a'</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"b"</span><span class="special">,</span> <span class="char">'\b'</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"f"</span><span class="special">,</span> <span class="char">'\f'</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"n"</span><span class="special">,</span> <span class="char">'\n'</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"r"</span><span class="special">,</span> <span class="char">'\r'</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"t"</span><span class="special">,</span> <span class="char">'\t'</span><span class="special">},</span>
+    <span class="special">{</span><span class="string">"v"</span><span class="special">,</span> <span class="char">'\v'</span><span class="special">}};</span>
+<span class="keyword">auto</span> <span class="identifier">result5</span> <span class="special">=</span>
+    <span class="identifier">bp</span><span class="special">::</span><span class="identifier">parse</span><span class="special">(</span><span class="string">"\"some text\r\""</span><span class="special">,</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">quoted_string</span><span class="special">(</span><span class="char">'"'</span><span class="special">,</span> <span class="identifier">escapes</span><span class="special">),</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">ws</span><span class="special">);</span>
+<span class="identifier">assert</span><span class="special">(</span><span class="identifier">result5</span><span class="special">);</span>
+<span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="special">*</span><span class="identifier">result5</span> <span class="special">&lt;&lt;</span> <span class="string">"\n"</span><span class="special">;</span> <span class="comment">// Prints (with a CRLF newline): some text</span>
+</pre>
+<p>
+      </p>
+</div>
+<div class="copyright-footer">Copyright © 2020 T. Zachary Laine<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+      </p>
+</div>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="alternative_parsers.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="parsing_in_detail.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Backtracking</title>
+<link rel="stylesheet" href="../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
+<link rel="up" href="../tutorial.html" title="Tutorial">
+<link rel="prev" href="parsing_in_detail.html" title="Parsing In Detail">
+<link rel="next" href="symbol_tables.html" title="Symbol Tables">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="parsing_in_detail.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="symbol_tables.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="boost_parser.tutorial.backtracking"></a><a class="link" href="backtracking.html" title="Backtracking">Backtracking</a>
+</h3></div></div></div>
+<p>
+        As described in the previous page, backtracking occurs when the parse attempts
+        to match the current parser <code class="computeroutput"><span class="identifier">P</span></code>,
+        matches part of the input, but fails to match all of <code class="computeroutput"><span class="identifier">P</span></code>.
+        The part of the input consumed during the parse of <code class="computeroutput"><span class="identifier">P</span></code>
+        is essentially "given back".
+      </p>
+<p>
+        This is necessary because <code class="computeroutput"><span class="identifier">P</span></code>
+        may consist of subparsers, and each subparser that succeeds will try to consume
+        input, produce attributes, etc. When a later subparser fails, the parse of
+        <code class="computeroutput"><span class="identifier">P</span></code> fails, and the input must
+        be rewound to where it was when <code class="computeroutput"><span class="identifier">P</span></code>
+        started its parse, not where the latest matching subparser stopped.
+      </p>
+<p>
+        Alternative parsers will often evaluate multiple subparsers one at a time,
+        advancing and then restoring the input position, until one of the subparsers
+        succeeds. Consider this example.
+      </p>
+<pre class="programlisting"><span class="keyword">namespace</span> <span class="identifier">bp</span> <span class="special">=</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">parser</span><span class="special">;</span>
+<span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">parser</span> <span class="special">=</span> <span class="identifier">repeat</span><span class="special">(</span><span class="number">53</span><span class="special">)[</span><span class="identifier">other_parser</span><span class="special">]</span> <span class="special">|</span> <span class="identifier">repeat</span><span class="special">(</span><span class="number">10</span><span class="special">)[</span><span class="identifier">other_parser</span><span class="special">];</span>
+</pre>
+<p>
+        Evaluating <code class="computeroutput"><span class="identifier">parser</span></code> means trying
+        to match <code class="computeroutput"><span class="identifier">other_parser</span></code> 53
+        times, and if that fails, trying to match <code class="computeroutput"><span class="identifier">other_parser</span></code>
+        10 times. Say you parse input that matches <code class="computeroutput"><span class="identifier">other_parser</span></code>
+        11 times. <code class="computeroutput"><span class="identifier">parser</span></code> will match
+        it. It will also evaluate <code class="computeroutput"><span class="identifier">other_parser</span></code>
+        21 times during the parse.
+      </p>
+<p>
+        The attributes of the <code class="computeroutput"><span class="identifier">repeat</span><span class="special">(</span><span class="number">53</span><span class="special">)[</span><span class="identifier">other_parser</span><span class="special">]</span></code>
+        and <code class="computeroutput"><span class="identifier">repeat</span><span class="special">(</span><span class="number">10</span><span class="special">)[</span><span class="identifier">other_parser</span><span class="special">]</span></code> are each <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span><span class="special">&lt;</span><span class="emphasis"><em><code class="literal">ATTR</code></em></span><span class="special">(</span><span class="identifier">other_parser</span><span class="special">)&gt;</span></code>; let's say that <code class="computeroutput"><span class="emphasis"><em><code class="literal">ATTR</code></em></span><span class="special">(</span><span class="identifier">other_parser</span><span class="special">)</span></code> is <code class="computeroutput"><span class="keyword">int</span></code>.
+        The attribute of <code class="computeroutput"><span class="identifier">parser</span></code> as
+        a whole is the same, <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;</span></code>.
+        Since <code class="computeroutput"><span class="identifier">other_parser</span></code> is busy
+        producing <code class="computeroutput"><span class="keyword">int</span></code>s — 21 of
+        them to be exact — you may be wondering what happens to the ones produced
+        during the evaluation of <code class="computeroutput"><span class="identifier">repeat</span><span class="special">(</span><span class="number">53</span><span class="special">)[</span><span class="identifier">other_parser</span><span class="special">]</span></code>
+        when it fails to find all 53 inputs. Its <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;</span></code>
+        will contain 11 <code class="computeroutput"><span class="keyword">int</span></code>s at that
+        point.
+      </p>
+<p>
+        When a repeat-parser fails, and attributes are being generated, it clears
+        its container. This applies to parsers such as the ones above, but also all
+        the other repeat parsers, including ones made using <code class="computeroutput"><span class="keyword">operator</span><span class="special">+</span></code> or <code class="computeroutput"><span class="keyword">operator</span><span class="special">*</span></code>.
+      </p>
+<p>
+        So, at the end of a successful parse by <code class="computeroutput"><span class="identifier">parser</span></code>
+        of 10 inputs (since the right side of the alternative only eats 10 repetitions),
+        the <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;</span></code> attribute
+        of <code class="computeroutput"><span class="identifier">parser</span></code> would contain 10
+        <code class="computeroutput"><span class="keyword">int</span></code>s.
+      </p>
+<div class="note"><table border="0" summary="Note">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../images/note.png"></td>
+<th align="left">Note</th>
+</tr>
+<tr><td align="left" valign="top"><p>
+          Users of Boost.Spirit may be familiar with the <code class="computeroutput"><span class="identifier">hold</span><span class="special">[]</span></code> directive. Because of the behavior described
+          above, there is no such directive in Boost.Parser.
+        </p></td></tr>
+</table></div>
+<h5>
+<a name="boost_parser.tutorial.backtracking.h0"></a>
+        <span class="phrase"><a name="boost_parser.tutorial.backtracking.expectation_points"></a></span><a class="link" href="backtracking.html#boost_parser.tutorial.backtracking.expectation_points">Expectation
+        points</a>
+      </h5>
+<p>
+        Ok, so if parsers all try their best to match the input, and are all-or-nothing,
+        doesn't that leave room for all kinds of bad input to be ignored? Consider
+        the top-level parser from the <a class="link" href="../extended_examples/parsing_json.html" title="Parsing JSON">Parsing
+        JSON</a> example.
+      </p>
+<pre class="programlisting"><span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">value_p_def</span> <span class="special">=</span>
+    <span class="identifier">number</span> <span class="special">|</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">bool_</span> <span class="special">|</span> <span class="identifier">null</span> <span class="special">|</span> <span class="identifier">string</span> <span class="special">|</span> <span class="identifier">array_p</span> <span class="special">|</span> <span class="identifier">object_p</span><span class="special">;</span>
+</pre>
+<p>
+        What happens if I use this to parse <code class="computeroutput"><span class="string">"\""</span></code>?
+        The parse tries <code class="computeroutput"><span class="identifier">number</span></code>, fails.
+        It then tries <code class="computeroutput"><span class="identifier">bp</span><span class="special">::</span><span class="identifier">bool_</span></code>, fails. Then <code class="computeroutput"><span class="identifier">null</span></code>
+        fails too. Finally, it starts parsing <code class="computeroutput"><span class="identifier">string</span></code>.
+        Good news, the first character is the open-quote of a JSON string. Unfortunately,
+        that's also the end of the input, so <code class="computeroutput"><span class="identifier">string</span></code>
+        must fail too. However, we probably don't want to just give up on parsing
+        <code class="computeroutput"><span class="identifier">string</span></code> now and try <code class="computeroutput"><span class="identifier">array_p</span></code>, right? If the user wrote an open-quote
+        with no matching close-quote, that's not the prefix of some later alternative
+        of <code class="computeroutput"><span class="identifier">value_p_def</span></code>; it's ill-formed
+        JSON. Here's the parser for the <code class="computeroutput"><span class="identifier">string</span></code>
+        rule:
+      </p>
+<pre class="programlisting"><span class="keyword">auto</span> <span class="keyword">const</span> <span class="identifier">string_def</span> <span class="special">=</span> <span class="identifier">bp</span><span class="special">::</span><span class="identifier">lexeme</span><span class="special">[</span><span class="char">'"'</span> <span class="special">&gt;&gt;</span> <span class="special">*(</span><span class="identifier">string_char</span> <span class="special">-</span> <span class="char">'"'</span><span class="special">)</span> <span class="special">&gt;</span> <span class="char">'"'</span><span class="special">];</span>
+</pre>
+<p>
+        Notice that <code class="computeroutput"><span class="keyword">operator</span><span class="special">&gt;</span></code>
+        is used on the right instead of <code class="computeroutput"><span class="keyword">operator</span><span class="special">&gt;&gt;</span></code>. This indicates the same sequence
+        operation as <code class="computeroutput"><span class="keyword">operator</span><span class="special">&gt;&gt;</span></code>,
+        except that it also represents an expectation. If the parse before the <code class="computeroutput"><span class="keyword">operator</span><span class="special">&gt;</span></code>
+        succeeds, whatever comes after it <span class="bold"><strong>must</strong></span> also
+        succeed. Otherwise, the top-level parse is failed, and a diagnostic is emitted.
+        It will say something like "Expected '"' here.", quoting the
+        line, with a caret pointing to the place in the input where it expected the
+        right-side match.
+      </p>
+<p>
+        Choosing to use <code class="computeroutput"><span class="special">&gt;</span></code> versus
+        <code class="computeroutput"><span class="special">&gt;&gt;</span></code> is how you indicate
+        to Boost.Parser that parse failure is or is not a hard error, respectively.
+      </p>
+</div>
+<div class="copyright-footer">Copyright © 2020 T. Zachary Laine<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+      </p>
+</div>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="parsing_in_detail.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="symbol_tables.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

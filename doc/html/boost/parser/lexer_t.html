@@ -1,0 +1,87 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Struct template lexer_t</title>
+<link rel="stylesheet" href="../../boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../../index.html" title="Chapter 1. Boost.Parser">
+<link rel="up" href="../../header/boost/parser/lexer_hpp.html" title="Header &lt;boost/parser/lexer.hpp&gt;">
+<link rel="prev" href="../../header/boost/parser/lexer_hpp.html" title="Header &lt;boost/parser/lexer.hpp&gt;">
+<link rel="next" href="token.html" title="Struct template token">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="spirit-nav">
+<a accesskey="p" href="../../header/boost/parser/lexer_hpp.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../../header/boost/parser/lexer_hpp.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="token.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+<div class="refentry">
+<a name="boost.parser.lexer_t"></a><div class="titlepage"></div>
+<div class="refnamediv">
+<h2><span class="refentrytitle">Struct template lexer_t</span></h2>
+<p>boost::parser::lexer_t</p>
+</div>
+<h2 class="refsynopsisdiv-title">Synopsis</h2>
+<div class="refsynopsisdiv"><pre class="synopsis"><span class="comment">// In header: &lt;<a class="link" href="../../header/boost/parser/lexer_hpp.html" title="Header &lt;boost/parser/lexer.hpp&gt;">boost/parser/lexer.hpp</a>&gt;
+
+</span><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">typename</span> CharType<span class="special">,</span> <span class="keyword">typename</span> ID<span class="special">,</span> <span class="identifier">ctll</span><span class="special">::</span><span class="identifier">fixed_string</span> WsStr <span class="special">=</span> <span class="string">"\\s+"</span><span class="special">,</span> 
+         <span class="identifier">ctll</span><span class="special">::</span><span class="identifier">fixed_string</span> RegexStr <span class="special">=</span> <span class="string">""</span><span class="special">,</span> 
+         <span class="identifier">unspecified</span> IDs <span class="special">=</span> detail::nttp_array<span class="special">&lt;</span><span class="special">-</span><span class="number">1</span><span class="special">&gt;</span><span class="special">{</span><span class="special">}</span><span class="special">,</span> 
+         <span class="identifier">unspecified</span> Specs <span class="special">=</span> detail::nttp_array<span class="special">&lt;</span>detail::parse_spec<span class="special">{</span><span class="special">}</span><span class="special">&gt;</span><span class="special">{</span><span class="special">}</span><span class="special">&gt;</span> 
+<span class="keyword">struct</span> <a class="link" href="lexer_t.html" title="Struct template lexer_t">lexer_t</a> <span class="special">{</span>
+  <span class="comment">// types</span>
+  <span class="keyword">typedef</span> <span class="identifier">ID</span>                                 <a name="boost.parser.lexer_t.id_type"></a><span class="identifier">id_type</span><span class="special">;</span>    
+  <span class="keyword">typedef</span> <a class="link" href="token.html" title="Struct template token">token</a><span class="special">&lt;</span> <span class="identifier">CharType</span> <span class="special">&gt;</span>                  <a name="boost.parser.lexer_t.token_type"></a><span class="identifier">token_type</span><span class="special">;</span> 
+  <span class="keyword">typedef</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">basic_string_view</span><span class="special">&lt;</span> <span class="identifier">CharType</span> <span class="special">&gt;</span> <a name="boost.parser.lexer_t.string_view"></a><span class="identifier">string_view</span><span class="special">;</span>
+
+  <span class="comment">// <a class="link" href="lexer_t.html#id83-bb">public static functions</a></span>
+  <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="identifier">size_t</span> <a class="link" href="lexer_t.html#id84-bb"><span class="identifier">size</span></a><span class="special">(</span><span class="special">)</span><span class="special">;</span>
+  <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="link" href="lexer_t.html#id85-bb"><span class="identifier">ids</span></a><span class="special">(</span><span class="special">)</span><span class="special">;</span>
+  <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="link" href="lexer_t.html#id86-bb"><span class="identifier">specs</span></a><span class="special">(</span><span class="special">)</span><span class="special">;</span>
+  <span class="keyword">template</span><span class="special">&lt;</span><span class="identifier">parsable_range</span> V<span class="special">&gt;</span> <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="link" href="lexer_t.html#id87-bb"><span class="identifier">regex_range</span></a><span class="special">(</span><span class="identifier">V</span> <span class="special">&amp;</span><span class="special">)</span><span class="special">;</span>
+
+  <span class="comment">// <a class="link" href="lexer_t.html#id88-bb">public member functions</a></span>
+  <span class="keyword">template</span><span class="special">&lt;</span><span class="identifier">ctll</span><span class="special">::</span><span class="identifier">fixed_string</span> RegexStr2<span class="special">,</span> <span class="keyword">auto</span> ID2<span class="special">,</span> <span class="keyword">typename</span> ValueType<span class="special">,</span> 
+           <span class="keyword">int</span> Base<span class="special">&gt;</span> 
+    <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="link" href="lexer_t.html#id89-bb"><span class="keyword">operator</span><span class="special">|</span></a><span class="special">(</span><span class="emphasis"><em><span class="identifier">unspecified</span></em></span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+  <span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">auto</span> Ch<span class="special">,</span> <span class="keyword">auto</span><span class="special">...</span> Chs<span class="special">&gt;</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="link" href="lexer_t.html#id90-bb"><span class="keyword">operator</span><span class="special">|</span></a><span class="special">(</span><span class="emphasis"><em><span class="identifier">unspecified</span></em></span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+
+  <span class="comment">// public data members</span>
+  <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="identifier">ctll</span><span class="special">::</span><span class="identifier">fixed_string</span> <span class="identifier">ws_str</span><span class="special">;</span>
+  <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="identifier">ctll</span><span class="special">::</span><span class="identifier">fixed_string</span> <span class="identifier">regex_str</span><span class="special">;</span>
+  <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword">bool</span> <span class="identifier">has_ws</span><span class="special">;</span>
+<span class="special">}</span><span class="special">;</span></pre></div>
+<div class="refsect1">
+<a name="id33835"></a><h2>Description</h2>
+<p>The type used to represent the lexer used to tokenize input during token parsing. Do not use this directly; use <code class="computeroutput">boost::parser::lexer</code> instead. </p>
+<div class="refsect2">
+<a name="id33839"></a><h3>
+<a name="id83-bb"></a><code class="computeroutput">lexer_t</code> public static functions</h3>
+<div class="orderedlist"><ol class="orderedlist" type="1">
+<li class="listitem"><pre class="literallayout"><span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="identifier">size_t</span> <a name="id84-bb"></a><span class="identifier">size</span><span class="special">(</span><span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a name="id85-bb"></a><span class="identifier">ids</span><span class="special">(</span><span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a name="id86-bb"></a><span class="identifier">specs</span><span class="special">(</span><span class="special">)</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="identifier">parsable_range</span> V<span class="special">&gt;</span> <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a name="id87-bb"></a><span class="identifier">regex_range</span><span class="special">(</span><span class="identifier">V</span> <span class="special">&amp;</span> base<span class="special">)</span><span class="special">;</span></pre></li>
+</ol></div>
+</div>
+<div class="refsect2">
+<a name="id33894"></a><h3>
+<a name="id88-bb"></a><code class="computeroutput">lexer_t</code> public member functions</h3>
+<div class="orderedlist"><ol class="orderedlist" type="1">
+<li class="listitem"><pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="identifier">ctll</span><span class="special">::</span><span class="identifier">fixed_string</span> RegexStr2<span class="special">,</span> <span class="keyword">auto</span> ID2<span class="special">,</span> <span class="keyword">typename</span> ValueType<span class="special">,</span> <span class="keyword">int</span> Base<span class="special">&gt;</span> 
+  <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a name="id89-bb"></a><span class="keyword">operator</span><span class="special">|</span><span class="special">(</span><span class="emphasis"><em><span class="identifier">unspecified</span></em></span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
+<li class="listitem"><pre class="literallayout"><span class="keyword">template</span><span class="special">&lt;</span><span class="keyword">auto</span> Ch<span class="special">,</span> <span class="keyword">auto</span><span class="special">...</span> Chs<span class="special">&gt;</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a name="id90-bb"></a><span class="keyword">operator</span><span class="special">|</span><span class="special">(</span><span class="emphasis"><em><span class="identifier">unspecified</span></em></span> rhs<span class="special">)</span> <span class="keyword">const</span><span class="special">;</span></pre></li>
+</ol></div>
+</div>
+</div>
+</div>
+<div class="copyright-footer">Copyright © 2020 T. Zachary Laine<p>
+        Distributed under the Boost Software License, Version 1.0. (See accompanying
+        file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+      </p>
+</div>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="../../header/boost/parser/lexer_hpp.html"><img src="../../images/prev.png" alt="Prev"></a><a accesskey="u" href="../../header/boost/parser/lexer_hpp.html"><img src="../../images/up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../images/home.png" alt="Home"></a><a accesskey="n" href="token.html"><img src="../../images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

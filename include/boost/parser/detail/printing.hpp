@@ -210,10 +210,14 @@ namespace boost { namespace parser { namespace detail {
         std::ostream & os,
         int components = 0);
 
-    template<typename Context, typename Expected, typename AttributeType>
+    template<
+        typename Context,
+        typename Expected,
+        typename AttributeType,
+        typename ParserMods>
     void print_parser(
         Context const & context,
-        char_parser<Expected, AttributeType> const & parser,
+        char_parser<Expected, AttributeType, ParserMods> const & parser,
         std::ostream & os,
         int components = 0);
 
@@ -256,13 +260,6 @@ namespace boost { namespace parser { namespace detail {
     void print_parser(
         Context const & context,
         char_set_parser<upper_case_chars> const & parser,
-        std::ostream & os,
-        int components = 0);
-
-    template<typename Context, typename Expected, typename AttributeType>
-    void print_parser(
-        Context const & context,
-        omit_parser<char_parser<Expected, AttributeType>> const & parser,
         std::ostream & os,
         int components = 0);
 

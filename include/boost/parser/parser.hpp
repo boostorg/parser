@@ -2849,6 +2849,12 @@ namespace boost { namespace parser {
         private:
             T * x_;
         };
+
+        template<typename ParserMods>
+        constexpr auto omit_attr(ParserMods const &)
+        {
+            return ParserMods::omit_attr;
+        }
     }
 
 #ifndef BOOST_PARSER_DOXYGEN
@@ -6613,17 +6619,23 @@ namespace boost { namespace parser {
 
 #ifndef BOOST_PARSER_DOXYGEN
 
-    template<typename Expected, typename AttributeType>
+    template<typename Expected, typename AttributeType, typename ParserMods>
     struct char_parser
     {
         constexpr char_parser() {}
-        constexpr char_parser(Expected expected) : expected_(expected) {}
+        constexpr char_parser(Expected expected, ParserMods mods) :
+            expected_(expected), mods_(mods)
+        {}
 
         template<typename T>
-        using attribute_type = std::conditional_t<
+        using char_type = std::conditional_t<
             std::is_same_v<AttributeType, void>,
             std::decay_t<T>,
             AttributeType>;
+
+        template<typename T>
+        using attribute_type = std::
+            conditional_t<ParserMods::omit_attr, detail::nope, char_type<T>>;
 
         template<
             typename Iter,
@@ -6665,12 +6677,13 @@ namespace boost { namespace parser {
                 success = false;
                 return;
             }
-            attribute_type<decltype(*first)> const x = *first;
+            char_type<decltype(*first)> const x = *first;
             if (detail::unequal(context, x, expected_)) {
                 success = false;
                 return;
             }
-            detail::assign(retval, x);
+            if constexpr (!ParserMods::omit_attr)
+                detail::assign(retval, x);
             ++first;
         }
 
@@ -6694,7 +6707,7 @@ namespace boost { namespace parser {
                  "If you're seeing this, you tried to chain calls on char_, "
                  "like 'char_('a')('b')'.  Quit it!'"));
             return parser_interface{
-                char_parser<T, AttributeType>{std::move(x)}};
+                char_parser<T, AttributeType, ParserMods>{std::move(x), mods_}};
         }
 
         /** Returns a `parser_interface` containing a `char_parser` that
@@ -6707,9 +6720,10 @@ namespace boost { namespace parser {
                  "If you're seeing this, you tried to chain calls on char_, "
                  "like 'char_('a', 'b')('c', 'd')'.  Quit it!'"));
             using char_pair_t = detail::char_pair<LoType, HiType>;
-            using char_parser_t = char_parser<char_pair_t, AttributeType>;
-            return parser_interface(
-                char_parser_t(char_pair_t{std::move(lo), std::move(hi)}));
+            using char_parser_t =
+                char_parser<char_pair_t, AttributeType, ParserMods>;
+            return parser_interface(char_parser_t(
+                char_pair_t{std::move(lo), std::move(hi)}, mods_));
         }
 
         /** Returns a `parser_interface` containing a `char_parser` that
@@ -6740,8 +6754,9 @@ namespace boost { namespace parser {
                  "like 'char_(char-set)(char-set)'.  Quit it!'"));
             auto chars = detail::make_char_range<false>(r);
             using char_range_t = decltype(chars);
-            using char_parser_t = char_parser<char_range_t, AttributeType>;
-            return parser_interface(char_parser_t(chars));
+            using char_parser_t =
+                char_parser<char_range_t, AttributeType, ParserMods>;
+            return parser_interface(char_parser_t(chars, mods_));
         }
 
         /** Returns a `parser_interface` containing a `char_parser` that
@@ -6776,11 +6791,20 @@ namespace boost { namespace parser {
                  "like 'char_(char-set)(char-set)'.  Quit it!'"));
             auto chars = detail::make_char_range<true>(r);
             using char_range_t = decltype(chars);
-            using char_parser_t = char_parser<char_range_t, AttributeType>;
-            return parser_interface(char_parser_t(chars));
+            using char_parser_t =
+                char_parser<char_range_t, AttributeType, ParserMods>;
+            return parser_interface(char_parser_t(chars, mods_));
+        }
+
+        template<typename ParserMods2>
+        constexpr auto with_parser_mods(ParserMods2 mods)
+        {
+            return char_parser<Expected, AttributeType, ParserMods2>{
+                expected_, std::move(mods)};
         }
 
         Expected expected_;
+        [[no_unique_address]] ParserMods mods_;
     };
 
     struct digit_parser
@@ -7113,15 +7137,27 @@ namespace boost { namespace parser {
     inline constexpr parser_interface<char_parser<detail::nope, char>> cu;
 
     /** Returns a literal code point parser that produces no attribute. */
-    inline constexpr auto lit(char c) noexcept { return omit[char_(c)]; }
+    inline constexpr auto lit(char c) noexcept
+    {
+        return parser_interface<
+            char_parser<detail::nope, void, parser_modifiers<true>>>{}(c);
+    }
 
 #if defined(__cpp_char8_t) || defined(BOOST_PARSER_DOXYGEN)
     /** Returns a literal code point parser that produces no attribute. */
-    inline constexpr auto lit(char8_t c) noexcept { return omit[char_(c)]; }
+    inline constexpr auto lit(char8_t c) noexcept
+    {
+        return parser_interface<
+            char_parser<detail::nope, void, parser_modifiers<true>>>{}(c);
+    }
 #endif
 
     /** Returns a literal code point parser that produces no attribute. */
-    inline constexpr auto lit(char32_t c) noexcept { return omit[char_(c)]; }
+    inline constexpr auto lit(char32_t c) noexcept
+    {
+        return parser_interface<
+            char_parser<detail::nope, void, parser_modifiers<true>>>{}(c);
+    }
 
 #ifndef BOOST_PARSER_DOXYGEN
 

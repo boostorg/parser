@@ -7161,10 +7161,13 @@ namespace boost { namespace parser {
 
 #ifndef BOOST_PARSER_DOXYGEN
 
-    template<typename StrIter, typename StrSentinel>
+    template<typename StrIter, typename StrSentinel, typename ParserMods>
     struct string_parser
     {
-        constexpr string_parser() : expected_first_(), expected_last_() {}
+        using attribute_type = std::
+            conditional_t<ParserMods::omit_attr, detail::nope, std::string>;
+
+        constexpr string_parser() = default;
 
 #if BOOST_PARSER_USE_CONCEPTS
         template<parsable_range_like R>
@@ -7179,12 +7182,16 @@ namespace boost { namespace parser {
             expected_last_(detail::make_view_end(r))
         {}
 
+        constexpr string_parser(StrIter f, StrSentinel l, ParserMods mods) :
+            expected_first_(f), expected_last_(l), mods_(mods)
+        {}
+
         template<
             typename Iter,
             typename Sentinel,
             typename Context,
             typename SkipParser>
-        std::string call(
+        attribute_type call(
             Iter & first,
             Sentinel last,
             Context const & context,
@@ -7192,7 +7199,7 @@ namespace boost { namespace parser {
             detail::flags flags,
             bool & success) const
         {
-            std::string retval;
+            attribute_type retval;
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -7238,8 +7245,13 @@ namespace boost { namespace parser {
                     return;
                 }
 
-                detail::append(
-                    retval, first, mismatch.first, detail::gen_attrs(flags));
+                if constexpr (!ParserMods::omit_attr) {
+                    detail::append(
+                        retval,
+                        first,
+                        mismatch.first,
+                        detail::gen_attrs(flags));
+                }
 
                 first = mismatch.first;
             } else {
@@ -7254,15 +7266,28 @@ namespace boost { namespace parser {
                     return;
                 }
 
-                detail::append(
-                    retval, first, mismatch.first, detail::gen_attrs(flags));
+                if constexpr (!ParserMods::omit_attr) {
+                    detail::append(
+                        retval,
+                        first,
+                        mismatch.first,
+                        detail::gen_attrs(flags));
+                }
 
                 first = mismatch.first;
             }
         }
 
+        template<typename ParserMods2>
+        constexpr auto with_parser_mods(ParserMods2 mods)
+        {
+            return string_parser<StrIter, StrSentinel, ParserMods2>{
+                expected_first_, expected_last_, std::move(mods)};
+        }
+
         StrIter expected_first_;
         StrSentinel expected_last_;
+        [[no_unique_address]] ParserMods mods_;
     };
 
 #if BOOST_PARSER_USE_CONCEPTS
@@ -7271,8 +7296,9 @@ namespace boost { namespace parser {
     template<typename R>
 #endif
     string_parser(R r) -> string_parser<
-        decltype(detail::make_view_begin(r)),
-        decltype(detail::make_view_end(r))>;
+                           decltype(detail::make_view_begin(r)),
+                           decltype(detail::make_view_end(r)),
+                           parser_modifiers<>>;
 
 #endif
 
@@ -7602,7 +7628,8 @@ namespace boost { namespace parser {
 #endif
     constexpr auto lit(R && str) noexcept
     {
-        return omit[parser::string(str)];
+        return parser_interface{parser::string(str).parser_.with_parser_mods(
+            parser_modifiers<true>{})};
     }
 
 #ifndef BOOST_PARSER_DOXYGEN

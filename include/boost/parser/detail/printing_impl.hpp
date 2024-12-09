@@ -660,37 +660,30 @@ namespace boost { namespace parser { namespace detail {
         os << "upper";
     }
 
-    template<typename Context, typename StrIter, typename StrSentinel>
+    template<
+        typename Context,
+        typename StrIter,
+        typename StrSentinel,
+        typename ParserMods>
     void print_parser(
         Context const & context,
-        string_parser<StrIter, StrSentinel> const & parser,
+        string_parser<StrIter, StrSentinel, ParserMods> const & parser,
         std::ostream & os,
         int components)
     {
-        os << "string(\"";
+        if constexpr (!parser.mods_.omit_attr) {
+            os << "string(";
+        }
+        os << "\"";
         for (auto c : BOOST_PARSER_DETAIL_TEXT_SUBRANGE(
                           parser.expected_first_, parser.expected_last_) |
                           text::as_utf8) {
             detail::print_char(os, c);
         }
-        os << "\")";
-    }
-
-    template<typename Context, typename StrIter, typename StrSentinel>
-    void print_parser(
-        Context const & context,
-        omit_parser<string_parser<StrIter, StrSentinel>> const & parser,
-        std::ostream & os,
-        int components)
-    {
         os << "\"";
-        for (auto c : BOOST_PARSER_DETAIL_TEXT_SUBRANGE(
-                          parser.parser_.expected_first_,
-                          parser.parser_.expected_last_) |
-                          text::as_utf8) {
-            detail::print_char(os, c);
+        if constexpr (!parser.mods_.omit_attr) {
+            os << ")";
         }
-        os << "\"";
     }
 
     template<typename Context, typename Quotes, typename Escapes>

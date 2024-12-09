@@ -384,7 +384,7 @@ namespace boost { namespace parser {
 
     /** Matches a particular string, delimited by an iterator sentinel pair;
         produces no attribute. */
-    template<typename StrIter, typename StrSentinel>
+    template<typename StrIter, typename StrSentinel, typename ParserMods>
     struct string_parser;
 
     /** Matches a string delimited by quotation marks; produces a

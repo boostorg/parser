@@ -52,110 +52,125 @@ namespace boost { namespace parser { namespace detail {
         typename Parser,
         typename DelimiterParser,
         typename MinType,
-        typename MaxType>
-    void print_parser(
+        typename MaxType,
+        typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        repeat_parser<Parser, DelimiterParser, MinType, MaxType> const & parser,
+        repeat_parser<
+            Parser,
+            DelimiterParser,
+            MinType,
+            MaxType,
+            ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context, typename Parser>
-    void print_parser(
+    template<typename Context, typename Parser, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        opt_parser<Parser> const & parser,
+        opt_parser<Parser, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context, typename ParserTuple>
-    void print_parser(
+    template<typename Context, typename ParserTuple, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        or_parser<ParserTuple> const & parser,
+        or_parser<ParserTuple, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context, typename ParserTuple>
-    void print_parser(
+    template<typename Context, typename ParserTuple, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        perm_parser<ParserTuple> const & parser,
+        perm_parser<ParserTuple, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
     template<
         typename Context,
         typename ParserTuple,
         typename BacktrackingTuple,
-        typename CombiningGroups>
-    void print_parser(
+        typename CombiningGroups,
+        typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        seq_parser<ParserTuple, BacktrackingTuple, CombiningGroups> const &
-            parser,
+        seq_parser<
+            ParserTuple,
+            BacktrackingTuple,
+            CombiningGroups,
+            ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context, typename Parser, typename Action>
-    void print_parser(
+    template<
+        typename Context,
+        typename Parser,
+        typename Action,
+        typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        action_parser<Parser, Action> const & parser,
+        action_parser<Parser, Action, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context, typename Parser, typename F>
-    void print_parser(
+    template<typename Context, typename Parser, typename F, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        transform_parser<Parser, F> const & parser,
+        transform_parser<Parser, F, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context, typename Parser>
-    void print_parser(
+    template<typename Context, typename Parser, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        omit_parser<Parser> const & parser,
+        raw_parser<Parser, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
-
-    template<typename Context, typename Parser>
-    void print_parser(
-        Context const & context,
-        raw_parser<Parser> const & parser,
-        std::ostream & os,
-        int components = 0);
+        int components);
 
 #if defined(BOOST_PARSER_DOXYGEN) || BOOST_PARSER_USE_CONCEPTS
-    template<typename Context, typename Parser>
-    void print_parser(
+    template<typename Context, typename Parser, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        string_view_parser<Parser> const & parser,
+        string_view_parser<Parser, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 #endif
 
-    template<typename Context, typename Parser>
-    void print_parser(
+    template<typename Context, typename Parser, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        lexeme_parser<Parser> const & parser,
+        lexeme_parser<Parser, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context, typename Parser>
-    void print_parser(
+    template<typename Context, typename Parser, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        no_case_parser<Parser> const & parser,
+        no_case_parser<Parser, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context, typename Parser, typename SkipParser>
-    void print_parser(
+    template<
+        typename Context,
+        typename Parser,
+        typename SkipParser,
+        typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        skip_parser<Parser, SkipParser> const & parser,
+        skip_parser<Parser, SkipParser, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context, typename Parser, bool FailOnMatch>
-    void print_parser(
+    template<
+        typename Context,
+        typename Parser,
+        bool FailOnMatch,
+        typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        expect_parser<Parser, FailOnMatch> const & parser,
+        expect_parser<Parser, FailOnMatch, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
     template<
         typename Context,
@@ -163,137 +178,147 @@ namespace boost { namespace parser { namespace detail {
         typename Parser,
         typename Attribute,
         typename LocalState,
-        typename ParamsTuple>
-    void print_parser(
+        typename ParamsTuple,
+        typename ParserMods>
+    void print_parser_impl(
         Context const & context,
         rule_parser<
             UseCallbacks,
             Parser,
             Attribute,
             LocalState,
-            ParamsTuple> const & parser,
+            ParamsTuple,
+            ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context, typename T>
-    void print_parser(
+    template<typename Context, typename T, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        symbol_parser<T> const & parser,
+        symbol_parser<T, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context, typename Predicate>
-    void print_parser(
+    template<typename Context, typename Predicate, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        eps_parser<Predicate> const & parser,
+        eps_parser<Predicate, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context>
-    void print_parser(
+    template<typename Context, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        eps_parser<nope> const & parser,
+        eps_parser<nope, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context>
-    void print_parser(
+    template<typename Context, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        eoi_parser const & parser,
+        eoi_parser<ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context, typename Atribute>
-    void print_parser(
+    template<typename Context, typename Atribute, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        attr_parser<Atribute> const & parser,
+        attr_parser<Atribute, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
     template<
         typename Context,
         typename Expected,
         typename AttributeType,
         typename ParserMods>
-    void print_parser(
+    void print_parser_impl(
         Context const & context,
         char_parser<Expected, AttributeType, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context>
-    void print_parser(
+    template<typename Context, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        digit_parser const & parser,
+        digit_parser<ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context>
-    void print_parser(
+    template<typename Context, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        char_subrange_parser<hex_digit_subranges> const & parser,
+        char_subrange_parser<hex_digit_subranges, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context>
-    void print_parser(
+    template<typename Context, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        char_subrange_parser<control_subranges> const & parser,
+        char_subrange_parser<control_subranges, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context>
-    void print_parser(
+    template<typename Context, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        char_set_parser<punct_chars> const & parser,
+        char_set_parser<punct_chars, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context>
-    void print_parser(
+    template<typename Context, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        char_set_parser<lower_case_chars> const & parser,
+        char_set_parser<lower_case_chars, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context>
-    void print_parser(
+    template<typename Context, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        char_set_parser<upper_case_chars> const & parser,
+        char_set_parser<upper_case_chars, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
     template<
         typename Context,
         typename StrIter,
         typename StrSentinel,
         typename ParserMods>
-    void print_parser(
+    void print_parser_impl(
         Context const & context,
         string_parser<StrIter, StrSentinel, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context, typename Quotes, typename Escapes>
-    void print_parser(
+    template<
+        typename Context,
+        typename Quotes,
+        typename Escapes,
+        typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        quoted_string_parser<Quotes, Escapes> const & parser,
+        quoted_string_parser<Quotes, Escapes, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context, bool NewlinesOnly, bool NoNewlines>
-    void print_parser(
+    template<
+        typename Context,
+        bool NewlinesOnly,
+        bool NoNewlines,
+        typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        ws_parser<NewlinesOnly, NoNewlines> const & parser,
+        ws_parser<NewlinesOnly, NoNewlines, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context>
-    void print_parser(
+    template<typename Context, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        bool_parser const & parser,
+        bool_parser<ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
     template<
         typename Context,
@@ -301,12 +326,19 @@ namespace boost { namespace parser { namespace detail {
         int Radix,
         int MinDigits,
         int MaxDigits,
-        typename Expected>
-    void print_parser(
+        typename Expected,
+        typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        uint_parser<T, Radix, MinDigits, MaxDigits, Expected> const & parser,
+        uint_parser<
+            T,
+            Radix,
+            MinDigits,
+            MaxDigits,
+            Expected,
+            ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
     template<
         typename Context,
@@ -314,38 +346,51 @@ namespace boost { namespace parser { namespace detail {
         int Radix,
         int MinDigits,
         int MaxDigits,
-        typename Expected>
-    void print_parser(
+        typename Expected,
+        typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        int_parser<T, Radix, MinDigits, MaxDigits, Expected> const & parser,
+        int_parser<T, Radix, MinDigits, MaxDigits, Expected, ParserMods> const &
+            parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context, typename T>
-    void print_parser(
+    template<typename Context, typename T, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        float_parser<T> const & parser,
+        float_parser<T, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context>
-    void print_parser(
+    template<typename Context, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        float_parser<float> const & parser,
+        float_parser<float, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context>
-    void print_parser(
+    template<typename Context, typename ParserMods>
+    void print_parser_impl(
         Context const & context,
-        float_parser<double> const & parser,
+        float_parser<double, ParserMods> const & parser,
         std::ostream & os,
-        int components = 0);
+        int components);
 
-    template<typename Context, typename SwitchValue, typename OrParser>
+    template<
+        typename Context,
+        typename SwitchValue,
+        typename OrParser,
+        typename ParserMods>
+    void print_parser_impl(
+        Context const & context,
+        switch_parser<SwitchValue, OrParser, ParserMods> const & parser,
+        std::ostream & os,
+        int components);
+
+    template<typename Context, typename Parser>
     void print_parser(
         Context const & context,
-        switch_parser<SwitchValue, OrParser> const & parser,
+        Parser const & parser,
         std::ostream & os,
         int components = 0);
 

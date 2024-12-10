@@ -156,6 +156,8 @@ int main()
               << "----------------------------------------\n";
 
     PARSE(omit[char_]);
+    PARSE(omit[omit[char_]]);
+    PARSE(omit[*omit[char_]]);
 
     std::cout << "\n\n"
               << "----------------------------------------\n"

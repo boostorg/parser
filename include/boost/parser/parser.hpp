@@ -387,7 +387,11 @@ namespace boost { namespace parser {
                 return *this;
             }
 
-            operator std::nullopt_t() const noexcept { return std::nullopt; }
+            template<typename T>
+            operator T() const noexcept
+            {
+                return {};
+            }
 
             template<typename Context>
             constexpr bool operator()(Context const &) const noexcept
@@ -984,15 +988,16 @@ namespace boost { namespace parser {
         template<typename T>
         struct is_eps_p : std::false_type
         {};
-        template<typename T>
-        struct is_eps_p<eps_parser<T>> : std::true_type
+        template<typename T, typename ParserMods>
+        struct is_eps_p<eps_parser<T, ParserMods>> : std::true_type
         {};
 
         template<typename T>
         struct is_unconditional_eps : std::false_type
         {};
-        template<>
-        struct is_unconditional_eps<eps_parser<nope>> : std::true_type
+        template<typename ParserMods>
+        struct is_unconditional_eps<eps_parser<nope, ParserMods>>
+            : std::true_type
         {};
         template<typename T>
         constexpr bool is_unconditional_eps_v =
@@ -1001,36 +1006,36 @@ namespace boost { namespace parser {
         template<typename T>
         struct is_zero_plus_p : std::false_type
         {};
-        template<typename T>
-        struct is_zero_plus_p<zero_plus_parser<T>> : std::true_type
+        template<typename T, typename ParserMods>
+        struct is_zero_plus_p<zero_plus_parser<T, ParserMods>> : std::true_type
         {};
 
         template<typename T>
         struct is_or_p : std::false_type
         {};
-        template<typename T>
-        struct is_or_p<or_parser<T>> : std::true_type
+        template<typename T, typename ParserMods>
+        struct is_or_p<or_parser<T, ParserMods>> : std::true_type
         {};
 
         template<typename T>
         struct is_perm_p : std::false_type
         {};
-        template<typename T>
-        struct is_perm_p<perm_parser<T>> : std::true_type
+        template<typename T, typename ParserMods>
+        struct is_perm_p<perm_parser<T, ParserMods>> : std::true_type
         {};
 
         template<typename T>
         struct is_seq_p : std::false_type
         {};
-        template<typename T, typename U, typename V>
-        struct is_seq_p<seq_parser<T, U, V>> : std::true_type
+        template<typename T, typename U, typename V, typename ParserMods>
+        struct is_seq_p<seq_parser<T, U, V, ParserMods>> : std::true_type
         {};
 
         template<typename T>
         struct is_one_plus_p : std::false_type
         {};
-        template<typename T>
-        struct is_one_plus_p<one_plus_parser<T>> : std::true_type
+        template<typename T, typename ParserMods>
+        struct is_one_plus_p<one_plus_parser<T, ParserMods>> : std::true_type
         {};
 
         template<typename T>
@@ -1349,11 +1354,15 @@ namespace boost { namespace parser {
 #endif
              );
 
-        template<typename Container, typename T>
-        void append(Container & c, T && x, bool gen_attrs)
+        template<typename ParserMods>
+        constexpr auto gen_attrs()
         {
-            if (!gen_attrs)
-                return;
+            return std::bool_constant<!ParserMods::omit_attr>{};
+        }
+
+        template<typename Container, typename T>
+        void append(Container & c, T && x)
+        {
             if constexpr (needs_transcoding_to_utf8<Container, T>) {
                 char32_t cps[1] = {(char32_t)x};
                 auto const r = cps | text::as_utf8;
@@ -1364,30 +1373,26 @@ namespace boost { namespace parser {
         }
 
         template<typename Container, typename T>
-        void append(std::optional<Container> & c, T && x, bool gen_attrs)
+        void append(std::optional<Container> & c, T && x)
         {
-            if (!gen_attrs)
-                return;
             if (!c)
                 c = Container();
-            return detail::append(*c, (T &&) x, gen_attrs);
+            detail::append(*c, (T &&)x, gen_attrs);
         }
 
         template<typename Container>
-        void append(Container & c, nope &&, bool)
+        void append(Container & c, nope &&)
         {}
 
         template<typename T>
-        void append(nope &, T &&, bool)
+        void append(nope &, T &&)
         {}
 
-        inline void append(nope &, nope &&, bool) {}
+        inline void append(nope &, nope &&) {}
 
         template<typename Container, typename Iter, typename Sentinel>
-        void append(Container & c, Iter first, Sentinel last, bool gen_attrs)
+        void append(Container & c, Iter first, Sentinel last)
         {
-            if (!gen_attrs)
-                return;
             if constexpr (needs_transcoding_to_utf8<
                               Container,
                               iter_value_t<Iter>>) {
@@ -1400,21 +1405,15 @@ namespace boost { namespace parser {
         }
 
         template<typename Container, typename Iter, typename Sentinel>
-        void append(
-            std::optional<Container> & c,
-            Iter first,
-            Sentinel last,
-            bool gen_attrs)
+        void append(std::optional<Container> & c, Iter first, Sentinel last)
         {
-            if (!gen_attrs)
-                return;
             if (!c)
                 c = Container();
-            return detail::append(*c, first, last, gen_attrs);
+            detail::append(*c, first, last);
         }
 
         template<typename Iter, typename Sentinel>
-        void append(nope &, Iter first, Sentinel last, bool gen_attrs)
+        void append(nope &, Iter first, Sentinel last)
         {}
 
         constexpr inline flags default_flags()
@@ -1449,11 +1448,6 @@ namespace boost { namespace parser {
         constexpr inline flags set_in_apply_parser(flags f)
         {
             return flags(uint32_t(f) | uint32_t(flags::in_apply_parser));
-        }
-        constexpr inline bool gen_attrs(flags f)
-        {
-            return (uint32_t(f) & uint32_t(flags::gen_attrs)) ==
-                   uint32_t(flags::gen_attrs);
         }
         constexpr inline bool use_skip(flags f)
         {
@@ -1643,6 +1637,9 @@ namespace boost { namespace parser {
             V base_;
         };
 
+        template<typename T>
+        struct symbol_parser_impl;
+
         enum class symbol_table_op { insert, erase, clear };
 
         template<typename T>
@@ -1694,7 +1691,7 @@ namespace boost { namespace parser {
 
         template<typename Context, typename T>
         auto get_trie(
-            Context const & context, symbol_parser<T> const & sym_parser)
+            Context const & context, symbol_parser_impl<T> const & sym_parser)
         {
             using trie_t = text::trie_map<std::vector<char32_t>, T>;
             using result_type = std::pair<trie_t &, bool>;
@@ -1735,7 +1732,7 @@ namespace boost { namespace parser {
 
         template<typename Context, typename T>
         decltype(auto) get_pending_symtab_ops(
-            Context const & context, symbol_parser<T> const & sym_parser)
+            Context const & context, symbol_parser_impl<T> const & sym_parser)
         {
             void const * ptr = static_cast<void const *>(&sym_parser);
             auto & entry = (*context.pending_symbol_table_operations_)[ptr];
@@ -1756,6 +1753,121 @@ namespace boost { namespace parser {
             }
             return *retval;
         }
+
+        template<typename T>
+        struct symbol_parser_impl
+        {
+            symbol_parser_impl() : copied_from_(nullptr) {}
+            explicit symbol_parser_impl(std::string_view diagnostic_text) :
+                copied_from_(nullptr), diagnostic_text_(diagnostic_text)
+            {}
+            symbol_parser_impl(symbol_parser_impl const & other) :
+                initial_elements_(other.initial_elements_),
+                copied_from_(other.copied_from_ ? other.copied_from_ : &other),
+                diagnostic_text_(other.diagnostic_text_)
+            {}
+            symbol_parser_impl(symbol_parser_impl && other) :
+                initial_elements_(std::move(other.initial_elements_)),
+                copied_from_(other.copied_from_),
+                diagnostic_text_(other.diagnostic_text_)
+            {}
+
+            template<typename Context>
+            void insert_for_next_parse(
+                Context const & context, std::string_view str, T x)
+            {
+                auto & pending_ops =
+                    detail::get_pending_symtab_ops(context, ref());
+                pending_ops.push_back(detail::symbol_table_operation<T>{
+                    std::string(str),
+                    std::move(x),
+                    detail::symbol_table_op::insert});
+            }
+
+            template<typename Context>
+            void
+            erase_for_next_parse(Context const & context, std::string_view str)
+            {
+                auto & pending_ops =
+                    detail::get_pending_symtab_ops(context, ref());
+                pending_ops.push_back(detail::symbol_table_operation<T>{
+                    std::string(str),
+                    std::nullopt,
+                    detail::symbol_table_op::erase});
+            }
+
+            template<typename Context>
+            void clear_for_next_parse(Context const & context)
+            {
+                auto & pending_ops =
+                    detail::get_pending_symtab_ops(context, ref());
+                pending_ops.push_back(detail::symbol_table_operation<T>{
+                    {}, std::nullopt, detail::symbol_table_op::clear});
+            }
+
+            template<typename Context>
+            parser::detail::text::optional_ref<T>
+            find(Context const & context, std::string_view str) const
+            {
+                auto [trie, has_case_folded] = detail::get_trie(context, ref());
+                if (context.no_case_depth_) {
+                    return trie[detail::case_fold_view(
+                        str | detail::text::as_utf32)];
+                } else {
+                    return trie[str | detail::text::as_utf32];
+                }
+            }
+
+            template<typename Context>
+            void
+            insert(Context const & context, std::string_view str, T && x) const
+            {
+                auto [trie, has_case_folded] = detail::get_trie(context, ref());
+                if (context.no_case_depth_) {
+                    trie.insert(
+                        detail::case_fold_view(str | detail::text::as_utf32),
+                        std::move(x));
+                } else {
+                    trie.insert(str | detail::text::as_utf32, std::move(x));
+                }
+            }
+
+            template<typename Context>
+            void erase(Context const & context, std::string_view str) const
+            {
+                auto [trie, has_case_folded] = detail::get_trie(context, ref());
+                if (context.no_case_depth_) {
+                    trie.erase(
+                        detail::case_fold_view(str | detail::text::as_utf32));
+                } else {
+                    trie.erase(str | detail::text::as_utf32);
+                }
+            }
+
+            template<typename Context>
+            void clear(Context const & context) const
+            {
+                auto [trie, _] = detail::get_trie(context, ref());
+                trie.clear();
+            }
+
+            mutable std::vector<std::pair<std::string, T>> initial_elements_;
+            symbol_parser_impl const * copied_from_;
+
+            symbol_parser_impl const & ref() const noexcept
+            {
+                if (copied_from_)
+                    return *copied_from_;
+                return *this;
+            }
+            std::vector<std::pair<std::string, T>> &
+            initial_elements() const noexcept
+            {
+                return ref().initial_elements_;
+            }
+
+            std::string_view diagnostic_text_;
+        };
 
         template<>
         struct char_subranges<hex_digit_subranges>
@@ -2025,35 +2137,29 @@ namespace boost { namespace parser {
         }
 
         template<typename Container, typename T>
-        constexpr void move_back(Container & c, T && x, bool gen_attrs)
+        constexpr void move_back(Container & c, T && x)
         {
-            if (!gen_attrs)
-                return;
             detail::move_back_impl(c, std::move(x));
         }
 
         template<typename Container>
-        constexpr void move_back(Container & c, Container & x, bool gen_attrs)
+        constexpr void move_back(Container & c, Container & x)
         {
-            if (!gen_attrs)
-                return;
             c.insert(c.end(), x.begin(), x.end());
         }
 
         template<typename Container>
-        constexpr void
-        move_back(Container & c, std::optional<Container> && x, bool gen_attrs)
+        constexpr void move_back(Container & c, std::optional<Container> && x)
         {
-            if (!gen_attrs || !x)
+            if (!x)
                 return;
             c.insert(c.end(), x->begin(), x->end());
         }
 
         template<typename Container, typename T>
-        constexpr void
-        move_back(Container & c, std::optional<T> & x, bool gen_attrs)
+        constexpr void move_back(Container & c, std::optional<T> & x)
         {
-            if (!gen_attrs || !x)
+            if (!x)
                 return;
             detail::move_back_impl(c, std::move(*x));
         }
@@ -2062,18 +2168,17 @@ namespace boost { namespace parser {
             typename Container,
             typename T,
             typename Enable = std::enable_if_t<!std::is_same_v<Container, T>>>
-        constexpr void
-        move_back(Container & c, std::optional<T> && x, bool gen_attrs)
+        constexpr void move_back(Container & c, std::optional<T> && x)
         {
-            if (!gen_attrs || !x)
+            if (!x)
                 return;
             detail::move_back_impl(c, std::move(*x));
         }
 
-        constexpr void move_back(nope, nope, bool gen_attrs) {}
+        inline constexpr void move_back(nope, nope) {}
 
         template<typename Container>
-        constexpr void move_back(Container & c, nope, bool gen_attrs)
+        constexpr void move_back(Container & c, nope)
         {}
 
         template<typename From, typename To>
@@ -2850,11 +2955,38 @@ namespace boost { namespace parser {
             T * x_;
         };
 
-        template<typename ParserMods>
-        constexpr auto omit_attr(ParserMods const &)
+        template<typename F, typename Parsers, int... Is>
+        auto modify_parsers_impl(
+            F f, Parsers parsers, std::integer_sequence<int, Is...>)
         {
-            return ParserMods::omit_attr;
+            return hl::make_tuple(
+                parser::get(parsers, llong<Is>{}).with_parser_mods(f)...);
         }
+        template<typename F, typename... Parsers>
+        auto modify_parsers(F f, tuple<Parsers...> parsers)
+        {
+            return modify_parsers_impl(
+                f,
+                parsers,
+                std::make_integer_sequence<int, sizeof...(Parsers)>{});
+        }
+
+        inline constexpr struct omit_attr_t
+        {
+            template<bool OmitAttr>
+            constexpr auto operator()(parser_modifiers<OmitAttr> const &) const
+            {
+                return parser_modifiers<true>{};
+            }
+        } omit_attr;
+
+        template<typename Attribute, bool OmitAttr>
+        using final_attribute_type_impl =
+            std::conditional_t<OmitAttr, nope, Attribute>;
+
+        template<typename Attribute, typename ParserMods>
+        using final_attribute_type =
+            final_attribute_type_impl<Attribute, ParserMods::omit_attr>;
     }
 
 #ifndef BOOST_PARSER_DOXYGEN
@@ -3002,7 +3134,8 @@ namespace boost { namespace parser {
         typename Parser,
         typename DelimiterParser,
         typename MinType,
-        typename MaxType>
+        typename MaxType,
+        typename ParserMods>
     struct repeat_parser
     {
         constexpr repeat_parser(
@@ -3016,7 +3149,20 @@ namespace boost { namespace parser {
             max_(_max)
         {}
 
-        template<
+        constexpr repeat_parser(
+            Parser parser,
+            DelimiterParser delimiter_parser,
+            MinType _min,
+            MaxType _max,
+            ParserMods mods) :
+            parser_(parser),
+            delimiter_parser_(delimiter_parser),
+            min_(_min),
+            max_(_max),
+            mods_(std::move(mods))
+        {}
+
+       template<
             typename Iter,
             typename Sentinel,
             typename Context,
@@ -3033,7 +3179,10 @@ namespace boost { namespace parser {
                 first, last, context, skip, flags, success));
             auto retval = detail::make_sequence_of<attr_t>();
             call(first, last, context, skip, flags, success, retval);
-            return retval;
+            if constexpr (detail::gen_attrs<ParserMods>())
+                return retval;
+            else
+                return detail::nope{};
         }
 
         template<
@@ -3071,8 +3220,10 @@ namespace boost { namespace parser {
                     detail::set_in_apply_parser(flags),
                     success,
                     attr);
-                if (success)
-                    retval = std::move(attr);
+                if constexpr (detail::gen_attrs<ParserMods>()) {
+                    if (success)
+                        retval = std::move(attr);
+                }
             } else { // Otherwise, Attribute must be a container or a nope.
                 using attr_t = detail::parser_attr_or_container_value_type_v<
                     decltype(parser_.call(
@@ -3088,11 +3239,12 @@ namespace boost { namespace parser {
                     parser_.call(
                         first, last, context, skip, flags, success, attr);
                     if (!success) {
-                        detail::assign(retval, Attribute());
+                        if constexpr (detail::gen_attrs<ParserMods>())
+                            detail::assign(retval, Attribute());
                         return;
                     }
-                    detail::move_back(
-                        retval, std::move(attr), detail::gen_attrs(flags));
+                    if constexpr (detail::gen_attrs<ParserMods>())
+                        detail::move_back(retval, std::move(attr));
                 }
 
                 int64_t const end = detail::resolve(context, max_);
@@ -3132,9 +3284,29 @@ namespace boost { namespace parser {
                         first = prev_first;
                         break;
                     }
-                    detail::move_back(
-                        retval, std::move(attr), detail::gen_attrs(flags));
+                    if constexpr (detail::gen_attrs<ParserMods>())
+                        detail::move_back(retval, std::move(attr));
                 }
+            }
+        }
+
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            if constexpr (std::is_same_v<DelimiterParser, detail::nope>) {
+                return parser::repeat_parser(
+                    parser_.with_parser_mods(f),
+                    detail::nope{},
+                    min_,
+                    max_,
+                    f(mods_));
+            } else {
+                return parser::repeat_parser(
+                    parser_.with_parser_mods(f),
+                    delimiter_parser_.with_parser_mods(f),
+                    min_,
+                    max_,
+                    f(mods_));
             }
         }
 
@@ -3142,40 +3314,86 @@ namespace boost { namespace parser {
         DelimiterParser delimiter_parser_;
         MinType min_;
         MaxType max_;
+        [[no_unique_address]] ParserMods mods_;
     };
 #endif
 
-    template<typename Parser>
-    struct zero_plus_parser : repeat_parser<Parser>
+    template<typename Parser, typename ParserMods>
+    struct zero_plus_parser
+        : repeat_parser<Parser, detail::nope, int64_t, int64_t, ParserMods>
     {
-        constexpr zero_plus_parser(Parser parser) :
-            repeat_parser<Parser>(parser, 0, Inf)
+        using base_type =
+            repeat_parser<Parser, detail::nope, int64_t, int64_t, ParserMods>;
+
+        constexpr zero_plus_parser(Parser parser) : base_type(parser, 0, Inf) {}
+        constexpr zero_plus_parser(Parser parser, ParserMods mods) :
+            base_type(parser, detail::nope{}, 0, Inf, mods)
         {}
+
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            return parser::zero_plus_parser(
+                this->parser_.with_parser_mods(f), f(this->mods_));
+        }
     };
 
-    template<typename Parser>
-    struct one_plus_parser : repeat_parser<Parser>
+    template<typename Parser, typename ParserMods>
+    struct one_plus_parser
+        : repeat_parser<Parser, detail::nope, int64_t, int64_t, ParserMods>
     {
-        constexpr one_plus_parser(Parser parser) :
-            repeat_parser<Parser>(parser, 1, Inf)
+        using base_type =
+            repeat_parser<Parser, detail::nope, int64_t, int64_t, ParserMods>;
+
+        constexpr one_plus_parser(Parser parser) : base_type(parser, 1, Inf) {}
+        constexpr one_plus_parser(Parser parser, ParserMods mods) :
+            base_type(parser, detail::nope{}, 1, Inf, mods)
         {}
+
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            return parser::one_plus_parser(
+                this->parser_.with_parser_mods(f), f(this->mods_));
+        }
     };
 
-    template<typename Parser, typename DelimiterParser>
-    struct delimited_seq_parser : repeat_parser<Parser, DelimiterParser>
+    template<typename Parser, typename DelimiterParser, typename ParserMods>
+    struct delimited_seq_parser
+        : repeat_parser<Parser, DelimiterParser, int64_t, int64_t, ParserMods>
     {
+        using base_type =
+            repeat_parser<Parser, DelimiterParser, int64_t, int64_t, ParserMods>;
+
         constexpr delimited_seq_parser(
             Parser parser, DelimiterParser delimiter_parser) :
-            repeat_parser<Parser, DelimiterParser>(
-                parser, 1, Inf, delimiter_parser)
+            base_type(parser, 1, Inf, delimiter_parser)
         {}
+        constexpr delimited_seq_parser(
+            Parser parser, DelimiterParser delimiter_parser, ParserMods mods) :
+            base_type(parser, delimiter_parser, 1, Inf, mods)
+        {}
+
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            return parser::delimited_seq_parser(
+                this->parser_.with_parser_mods(f),
+                this->delimiter_parser_.with_parser_mods(f),
+                f(this->mods_));
+         }
     };
 
     //[ opt_parser_beginning
-    template<typename Parser>
+    template<typename Parser, typename ParserMods>
     struct opt_parser
     {
         //]
+        constexpr opt_parser(Parser parser) : parser_(parser) {}
+        constexpr opt_parser(Parser parser, ParserMods mods) :
+            parser_(parser), mods_(std::move(mods))
+        {}
+
         //[ opt_parser_attr_call
         template<
             typename Iter,
@@ -3192,7 +3410,9 @@ namespace boost { namespace parser {
         {
             using attr_t = decltype(parser_.call(
                 first, last, context, skip, flags, success));
-            detail::optional_of<attr_t> retval;
+            detail::
+                final_attribute_type<detail::optional_of<attr_t>, ParserMods>
+                    retval;
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -3224,7 +3444,7 @@ namespace boost { namespace parser {
             //]
 
             //[ opt_parser_no_gen_attr_path
-            if (!detail::gen_attrs(flags)) {
+            if (!detail::gen_attrs<ParserMods>()) {
                 parser_.call(first, last, context, skip, flags, success);
                 success = true;
                 return;
@@ -3238,15 +3458,25 @@ namespace boost { namespace parser {
         }
         //]
 
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            return parser::opt_parser(parser_.with_parser_mods(f), f(mods_));
+        }
+
         //[ opt_parser_end
         Parser parser_;
+        [[no_unique_address]] ParserMods mods_;
     };
     //]
 
-    template<typename ParserTuple>
+    template<typename ParserTuple, typename ParserMods>
     struct or_parser
     {
         constexpr or_parser(ParserTuple parsers) : parsers_(parsers) {}
+        constexpr or_parser(ParserTuple parsers, ParserMods mods) :
+            parsers_(parsers), mods_(std::move(mods))
+        {}
 
 #ifndef BOOST_PARSER_DOXYGEN
 
@@ -3359,7 +3589,10 @@ namespace boost { namespace parser {
 
             result_t retval{};
             call(first, last, context, skip, flags, success, retval);
-            return retval;
+            if constexpr (detail::gen_attrs<ParserMods>())
+                return retval;
+            else
+                return detail::nope{};
         }
 
         template<
@@ -3392,7 +3625,7 @@ namespace boost { namespace parser {
                                &done](auto const & parser) {
                 if (done)
                     return;
-                if (detail::gen_attrs(flags))
+                if constexpr (detail::gen_attrs<ParserMods>())
                     use_parser(parser, retval);
                 else
                     use_parser(parser);
@@ -3416,13 +3649,24 @@ namespace boost { namespace parser {
 
 #endif
 
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            return parser::or_parser(
+                detail::modify_parsers(f, parsers_), f(mods_));
+        }
+
         ParserTuple parsers_;
+        [[no_unique_address]] ParserMods mods_;
     };
 
-    template<typename ParserTuple>
+    template<typename ParserTuple, typename ParserMods>
     struct perm_parser
     {
         constexpr perm_parser(ParserTuple parsers) : parsers_(parsers) {}
+        constexpr perm_parser(ParserTuple parsers, ParserMods mods) :
+            parsers_(parsers), mods_(std::move(mods))
+        {}
 
 #ifndef BOOST_PARSER_DOXYGEN
 
@@ -3513,7 +3757,10 @@ namespace boost { namespace parser {
             if (success)
                 first_ = first;
 
-            return retval;
+            if constexpr (detail::gen_attrs<ParserMods>())
+                return retval;
+            else
+                return detail::nope{};
         }
 
         template<
@@ -3546,8 +3793,10 @@ namespace boost { namespace parser {
             if constexpr (detail::is_optional_v<Attribute>) {
                 typename Attribute::value_type attr;
                 call(first, last, context, skip, flags, success, attr);
-                if (success)
-                    detail::assign(retval, std::move(attr));
+                if constexpr (detail::gen_attrs<ParserMods>()) {
+                    if (success)
+                        detail::assign(retval, std::move(attr));
+                }
             } else if constexpr (
                 detail::is_tuple<Attribute>{} ||
                 detail::is_struct_compatible_v<Attribute, result_t>) {
@@ -3561,8 +3810,10 @@ namespace boost { namespace parser {
                     retval,
                     indices);
 
-                if (!success)
-                    detail::assign(retval, Attribute());
+                if constexpr (detail::gen_attrs<ParserMods>()) {
+                    if (!success)
+                        detail::assign(retval, Attribute());
+                }
             } else if constexpr (detail::is_constructible_from_tuple_v<
                                      Attribute,
                                      result_t>) {
@@ -3577,11 +3828,13 @@ namespace boost { namespace parser {
                     temp_retval,
                     indices);
 
-                if (success && detail::gen_attrs(flags)) {
-                    detail::assign(
-                        retval,
-                        detail::make_from_tuple<Attribute>(
-                            std::move(temp_retval)));
+                if constexpr (detail::gen_attrs<ParserMods>()) {
+                    if (success) {
+                        detail::assign(
+                            retval,
+                            detail::make_from_tuple<Attribute>(
+                                std::move(temp_retval)));
+                    }
                 }
             } else {
 #if 0 // TODO Seems incompatible with this parser.
@@ -3597,9 +3850,11 @@ namespace boost { namespace parser {
                     temp_retval,
                     indices);
 
-                if (success && detail::gen_attrs(flags)) {
-                    detail::assign(
-                        retval, std::move(detail::hl::front(temp_retval)));
+                if constexpr (detail::gen_attrs<ParserMods>()) {
+                    if (success) {
+                        detail::assign(
+                            retval, std::move(detail::hl::front(temp_retval)));
+                    }
                 }
 #else
                 static_assert(
@@ -3672,7 +3927,15 @@ namespace boost { namespace parser {
 
 #endif
 
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            return parser::perm_parser(
+                detail::modify_parsers(f, parsers_), f(mods_));
+        }
+
         ParserTuple parsers_;
+        [[no_unique_address]] ParserMods mods_;
     };
 
     namespace detail {
@@ -3816,13 +4079,17 @@ namespace boost { namespace parser {
     template<
         typename ParserTuple,
         typename BacktrackingTuple,
-        typename CombiningGroups>
+        typename CombiningGroups,
+        typename ParserMods>
     struct seq_parser
     {
         using backtracking = BacktrackingTuple;
         using combining_groups = CombiningGroups;
 
         constexpr seq_parser(ParserTuple parsers) : parsers_(parsers) {}
+        constexpr seq_parser(ParserTuple parsers, ParserMods mods) :
+            parsers_(parsers), mods_(std::move(mods))
+        {}
 
         static constexpr auto true_ = std::true_type{};
         static constexpr auto false_ = std::false_type{};
@@ -4175,11 +4442,15 @@ namespace boost { namespace parser {
                 first_ = first;
 
             // A 1-tuple is converted to a scalar.
-            if constexpr (detail::hl::size(retval) == llong<1>{}) {
-                using namespace literals;
-                return parser::get(retval, 0_c);
+            if constexpr (detail::gen_attrs<ParserMods>()) {
+                if constexpr (detail::hl::size(retval) == llong<1>{}) {
+                    using namespace literals;
+                    return parser::get(retval, 0_c);
+                } else {
+                    return retval;
+                }
             } else {
-                return retval;
+                return detail::nope{};
             }
         }
 
@@ -4230,8 +4501,10 @@ namespace boost { namespace parser {
             if constexpr (detail::is_optional_v<Attribute>) {
                 typename Attribute::value_type attr;
                 call(first, last, context, skip, flags, success, attr);
-                if (success)
-                    detail::assign(retval, std::move(attr));
+                if constexpr (detail::gen_attrs<ParserMods>()) {
+                    if (success)
+                        detail::assign(retval, std::move(attr));
+                }
             } else if constexpr (
                 detail::is_tuple<Attribute>{} ||
                 detail::is_struct_compatible_v<Attribute, temp_result_attr_t>) {
@@ -4246,8 +4519,10 @@ namespace boost { namespace parser {
                     indices,
                     merged);
 
-                if (!success)
-                    detail::assign(retval, Attribute());
+                if constexpr (detail::gen_attrs<ParserMods>()) {
+                    if (!success)
+                        detail::assign(retval, Attribute());
+                }
             } else if constexpr (
                 0 < max_index_t::value && detail::is_constructible_from_tuple_v<
                                               Attribute,
@@ -4264,11 +4539,13 @@ namespace boost { namespace parser {
                     indices,
                     merged);
 
-                if (success && detail::gen_attrs(flags)) {
-                    detail::assign(
-                        retval,
-                        detail::make_from_tuple<Attribute>(
-                            std::move(temp_retval)));
+                if constexpr (detail::gen_attrs<ParserMods>()) {
+                    if (success) {
+                        detail::assign(
+                            retval,
+                            detail::make_from_tuple<Attribute>(
+                                std::move(temp_retval)));
+                    }
                 }
             } else {
                 // call_impl requires a tuple, so we must wrap this scalar.
@@ -4284,9 +4561,11 @@ namespace boost { namespace parser {
                     indices,
                     merged);
 
-                if (success && detail::gen_attrs(flags)) {
-                    detail::assign(
-                        retval, std::move(detail::hl::front(temp_retval)));
+                if constexpr (detail::gen_attrs<ParserMods>()) {
+                    if (success) {
+                        detail::assign(
+                            retval, std::move(detail::hl::front(temp_retval)));
+                    }
                 }
             }
 
@@ -4348,7 +4627,7 @@ namespace boost { namespace parser {
                 bool const can_backtrack =
                     parser::get(parser_index_merged_and_backtrack, 3_c);
 
-                if (!detail::gen_attrs(flags)) {
+                if constexpr (!detail::gen_attrs<ParserMods>()) {
                     parser.call(first, last, context, skip, flags, success);
                     if (!success && !can_backtrack) {
                         std::stringstream oss;
@@ -4418,8 +4697,7 @@ namespace boost { namespace parser {
                          !std::is_integral_v<just_x>)) {
                         detail::assign(out, std::move(x));
                     } else {
-                        detail::move_back(
-                            out, std::move(x), detail::gen_attrs(flags));
+                        detail::move_back(out, std::move(x));
                     }
                 }
             };
@@ -4434,7 +4712,20 @@ namespace boost { namespace parser {
         template<bool AllowBacktracking, typename Parser>
         constexpr auto append(parser_interface<Parser> parser) const noexcept;
 
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            auto parsers = detail::modify_parsers(f, parsers_);
+            auto mods = f(mods_);
+            return seq_parser<
+                decltype(parsers),
+                BacktrackingTuple,
+                CombiningGroups,
+                decltype(mods)>(std::move(parsers), std::move(mods));
+        }
+
         ParserTuple parsers_;
+        [[no_unique_address]] ParserMods mods_;
     };
 
 #endif
@@ -4511,9 +4802,17 @@ namespace boost { namespace parser {
 
 #ifndef BOOST_PARSER_DOXYGEN
 
-    template<typename Parser, typename Action>
+    // TODO: Consider turning the action into a mod data member.
+    template<typename Parser, typename Action, typename ParserMods>
     struct action_parser
     {
+        constexpr action_parser(Parser parser, Action action) :
+            parser_(parser), action_(action)
+        {}
+        constexpr action_parser(Parser parser, Action action, ParserMods mods) :
+            parser_(parser), action_(action), mods_(std::move(mods))
+        {}
+
         template<
             typename Iter,
             typename Sentinel,
@@ -4593,13 +4892,29 @@ namespace boost { namespace parser {
             }
         }
 
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            return parser::action_parser(
+                parser_.with_parser_mods(f), action_, f(mods_));
+        }
+
         Parser parser_;
         Action action_;
+        [[no_unique_address]] ParserMods mods_;
     };
 
-    template<typename Parser, typename F>
+    // TODO: Consider turning this into a mod data member, same with raw_- and
+    // string_view_parser.
+    template<typename Parser, typename F, typename ParserMods>
     struct transform_parser
     {
+        constexpr transform_parser(Parser parser, F f) : parser_(parser), f_(f)
+        {}
+        constexpr transform_parser(Parser parser, F f, ParserMods mods) :
+            parser_(parser), f_(f), mods_(std::move(mods))
+        {}
+
         template<
             typename Iter,
             typename Sentinel,
@@ -4617,10 +4932,14 @@ namespace boost { namespace parser {
                 *this, first, last, context, flags, detail::global_nope);
             auto attr =
                 parser_.call(first, last, context, skip, flags, success);
-            if (success && detail::gen_attrs(flags))
-                return f_(std::move(attr));
-            else
-                return decltype(f_(std::move(attr))){};
+            if constexpr (detail::gen_attrs<ParserMods>()) {
+                if (success)
+                    return f_(std::move(attr));
+                else
+                    return decltype(f_(std::move(attr))){};
+            } else {
+                return detail::nope{};
+            }
         }
 
         template<
@@ -4642,90 +4961,50 @@ namespace boost { namespace parser {
                 *this, first, last, context, flags, retval);
             auto attr =
                 parser_.call(first, last, context, skip, flags, success);
-            if (success && detail::gen_attrs(flags))
-                detail::assign(retval, f_(std::move(attr)));
+            if constexpr (detail::gen_attrs<ParserMods>()) {
+                if (success)
+                    detail::assign(retval, f_(std::move(attr)));
+            }
+        }
+
+        template<typename F2>
+        constexpr auto with_parser_mods(F2 f) const
+        {
+            return parser::transform_parser(
+                parser_.with_parser_mods(f), f_, f(mods_));
         }
 
         Parser parser_;
         F f_;
+        [[no_unique_address]] ParserMods mods_;
     };
 
-    template<typename Parser>
-    struct omit_parser
-    {
-        template<
-            typename Iter,
-            typename Sentinel,
-            typename Context,
-            typename SkipParser>
-        detail::nope call(
-            Iter & first,
-            Sentinel last,
-            Context const & context,
-            SkipParser const & skip,
-            detail::flags flags,
-            bool & success) const
-        {
-            [[maybe_unused]] auto _ = detail::scoped_trace(
-                *this, first, last, context, flags, detail::global_nope);
-
-            parser_.call(
-                first,
-                last,
-                context,
-                skip,
-                detail::disable_attrs(flags),
-                success);
-            return {};
-        }
-
-        template<
-            typename Iter,
-            typename Sentinel,
-            typename Context,
-            typename SkipParser,
-            typename Attribute>
-        void call(
-            Iter & first,
-            Sentinel last,
-            Context const & context,
-            SkipParser const & skip,
-            detail::flags flags,
-            bool & success,
-            Attribute & retval) const
-        {
-            [[maybe_unused]] auto _ = detail::scoped_trace(
-                *this, first, last, context, flags, retval);
-
-            parser_.call(
-                first,
-                last,
-                context,
-                skip,
-                detail::disable_attrs(flags),
-                success);
-        }
-
-        Parser parser_;
-    };
-
-    template<typename Parser>
+    template<typename Parser, typename ParserMods>
     struct raw_parser
     {
+        constexpr raw_parser(Parser parser) : parser_(parser) {}
+        constexpr raw_parser(Parser parser, ParserMods mods) :
+            parser_(parser), mods_(std::move(mods))
+        {}
+
         template<
             typename Iter,
             typename Sentinel,
             typename Context,
             typename SkipParser>
-        BOOST_PARSER_SUBRANGE<Iter> call(
+        auto call(
             Iter & first,
             Sentinel last,
             Context const & context,
             SkipParser const & skip,
             detail::flags flags,
             bool & success) const
+            -> detail::
+                final_attribute_type<BOOST_PARSER_SUBRANGE<Iter>, ParserMods>
         {
-            BOOST_PARSER_SUBRANGE<Iter> retval;
+            detail::
+                final_attribute_type<BOOST_PARSER_SUBRANGE<Iter>, ParserMods>
+                    retval;
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -4756,18 +5035,34 @@ namespace boost { namespace parser {
                 skip,
                 detail::disable_attrs(flags),
                 success);
-            if (success && detail::gen_attrs(flags))
-                detail::assign(
-                    retval, BOOST_PARSER_SUBRANGE<Iter>(initial_first, first));
+            if constexpr (detail::gen_attrs<ParserMods>()) {
+                if (success) {
+                    detail::assign(
+                        retval,
+                        BOOST_PARSER_SUBRANGE<Iter>(initial_first, first));
+                }
+            }
+        }
+
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            return parser::raw_parser(parser_.with_parser_mods(f), f(mods_));
         }
 
         Parser parser_;
+        [[no_unique_address]] ParserMods mods_;
     };
 
 #if BOOST_PARSER_USE_CONCEPTS
-    template<typename Parser>
+    template<typename Parser, typename ParserMods>
     struct string_view_parser
     {
+        constexpr string_view_parser(Parser parser) : parser_(parser) {}
+        constexpr string_view_parser(Parser parser, ParserMods mods) :
+            parser_(parser), mods_(std::move(mods))
+        {}
+
         template<
             typename Iter,
             typename Sentinel,
@@ -4790,7 +5085,10 @@ namespace boost { namespace parser {
                 "a contiguous range.  If you're seeing this static_assert, you "
                 "have not met this contract.");
             using char_type = detail::remove_cv_ref_t<decltype(*r.first)>;
-            std::basic_string_view<char_type> retval;
+            detail::final_attribute_type<
+                std::basic_string_view<char_type>,
+                ParserMods>
+                retval;
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -4822,35 +5120,51 @@ namespace boost { namespace parser {
                 detail::disable_attrs(flags),
                 success);
 
-            if (!success || !detail::gen_attrs(flags))
+            if (!success || !detail::gen_attrs<ParserMods>())
                 return;
 
-            auto r = parser::detail::text::unpack_iterator_and_sentinel(
-                initial_first, first);
-            static_assert(
-                std::contiguous_iterator<decltype(r.first)>,
-                "string_view_parser and the string_view[] directive that uses "
-                "it requires that the underlying char sequence being parsed be "
-                "a contiguous range.  If you're seeing this static_assert, you "
-                "have not met this contract.");
-            using char_type = detail::remove_cv_ref_t<decltype(*r.first)>;
-            if (initial_first == first) {
-                detail::assign(retval, std::basic_string_view<char_type>{});
-            } else {
-                detail::assign(
-                    retval,
-                    std::basic_string_view<char_type>{
-                        &*r.first, std::size_t(r.last - r.first)});
+            if constexpr (detail::gen_attrs<ParserMods>()) {
+                auto r = parser::detail::text::unpack_iterator_and_sentinel(
+                    initial_first, first);
+                static_assert(
+                    std::contiguous_iterator<decltype(r.first)>,
+                    "string_view_parser and the string_view[] directive that "
+                    "uses it requires that the underlying char sequence being "
+                    "parsed be a contiguous range.  If you're seeing this "
+                    "static_assert, you have not met this contract.");
+                using char_type = detail::remove_cv_ref_t<decltype(*r.first)>;
+                if (initial_first == first) {
+                    detail::assign(retval, std::basic_string_view<char_type>{});
+                } else {
+                    detail::assign(
+                        retval,
+                        std::basic_string_view<char_type>{
+                            &*r.first, std::size_t(r.last - r.first)});
+                }
             }
         }
 
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            return parser::string_view_parser(
+                parser_.with_parser_mods(f), f(mods_));
+        }
+
         Parser parser_;
+        [[no_unique_address]] ParserMods mods_;
     };
 #endif
 
-    template<typename Parser>
+    // TODO: -> mod
+    template<typename Parser, typename ParserMods>
     struct lexeme_parser
     {
+        constexpr lexeme_parser(Parser parser) : parser_(parser) {}
+        constexpr lexeme_parser(Parser parser, ParserMods mods) :
+            parser_(parser), mods_(std::move(mods))
+        {}
+
         template<
             typename Iter,
             typename Sentinel,
@@ -4866,7 +5180,7 @@ namespace boost { namespace parser {
         {
             using attr_t = decltype(parser_.call(
                 first, last, context, skip, flags, success));
-            attr_t retval{};
+            detail::final_attribute_type<attr_t, ParserMods> retval{};
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -4899,12 +5213,25 @@ namespace boost { namespace parser {
                 retval);
         }
 
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            return parser::lexeme_parser(parser_.with_parser_mods(f), f(mods_));
+        }
+
         Parser parser_;
+        [[no_unique_address]] ParserMods mods_;
     };
 
-    template<typename Parser>
+    // TODO: -> mod
+    template<typename Parser, typename ParserMods>
     struct no_case_parser
     {
+        constexpr no_case_parser(Parser parser) : parser_(parser) {}
+        constexpr no_case_parser(Parser parser, ParserMods mods) :
+            parser_(parser), mods_(std::move(mods))
+        {}
+
         template<
             typename Iter,
             typename Sentinel,
@@ -4923,7 +5250,7 @@ namespace boost { namespace parser {
 
             using attr_t = decltype(parser_.call(
                 first, last, context, skip, flags, success));
-            attr_t retval{};
+            detail::final_attribute_type<attr_t, ParserMods> retval{};
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -4952,12 +5279,27 @@ namespace boost { namespace parser {
             parser_.call(first, last, context, skip, flags, success, retval);
         }
 
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            return parser::no_case_parser(
+                parser_.with_parser_mods(f), f(mods_));
+        }
+
         Parser parser_;
+        [[no_unique_address]] ParserMods mods_;
     };
 
-    template<typename Parser, typename SkipParser>
+    template<typename Parser, typename SkipParser, typename ParserMods>
     struct skip_parser
     {
+        constexpr skip_parser(Parser parser, SkipParser skip) :
+            parser_(parser), skip_parser_(skip)
+        {}
+        constexpr skip_parser(Parser parser, SkipParser skip, ParserMods mods) :
+            parser_(parser), skip_parser_(skip), mods_(std::move(mods))
+        {}
+
         template<
             typename Iter,
             typename Sentinel,
@@ -4973,7 +5315,7 @@ namespace boost { namespace parser {
         {
             using attr_t = decltype(parser_.call(
                 first, last, context, skip, flags, success));
-            attr_t retval{};
+            detail::final_attribute_type<attr_t, ParserMods> retval{};
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -5017,13 +5359,30 @@ namespace boost { namespace parser {
             }
         }
 
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            return parser::skip_parser(
+                parser_.with_parser_mods(f),
+                skip_parser_.with_parser_mods(f),
+                f(mods_));
+        }
+
         Parser parser_;
         SkipParser skip_parser_;
+        [[no_unique_address]] ParserMods mods_;
     };
 
-    template<typename Parser, bool FailOnMatch>
+    // TODO: Consider adding expactation (pass/fail) as a mod property, and
+    // adding pre and post expectation parsers to the mod properties.
+    template<typename Parser, bool FailOnMatch, typename ParserMods>
     struct expect_parser
     {
+        constexpr expect_parser(Parser parser) : parser_(parser) {}
+        constexpr expect_parser(Parser parser, ParserMods mods) :
+            parser_(parser), mods_(std::move(mods))
+        {}
+
         template<
             typename Iter,
             typename Sentinel,
@@ -5072,26 +5431,46 @@ namespace boost { namespace parser {
                 success = !success;
         }
 
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            auto mods = f(mods_);
+            return expect_parser<
+                decltype(parser_.with_parser_mods(f)),
+                FailOnMatch,
+                decltype(mods)>{parser_.with_parser_mods(f), std::move(mods)};
+        }
+
         Parser parser_;
+        [[no_unique_address]] ParserMods mods_;
     };
 
-    template<typename T>
-    struct symbol_parser
+    template<typename T, typename ParserMods>
+    struct symbol_parser : detail::symbol_parser_impl<T>
     {
-        symbol_parser() : copied_from_(nullptr) {}
+        symbol_parser() : detail::symbol_parser_impl<T>() {}
         explicit symbol_parser(std::string_view diagnostic_text) :
-            copied_from_(nullptr), diagnostic_text_(diagnostic_text)
+            detail::symbol_parser_impl<T>(diagnostic_text)
         {}
         symbol_parser(symbol_parser const & other) :
-            initial_elements_(other.initial_elements_),
-            copied_from_(other.copied_from_ ? other.copied_from_ : &other),
-            diagnostic_text_(other.diagnostic_text_)
+            detail::symbol_parser_impl<T>(other)
         {}
         symbol_parser(symbol_parser && other) :
-            initial_elements_(std::move(other.initial_elements_)),
-            copied_from_(other.copied_from_),
-            diagnostic_text_(other.diagnostic_text_)
+            detail::symbol_parser_impl<T>(std::move(other))
         {}
+        template<typename OldParserMods>
+        symbol_parser(
+            symbol_parser<T, OldParserMods> const & other, ParserMods mods) :
+            detail::symbol_parser_impl<T>(other), mods_(std::move(mods))
+        {}
+        template<typename OldParserMods>
+        symbol_parser(
+            symbol_parser<T, OldParserMods> && other, ParserMods mods) :
+            detail::symbol_parser_impl<T>(std::move(other)),
+            mods_(std::move(mods))
+        {}
+
+#ifdef BOOST_PARSER_DOXYGEN
 
         /** Inserts an entry consisting of a UTF-8 string `str` to match, and
             an associated attribute `x`, to `*this`.  The entry is added for
@@ -5099,41 +5478,20 @@ namespace boost { namespace parser {
             the current top-level parse will not necessarily match `str`. */
         template<typename Context>
         void insert_for_next_parse(
-            Context const & context, std::string_view str, T x)
-        {
-            auto & pending_ops =
-                detail::get_pending_symtab_ops(context, ref());
-            pending_ops.push_back(detail::symbol_table_operation<T>{
-                std::string(str),
-                std::move(x),
-                detail::symbol_table_op::insert});
-        }
+            Context const & context, std::string_view str, T x);
 
         /** Erases the entry whose UTF-8 match string is `str`, from `*this`.
             The entry will no longer be available for use in all subsequent
             top-level parses.  `str` will not be removed from the symbols
             matched in the current top-level parse. */
         template<typename Context>
-        void erase_for_next_parse(Context const & context, std::string_view str)
-        {
-            auto & pending_ops =
-                detail::get_pending_symtab_ops(context, ref());
-            pending_ops.push_back(detail::symbol_table_operation<T>{
-                std::string(str),
-                std::nullopt,
-                detail::symbol_table_op::erase});
-        }
+        void
+        erase_for_next_parse(Context const & context, std::string_view str);
 
         /** Erases all the entries from the copy of the symbol table inside
             the parse context `context`. */
         template<typename Context>
-        void clear_for_next_parse(Context const & context)
-        {
-            auto & pending_ops =
-                detail::get_pending_symtab_ops(context, ref());
-            pending_ops.push_back(detail::symbol_table_operation<T>{
-                {}, std::nullopt, detail::symbol_table_op::clear});
-        }
+        void clear_for_next_parse(Context const & context);
 
         /** Uses UTF-8 string `str` to look up an attribute in the table
             during parsing, returning it as an optional reference.  The lookup
@@ -5141,70 +5499,40 @@ namespace boost { namespace parser {
             `context`. */
         template<typename Context>
         parser::detail::text::optional_ref<T>
-        find(Context const & context, std::string_view str) const
-        {
-            auto [trie, has_case_folded] = detail::get_trie(context, ref());
-            if (context.no_case_depth_) {
-                return trie[detail::case_fold_view(
-                    str | detail::text::as_utf32)];
-            } else {
-                return trie[str | detail::text::as_utf32];
-            }
-        }
+        find(Context const & context, std::string_view str) const;
 
         /** Inserts an entry consisting of a UTF-8 string `str` to match, and
             an associtated attribute `x`, to the copy of the symbol table
             inside the parse context `context`. */
         template<typename Context>
-        void insert(Context const & context, std::string_view str, T && x) const
-        {
-            auto [trie, has_case_folded] = detail::get_trie(context, ref());
-            if (context.no_case_depth_) {
-                trie.insert(
-                    detail::case_fold_view(str | detail::text::as_utf32),
-                    std::move(x));
-            } else {
-                trie.insert(str | detail::text::as_utf32, std::move(x));
-            }
-        }
+        void insert(Context const & context, std::string_view str, T && x) const;
 
         /** Erases the entry whose UTF-8 match string is `str` from the copy
             of the symbol table inside the parse context `context`. */
         template<typename Context>
-        void erase(Context const & context, std::string_view str) const
-        {
-            auto [trie, has_case_folded] = detail::get_trie(context, ref());
-            if (context.no_case_depth_) {
-                trie.erase(
-                    detail::case_fold_view(str | detail::text::as_utf32));
-            } else {
-                trie.erase(str | detail::text::as_utf32);
-            }
-        }
+        void erase(Context const & context, std::string_view str) const;
 
         /** Erases the entry whose UTF-8 match string is `str` from the copy
             of the symbol table inside the parse context `context`. */
         template<typename Context>
-        void clear(Context const & context) const
-        {
-            auto [trie, _] = detail::get_trie(context, ref());
-            trie.clear();
-        }
+        void clear(Context const & context) const;
+
+#endif
 
         template<
             typename Iter,
             typename Sentinel,
             typename Context,
             typename SkipParser>
-        T call(
+        auto call(
             Iter & first,
             Sentinel last,
             Context const & context,
             SkipParser const & skip,
             detail::flags flags,
-            bool & success) const
+            bool & success) const -> detail::final_attribute_type<T, ParserMods>
         {
-            T retval{};
+            detail::final_attribute_type<T, ParserMods> retval{};
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -5227,35 +5555,35 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
-            auto [trie, _0] = detail::get_trie(context, ref());
+            auto [trie, _0] = detail::get_trie(context, this->ref());
             auto const lookup = context.no_case_depth_
                                     ? trie.longest_match(detail::case_fold_view(
                                           BOOST_PARSER_SUBRANGE(first, last)))
                                     : trie.longest_match(first, last);
             if (lookup.match) {
                 std::advance(first, lookup.size);
-                detail::assign(retval, T{*trie[lookup]});
+                if constexpr (detail::gen_attrs<ParserMods>())
+                    detail::assign(retval, T{*trie[lookup]});
             } else {
                 success = false;
             }
         }
 
-        mutable std::vector<std::pair<std::string, T>> initial_elements_;
-        symbol_parser const * copied_from_;
-
-        symbol_parser const & ref() const noexcept
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const &
         {
-            if (copied_from_)
-                return *copied_from_;
-            return *this;
+            auto mods = f(mods_);
+            return symbol_parser<T, decltype(mods)>(*this, std::move(mods));
         }
-        std::vector<std::pair<std::string, T>> &
-        initial_elements() const noexcept
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const &&
         {
-            return ref().initial_elements_;
+            auto mods = f(mods_);
+            return symbol_parser<T, decltype(mods)>(
+                std::move(*this), std::move(mods));
         }
 
-        std::string_view diagnostic_text_;
+        [[no_unique_address]] ParserMods mods_;
     };
 
     template<
@@ -5263,12 +5591,27 @@ namespace boost { namespace parser {
         typename TagType,
         typename Attribute,
         typename LocalState,
-        typename ParamsTuple>
+        typename ParamsTuple,
+        typename ParserMods>
     struct rule_parser
     {
         using tag_type = TagType;
         using attr_type = Attribute;
         using locals_type = LocalState;
+
+        constexpr rule_parser() {}
+        constexpr rule_parser(
+            std::string_view diagnostic_text, ParamsTuple params) :
+            diagnostic_text_(diagnostic_text), params_(params)
+        {}
+        constexpr rule_parser(
+            std::string_view diagnostic_text,
+            ParamsTuple params,
+            ParserMods mods) :
+            diagnostic_text_(diagnostic_text),
+            params_(params),
+            mods_(std::move(mods))
+        {}
 
         template<
             typename Iter,
@@ -5276,7 +5619,8 @@ namespace boost { namespace parser {
             typename Context,
             typename SkipParser>
         std::conditional_t<
-            detail::in_recursion<Context, tag_type>,
+            detail::in_recursion<Context, tag_type> ||
+                !detail::gen_attrs<ParserMods>(),
             detail::nope,
             attr_type>
         call(
@@ -5328,7 +5672,7 @@ namespace boost { namespace parser {
                     success,
                     dont_assign);
                 if (success && !dont_assign) {
-                    if constexpr (!detail::is_nope_v<decltype(attr)>)
+                    if constexpr (detail::gen_attrs<ParserMods>())
                         detail::assign(retval, attr);
                 }
             }
@@ -5336,7 +5680,7 @@ namespace boost { namespace parser {
             if constexpr (
                 CanUseCallbacks && Context::use_callbacks && !in_recursion) {
                 if (!success)
-                    return attr_type{};
+                    return {};
 
                 auto const & callbacks = _callbacks(context);
 
@@ -5361,10 +5705,12 @@ namespace boost { namespace parser {
                     callbacks(tag_type{}, std::move(retval));
                 }
 
-                return attr_type{};
+                return {};
             } else {
-                if (!success && !in_recursion)
-                    detail::assign(retval, attr_type());
+                if constexpr (detail::gen_attrs<ParserMods>()) {
+                    if (!success && !in_recursion)
+                        detail::assign(retval, attr_type());
+                }
                 if constexpr (in_recursion)
                     return detail::nope{};
                 else
@@ -5391,13 +5737,29 @@ namespace boost { namespace parser {
                 call(first, last, context, skip, flags, success);
             } else {
                 auto attr = call(first, last, context, skip, flags, success);
-                if (success)
-                    detail::assign(retval, std::move(attr));
+                if constexpr (detail::gen_attrs<ParserMods>()) {
+                    if (success)
+                        detail::assign(retval, std::move(attr));
+                }
             }
+        }
+
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            auto mods = f(mods_);
+            return rule_parser<
+                CanUseCallbacks,
+                TagType,
+                Attribute,
+                LocalState,
+                ParamsTuple,
+                decltype(mods)>(diagnostic_text_, params_, std::move(mods));
         }
 
         std::string_view diagnostic_text_;
         ParamsTuple params_;
+        [[no_unique_address]] ParserMods mods_;
     };
 
 #endif
@@ -5424,7 +5786,7 @@ namespace boost { namespace parser {
         constexpr auto operator!() const noexcept
         {
             return parser::parser_interface{
-                expect_parser<parser_type, true>{parser_}};
+                expect_parser<parser_type, true, parser_modifiers<>>{parser_}};
         }
 
         /** Returns a `parser_interface` containing a parser equivalent to an
@@ -5433,7 +5795,7 @@ namespace boost { namespace parser {
         constexpr auto operator&() const noexcept
         {
             return parser::parser_interface{
-                expect_parser<parser_type, false>{parser_}};
+                expect_parser<parser_type, false, parser_modifiers<>>{parser_}};
         }
 
         /** Returns a `parser_interface` containing a parser equivalent to a
@@ -5445,10 +5807,11 @@ namespace boost { namespace parser {
             } else if constexpr (detail::is_one_plus_p<parser_type>{}) {
                 using inner_parser = decltype(parser_type::parser_);
                 return parser::parser_interface{
-                    zero_plus_parser<inner_parser>(parser_.parser_)};
+                    zero_plus_parser<inner_parser, parser_modifiers<>>(
+                        parser_.parser_)};
             } else {
                 return parser::parser_interface{
-                    zero_plus_parser<parser_type>(parser_)};
+                    zero_plus_parser<parser_type, parser_modifiers<>>(parser_)};
             }
         }
 
@@ -5459,12 +5822,13 @@ namespace boost { namespace parser {
             if constexpr (detail::is_zero_plus_p<parser_type>{}) {
                 using inner_parser = decltype(parser_type::parser_);
                 return parser::parser_interface{
-                    zero_plus_parser<inner_parser>(parser_.parser_)};
+                    zero_plus_parser<inner_parser, parser_modifiers<>>(
+                        parser_.parser_)};
             } else if constexpr (detail::is_one_plus_p<parser_type>{}) {
                 return *this;
             } else {
                 return parser::parser_interface{
-                    one_plus_parser<parser_type>(parser_)};
+                    one_plus_parser<parser_type, parser_modifiers<>>(parser_)};
             }
         }
 
@@ -5472,7 +5836,8 @@ namespace boost { namespace parser {
             `opt_parser` containing `parser_`. */
         constexpr auto operator-() const noexcept
         {
-            return parser::parser_interface{opt_parser<parser_type>{parser_}};
+            return parser::parser_interface{
+                opt_parser<parser_type, parser_modifiers<>>{parser_}};
         }
 
         /** Returns a `parser_interface` containing a parser equivalent to a
@@ -5489,7 +5854,8 @@ namespace boost { namespace parser {
                 using parser_t = seq_parser<
                     tuple<parser_type, ParserType2>,
                     tuple<std::true_type, std::true_type>,
-                    tuple<llong<0>, llong<0>>>;
+                    tuple<llong<0>, llong<0>>,
+                    parser_modifiers<>>;
                 return parser::parser_interface{parser_t{
                     tuple<parser_type, ParserType2>{parser_, rhs.parser_}}};
             }
@@ -5532,7 +5898,8 @@ namespace boost { namespace parser {
                 using parser_t = seq_parser<
                     tuple<parser_type, ParserType2>,
                     tuple<std::true_type, std::false_type>,
-                    tuple<llong<0>, llong<0>>>;
+                    tuple<llong<0>, llong<0>>,
+                    parser_modifiers<>>;
                 return parser::parser_interface{parser_t{
                     tuple<parser_type, ParserType2>{parser_, rhs.parser_}}};
             }
@@ -5586,9 +5953,10 @@ namespace boost { namespace parser {
                 // which also is meaningful, and so is allowed.
                 BOOST_PARSER_ASSERT(
                     !detail::is_unconditional_eps<parser_type>{});
-                return parser::parser_interface{
-                    or_parser<tuple<parser_type, ParserType2>>{
-                        tuple<parser_type, ParserType2>{parser_, rhs.parser_}}};
+                return parser::parser_interface{or_parser<
+                    tuple<parser_type, ParserType2>,
+                    parser_modifiers<>>{
+                    tuple<parser_type, ParserType2>{parser_, rhs.parser_}}};
             }
         }
 
@@ -5610,9 +5978,10 @@ namespace boost { namespace parser {
             } else if constexpr (detail::is_perm_p<ParserType2>{}) {
                 return rhs.parser_.prepend(*this);
             } else {
-                return parser::parser_interface{
-                    perm_parser<tuple<parser_type, ParserType2>>{
-                        tuple<parser_type, ParserType2>{parser_, rhs.parser_}}};
+                return parser::parser_interface{perm_parser<
+                    tuple<parser_type, ParserType2>,
+                    parser_modifiers<>>{
+                    tuple<parser_type, ParserType2>{parser_, rhs.parser_}}};
             }
         }
 
@@ -5671,9 +6040,10 @@ namespace boost { namespace parser {
         constexpr auto
         operator%(parser_interface<ParserType2> rhs) const noexcept
         {
-            return parser::parser_interface{
-                delimited_seq_parser<parser_type, ParserType2>(
-                    parser_, rhs.parser_)};
+            return parser::parser_interface{delimited_seq_parser<
+                parser_type,
+                ParserType2,
+                parser_modifiers<>>(parser_, rhs.parser_)};
         }
 
         /** Returns a `parser_interface` containing a parser equivalent to an
@@ -5702,7 +6072,8 @@ namespace boost { namespace parser {
         template<typename Action>
         constexpr auto operator[](Action action) const
         {
-            using action_parser_t = action_parser<parser_type, Action>;
+            using action_parser_t =
+                action_parser<parser_type, Action, parser_modifiers<>>;
             return parser::parser_interface{action_parser_t{parser_, action}};
         }
 
@@ -5803,13 +6174,13 @@ namespace boost { namespace parser {
         symbol table in the parse context.  For table entries that should be
         used during every parse, add entries via `add()` or `operator()`.  For
         mid-parse mutations, use `insert()` and `erase()`. */
-    template<typename T>
-    struct symbols : parser_interface<symbol_parser<T>>
+    template<typename T, typename ParserMods = parser_modifiers<>>
+    struct symbols : parser_interface<symbol_parser<T, ParserMods>>
     {
         symbols() {}
         symbols(char const * diagnostic_text) :
-            parser_interface<symbol_parser<T>>(
-                symbol_parser<T>(diagnostic_text))
+            parser_interface<symbol_parser<T, ParserMods>>(
+                symbol_parser<T, ParserMods>(diagnostic_text))
         {}
         symbols(std::initializer_list<std::pair<std::string_view, T>> il)
         {
@@ -5820,8 +6191,8 @@ namespace boost { namespace parser {
         symbols(
             char const * diagnostic_text,
             std::initializer_list<std::pair<std::string_view, T>> il) :
-            parser_interface<symbol_parser<T>>(
-                symbol_parser<T>(diagnostic_text))
+            parser_interface<symbol_parser<T, ParserMods>>(
+                symbol_parser<T, ParserMods>(diagnostic_text))
         {
             this->parser_.initial_elements_.resize(il.size());
             std::copy(il.begin(), il.end(),
@@ -5923,83 +6294,93 @@ namespace boost { namespace parser {
 
 #ifndef BOOST_PARSER_DOXYGEN
 
-    template<
-        typename TagType,
-        typename Attribute,
-        typename LocalState,
-        typename ParamsTuple>
-    struct rule
-        : parser_interface<
-              rule_parser<false, TagType, Attribute, LocalState, ParamsTuple>>
-    {
-        static_assert(
-            !std::is_same_v<TagType, void>,
-            "void is not a valid tag type for a rule.");
+   template<
+       typename TagType,
+       typename Attribute,
+       typename LocalState,
+       typename ParamsTuple>
+   struct rule : parser_interface<rule_parser<
+                     false,
+                     TagType,
+                     Attribute,
+                     LocalState,
+                     ParamsTuple,
+                     parser_modifiers<>>>
+   {
+       static_assert(
+           !std::is_same_v<TagType, void>,
+           "void is not a valid tag type for a rule.");
 
-        constexpr rule(char const * diagnostic_text)
-        {
-            this->parser_.diagnostic_text_ = diagnostic_text;
-        }
+       constexpr rule(char const * diagnostic_text)
+       {
+           this->parser_.diagnostic_text_ = diagnostic_text;
+       }
 
-        template<typename T, typename... Ts>
-        constexpr auto with(T && x, Ts &&... xs) const
-        {
-            BOOST_PARSER_ASSERT(
-                (detail::is_nope_v<ParamsTuple> &&
-                 "If you're seeing this, you tried to chain calls on a rule, "
-                 "like 'rule.with(foo).with(bar)'.  Quit it!'"));
-            using params_tuple_type = decltype(detail::hl::make_tuple(
-                static_cast<T &&>(x), static_cast<Ts &&>(xs)...));
-            using rule_parser_type = rule_parser<
-                false,
-                TagType,
-                Attribute,
-                LocalState,
-                params_tuple_type>;
-            using result_type = parser_interface<rule_parser_type>;
-            return result_type{rule_parser_type{
-                this->parser_.diagnostic_text_,
-                detail::hl::make_tuple(
-                    static_cast<T &&>(x), static_cast<Ts &&>(xs)...)}};
-        }
-    };
+       template<typename T, typename... Ts>
+       constexpr auto with(T && x, Ts &&... xs) const
+       {
+           BOOST_PARSER_ASSERT(
+               (detail::is_nope_v<ParamsTuple> &&
+                "If you're seeing this, you tried to chain calls on a rule, "
+                "like 'rule.with(foo).with(bar)'.  Quit it!'"));
+           using params_tuple_type = decltype(detail::hl::make_tuple(
+               static_cast<T &&>(x), static_cast<Ts &&>(xs)...));
+           using rule_parser_type = rule_parser<
+               false,
+               TagType,
+               Attribute,
+               LocalState,
+               params_tuple_type,
+               parser_modifiers<>>;
+           using result_type = parser_interface<rule_parser_type>;
+           return result_type{rule_parser_type{
+               this->parser_.diagnostic_text_,
+               detail::hl::make_tuple(
+                   static_cast<T &&>(x), static_cast<Ts &&>(xs)...)}};
+       }
+   };
 
-    template<
-        typename TagType,
-        typename Attribute,
-        typename LocalState,
-        typename ParamsTuple>
-    struct callback_rule
-        : parser_interface<
-              rule_parser<true, TagType, Attribute, LocalState, ParamsTuple>>
-    {
-        constexpr callback_rule(char const * diagnostic_text)
-        {
-            this->parser_.diagnostic_text_ = diagnostic_text;
-        }
+   template<
+       typename TagType,
+       typename Attribute,
+       typename LocalState,
+       typename ParamsTuple>
+   struct callback_rule : parser_interface<rule_parser<
+                              true,
+                              TagType,
+                              Attribute,
+                              LocalState,
+                              ParamsTuple,
+                              parser_modifiers<>>>
+   {
+       constexpr callback_rule(char const * diagnostic_text)
+       {
+           this->parser_.diagnostic_text_ = diagnostic_text;
+       }
 
-        template<typename T, typename... Ts>
-        constexpr auto with(T && x, Ts &&... xs) const
-        {
-            BOOST_PARSER_ASSERT(
-                (detail::is_nope_v<ParamsTuple> &&
-                 "If you're seeing this, you tried to chain calls on a "
-                 "callback_rule, like 'rule.with(foo).with(bar)'.  Quit it!'"));
-            using params_tuple_type = decltype(detail::hl::make_tuple(
-                static_cast<T &&>(x), static_cast<Ts &&>(xs)...));
-            using rule_parser_type = rule_parser<
-                true,
-                TagType,
-                Attribute,
-                LocalState,
-                params_tuple_type>;
-            using result_type = parser_interface<rule_parser_type>;
-            return result_type{rule_parser_type{
-                this->parser_.diagnostic_text_,
-                detail::hl::make_tuple(
-                    static_cast<T &&>(x), static_cast<Ts &&>(xs)...)}};
-        }
-    };
+       template<typename T, typename... Ts>
+       constexpr auto with(T && x, Ts &&... xs) const
+       {
+           BOOST_PARSER_ASSERT(
+               (detail::is_nope_v<ParamsTuple> &&
+                "If you're seeing this, you tried to chain calls on a "
+                "callback_rule, like 'rule.with(foo).with(bar)'.  Quit it!'"));
+           using params_tuple_type = decltype(detail::hl::make_tuple(
+               static_cast<T &&>(x), static_cast<Ts &&>(xs)...));
+           using rule_parser_type = rule_parser<
+               true,
+               TagType,
+               Attribute,
+               LocalState,
+               params_tuple_type,
+               parser_modifiers<>>;
+           using result_type = parser_interface<rule_parser_type>;
+           return result_type{rule_parser_type{
+               this->parser_.diagnostic_text_,
+               detail::hl::make_tuple(
+                   static_cast<T &&>(x), static_cast<Ts &&>(xs)...)}};
+       }
+   };
 
 //[ define_rule_definition
 #define BOOST_PARSER_DEFINE_IMPL(_, rule_name_)                                \
@@ -6079,9 +6460,9 @@ namespace boost { namespace parser {
 
 #ifndef BOOST_PARSER_DOXYGEN
 
-    template<typename ParserTuple>
+    template<typename ParserTuple, typename ParserMods>
     template<typename Parser>
-    constexpr auto or_parser<ParserTuple>::prepend(
+    constexpr auto or_parser<ParserTuple, ParserMods>::prepend(
         parser_interface<Parser> parser) const noexcept
     {
         // If you're seeing this as a compile- or run-time failure, you've
@@ -6094,14 +6475,14 @@ namespace boost { namespace parser {
         // eps, like "eps(condition) | (int_ | double_)", which also is
         // meaningful, and so is allowed.
         BOOST_PARSER_ASSERT(!detail::is_unconditional_eps<Parser>{});
-        return parser_interface{
-            or_parser<decltype(detail::hl::prepend(parsers_, parser.parser_))>{
-                detail::hl::prepend(parsers_, parser.parser_)}};
+        return parser_interface{or_parser<
+            decltype(detail::hl::prepend(parsers_, parser.parser_)),
+            ParserMods>{detail::hl::prepend(parsers_, parser.parser_), mods_}};
     }
 
-    template<typename ParserTuple>
+    template<typename ParserTuple, typename ParserMods>
     template<typename Parser>
-    constexpr auto or_parser<ParserTuple>::append(
+    constexpr auto or_parser<ParserTuple, ParserMods>::append(
         parser_interface<Parser> parser) const noexcept
     {
         // If you're seeing this as a compile- or run-time failure, you've
@@ -6116,33 +6497,35 @@ namespace boost { namespace parser {
         BOOST_PARSER_ASSERT(!detail::is_unconditional_eps_v<decltype(
                                 detail::hl::back(parsers_))>);
         if constexpr (detail::is_or_p<Parser>{}) {
-            return parser_interface{or_parser<decltype(
-                detail::hl::concat(parsers_, parser.parser_.parsers_))>{
-                detail::hl::concat(parsers_, parser.parser_.parsers_)}};
+            return parser_interface{or_parser<
+                decltype(detail::hl::concat(parsers_, parser.parser_.parsers_)),
+                ParserMods>{
+                detail::hl::concat(parsers_, parser.parser_.parsers_), mods_}};
         } else {
-            return parser_interface{or_parser<decltype(
-                detail::hl::append(parsers_, parser.parser_))>{
-                detail::hl::append(parsers_, parser.parser_)}};
+            return parser_interface{or_parser<
+                decltype(detail::hl::append(parsers_, parser.parser_)),
+                ParserMods>{
+                detail::hl::append(parsers_, parser.parser_), mods_}};
         }
     }
 
-    template<typename ParserTuple>
+    template<typename ParserTuple, typename ParserMods>
     template<typename Parser>
-    constexpr auto perm_parser<ParserTuple>::prepend(
+    constexpr auto perm_parser<ParserTuple, ParserMods>::prepend(
         parser_interface<Parser> parser) const noexcept
     {
         // If you're seeing this as a compile- or run-time failure, you've
         // tried to put an eps parser in a permutation-parser, such as "eps ||
         // int_".
         BOOST_PARSER_ASSERT(!detail::is_eps_p<Parser>{});
-        return parser_interface{perm_parser<decltype(detail::hl::prepend(
-            parsers_, parser.parser_))>{
-            detail::hl::prepend(parsers_, parser.parser_)}};
+        return parser_interface{perm_parser<
+            decltype(detail::hl::prepend(parsers_, parser.parser_)),
+            ParserMods>{detail::hl::prepend(parsers_, parser.parser_), mods_}};
     }
 
-    template<typename ParserTuple>
+    template<typename ParserTuple, typename ParserMods>
     template<typename Parser>
-    constexpr auto perm_parser<ParserTuple>::append(
+    constexpr auto perm_parser<ParserTuple, ParserMods>::append(
         parser_interface<Parser> parser) const noexcept
     {
         // If you're seeing this as a compile- or run-time failure, you've
@@ -6150,24 +6533,27 @@ namespace boost { namespace parser {
         // || eps".
         BOOST_PARSER_ASSERT(!detail::is_eps_p<Parser>{});
         if constexpr (detail::is_perm_p<Parser>{}) {
-            return parser_interface{perm_parser<decltype(detail::hl::concat(
-                parsers_, parser.parser_.parsers_))>{
-                detail::hl::concat(parsers_, parser.parser_.parsers_)}};
+            return parser_interface{perm_parser<
+                decltype(detail::hl::concat(parsers_, parser.parser_.parsers_)),
+                ParserMods>{
+                detail::hl::concat(parsers_, parser.parser_.parsers_), mods_}};
         } else {
-            return parser_interface{perm_parser<decltype(detail::hl::append(
-                parsers_, parser.parser_))>{
-                detail::hl::append(parsers_, parser.parser_)}};
+            return parser_interface{perm_parser<
+                decltype(detail::hl::append(parsers_, parser.parser_)),
+                ParserMods>{
+                detail::hl::append(parsers_, parser.parser_), mods_}};
         }
     }
 
     template<
         typename ParserTuple,
         typename BacktrackingTuple,
-        typename CombiningGroups>
+        typename CombiningGroups,
+        typename ParserMods>
     template<bool AllowBacktracking, typename Parser>
     constexpr auto
-    seq_parser<ParserTuple, BacktrackingTuple, CombiningGroups>::prepend(
-        parser_interface<Parser> parser) const noexcept
+    seq_parser<ParserTuple, BacktrackingTuple, CombiningGroups, ParserMods>::
+        prepend(parser_interface<Parser> parser) const noexcept
     {
         using combining_groups =
             detail::combining_t<ParserTuple, CombiningGroups>;
@@ -6181,19 +6567,21 @@ namespace boost { namespace parser {
         using parser_t = seq_parser<
             decltype(detail::hl::prepend(parsers_, parser.parser_)),
             backtracking,
-            final_combining_groups>;
+            final_combining_groups,
+            ParserMods>;
         return parser_interface{
-            parser_t{detail::hl::prepend(parsers_, parser.parser_)}};
+            parser_t{detail::hl::prepend(parsers_, parser.parser_), mods_}};
     }
 
     template<
         typename ParserTuple,
         typename BacktrackingTuple,
-        typename CombiningGroups>
+        typename CombiningGroups,
+        typename ParserMods>
     template<bool AllowBacktracking, typename Parser>
     constexpr auto
-    seq_parser<ParserTuple, BacktrackingTuple, CombiningGroups>::append(
-        parser_interface<Parser> parser) const noexcept
+    seq_parser<ParserTuple, BacktrackingTuple, CombiningGroups, ParserMods>::
+        append(parser_interface<Parser> parser) const noexcept
     {
         using combining_groups =
             detail::combining_t<ParserTuple, CombiningGroups>;
@@ -6211,9 +6599,10 @@ namespace boost { namespace parser {
             using parser_t = seq_parser<
                 decltype(detail::hl::concat(parsers_, parser.parser_.parsers_)),
                 backtracking,
-                final_combining_groups>;
+                final_combining_groups,
+                ParserMods>;
             return parser_interface{parser_t{
-                detail::hl::concat(parsers_, parser.parser_.parsers_)}};
+                detail::hl::concat(parsers_, parser.parser_.parsers_), mods_}};
         } else {
             using final_combining_groups =
                 decltype(detail::hl::append(combining_groups{}, llong<0>{}));
@@ -6222,34 +6611,47 @@ namespace boost { namespace parser {
             using parser_t = seq_parser<
                 decltype(detail::hl::append(parsers_, parser.parser_)),
                 backtracking,
-                final_combining_groups>;
+                final_combining_groups,
+                ParserMods>;
             return parser_interface{
-                parser_t{detail::hl::append(parsers_, parser.parser_)}};
+                parser_t{detail::hl::append(parsers_, parser.parser_), mods_}};
         }
     }
 
 #endif
 
 
-
     // Directives.
 
-    /** Represents a unparameterized higher-order parser (e.g. `omit_parser`)
-        as a directive (e.g. `omit[other_parser]`). */
-    template<template<class> class Parser>
+    /** Represents a unparameterized higher-order parser (e.g. `raw_parser`)
+        as a directive (e.g. `raw[other_parser]`). */
+    template<template<class, class> class Parser>
     struct directive
     {
         template<typename Parser2>
         constexpr auto operator[](parser_interface<Parser2> rhs) const noexcept
         {
-            return parser_interface{Parser<Parser2>{rhs.parser_}};
+            return parser_interface{
+                Parser<Parser2, parser_modifiers<>>{rhs.parser_}};
         }
     };
 
-    /** The `omit` directive, whose `operator[]` returns a
-        `parser_interface<omit_parser<P>>` from a given parser of type
-        `parser_interface<P>`. */
-    inline constexpr directive<omit_parser> omit;
+    /** Transforms the attribute type of the given parser to `none`, as in
+        (e.g. `omit[other_parser]`). */
+    struct omit_directive
+    {
+        template<typename Parser>
+        constexpr auto operator[](parser_interface<Parser> rhs) const noexcept
+        {
+            return parser_interface{
+                rhs.parser_.with_parser_mods(detail::omit_attr)};
+        }
+    };
+
+    /** The global `omit_directive` object, whose `operator[]` returns a new
+        `parser_interface<P>` that does not generate an attribute, from a
+        given parser of type `parser_interface<P>`. */
+    inline constexpr omit_directive omit;
 
     /** The `raw` directive, whose `operator[]` returns a
         `parser_interface<raw_parser<P>>` from a given parser of type
@@ -6281,8 +6683,12 @@ namespace boost { namespace parser {
         template<typename Parser2>
         constexpr auto operator[](parser_interface<Parser2> rhs) const noexcept
         {
-            using repeat_parser_type =
-                repeat_parser<Parser2, detail::nope, MinType, MaxType>;
+            using repeat_parser_type = repeat_parser<
+                Parser2,
+                detail::nope,
+                MinType,
+                MaxType,
+                parser_modifiers<>>;
             return parser_interface{
                 repeat_parser_type{rhs.parser_, min_, max_}};
         }
@@ -6323,7 +6729,8 @@ namespace boost { namespace parser {
         constexpr auto operator[](parser_interface<Parser> rhs) const noexcept
         {
             return parser_interface{
-                skip_parser<Parser, SkipParser>{rhs.parser_, skip_parser_}};
+                skip_parser<Parser, SkipParser, parser_modifiers<>>{
+                    rhs.parser_, skip_parser_}};
         }
 
         /** Returns a `skip_directive` with `skip_parser` as its skipper. */
@@ -6354,15 +6761,19 @@ namespace boost { namespace parser {
         template<
             typename ParserTuple,
             typename BacktrackingTuple,
-            typename CombiningGroups>
-        constexpr auto
-        operator[](parser_interface<
-                   seq_parser<ParserTuple, BacktrackingTuple, CombiningGroups>>
-                       rhs) const noexcept
+            typename CombiningGroups,
+            typename ParserMods>
+        constexpr auto operator[](parser_interface<seq_parser<
+                                      ParserTuple,
+                                      BacktrackingTuple,
+                                      CombiningGroups,
+                                      ParserMods>> rhs) const noexcept
         {
-            return parser_interface{
-                seq_parser<ParserTuple, BacktrackingTuple, detail::merge_t>{
-                    rhs.parser_.parsers_}};
+            return parser_interface{seq_parser<
+                ParserTuple,
+                BacktrackingTuple,
+                detail::merge_t,
+                ParserMods>{rhs.parser_.parsers_, rhs.parser_.mods_}};
         }
     };
 
@@ -6382,15 +6793,19 @@ namespace boost { namespace parser {
         template<
             typename ParserTuple,
             typename BacktrackingTuple,
-            typename CombiningGroups>
-        constexpr auto
-        operator[](parser_interface<
-                   seq_parser<ParserTuple, BacktrackingTuple, CombiningGroups>>
-                       rhs) const noexcept
+            typename CombiningGroups,
+            typename ParserMods>
+        constexpr auto operator[](parser_interface<seq_parser<
+                                      ParserTuple,
+                                      BacktrackingTuple,
+                                      CombiningGroups,
+                                      ParserMods>> rhs) const noexcept
         {
-            return parser_interface{
-                seq_parser<ParserTuple, BacktrackingTuple, detail::separate_t>{
-                    rhs.parser_.parsers_}};
+            return parser_interface{seq_parser<
+                ParserTuple,
+                BacktrackingTuple,
+                detail::separate_t,
+                ParserMods>{rhs.parser_.parsers_, rhs.parser_.mods_}};
         }
     };
 
@@ -6412,7 +6827,8 @@ namespace boost { namespace parser {
         constexpr auto operator[](parser_interface<Parser> rhs) const noexcept
         {
             return parser_interface{
-                transform_parser<Parser, F>{rhs.parser_, f_}};
+                transform_parser<Parser, F, parser_modifiers<>>{
+                    rhs.parser_, f_}};
         }
 
         F f_;
@@ -6431,9 +6847,15 @@ namespace boost { namespace parser {
 
 #ifndef BOOST_PARSER_DOXYGEN
 
-    template<typename Predicate>
+    template<typename Predicate, typename ParserMods>
     struct eps_parser
     {
+        constexpr eps_parser() {}
+        constexpr eps_parser(Predicate pred) : pred_(pred) {}
+        constexpr eps_parser(Predicate pred, ParserMods mods) :
+            pred_(pred), mods_(std::move(mods))
+        {}
+
         template<
             typename Iter,
             typename Sentinel,
@@ -6496,10 +6918,18 @@ namespace boost { namespace parser {
                 (detail::is_nope_v<Predicate> &&
                  "If you're seeing this, you tried to chain calls on eps, "
                  "like 'eps(foo)(bar)'.  Quit it!'"));
-            return parser_interface{eps_parser<Predicate2>{std::move(pred)}};
+            return parser_interface{
+                eps_parser<Predicate2, ParserMods>{std::move(pred), mods_}};
+        }
+
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            return parser::eps_parser(pred_, f(mods_));
         }
 
         Predicate pred_;
+        [[no_unique_address]] ParserMods mods_;
     };
 
 #endif
@@ -6507,12 +6937,19 @@ namespace boost { namespace parser {
     /** The epsilon parser.  This matches anything, and consumes no input.  If
         used with an optional predicate, like `eps(pred)`, it matches iff
         `pred(ctx)` evaluates to true, where `ctx` is the parser context. */
-    inline constexpr parser_interface<eps_parser<detail::nope>> eps;
+    inline constexpr parser_interface<
+        eps_parser<detail::nope, parser_modifiers<>>>
+        eps;
 
 #ifndef BOOST_PARSER_DOXYGEN
 
+    template<typename ParserMods>
     struct eoi_parser
     {
+        constexpr eoi_parser() {}
+        constexpr explicit eoi_parser(ParserMods mods) : mods_(std::move(mods))
+        {}
+
         template<
             typename Iter,
             typename Sentinel,
@@ -6553,18 +6990,31 @@ namespace boost { namespace parser {
             if (first != last)
                 success = false;
         }
+
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            return parser::eoi_parser(f(mods_));
+        }
+
+        [[no_unique_address]] ParserMods mods_;
     };
 
 #endif
 
     /** The end-of-input parser.  It matches only the end of input. */
-    inline constexpr parser_interface<eoi_parser> eoi;
+    inline constexpr parser_interface<eoi_parser<parser_modifiers<>>> eoi;
 
 #ifndef BOOST_PARSER_DOXYGEN
 
-    template<typename Attribute>
+    template<typename Attribute, typename ParserMods>
     struct attr_parser
     {
+        constexpr attr_parser(Attribute attr) : attr_(attr) {}
+        constexpr attr_parser(Attribute attr, ParserMods mods) :
+            attr_(std::move(attr)), mods_(std::move(mods))
+        {}
+
         template<
             typename Iter,
             typename Sentinel,
@@ -6580,7 +7030,10 @@ namespace boost { namespace parser {
         {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, detail::global_nope);
-            return detail::resolve(context, attr_);
+            if constexpr (detail::gen_attrs<ParserMods>())
+                return detail::resolve(context, attr_);
+            else
+                return detail::nope{};
         }
 
         template<
@@ -6600,11 +7053,23 @@ namespace boost { namespace parser {
         {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
-            if (detail::gen_attrs(flags))
+            if constexpr (detail::gen_attrs<ParserMods>())
                 detail::assign_copy(retval, detail::resolve(context, attr_));
         }
 
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const &
+        {
+            return parser::attr_parser(attr_, f(mods_));
+        }
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const &&
+        {
+            return parser::attr_parser(std::move(attr_), f(mods_));
+        }
+
         Attribute attr_;
+        [[no_unique_address]] ParserMods mods_;
     };
 
 #endif
@@ -6614,7 +7079,8 @@ namespace boost { namespace parser {
     template<typename Attribute>
     constexpr auto attr(Attribute a) noexcept
     {
-        return parser_interface{attr_parser<Attribute>{std::move(a)}};
+        return parser_interface{
+            attr_parser<Attribute, parser_modifiers<>>{std::move(a)}};
     }
 
 #ifndef BOOST_PARSER_DOXYGEN
@@ -6624,7 +7090,7 @@ namespace boost { namespace parser {
     {
         constexpr char_parser() {}
         constexpr char_parser(Expected expected, ParserMods mods) :
-            expected_(expected), mods_(mods)
+            expected_(expected), mods_(std::move(mods))
         {}
 
         template<typename T>
@@ -6632,10 +7098,6 @@ namespace boost { namespace parser {
             std::is_same_v<AttributeType, void>,
             std::decay_t<T>,
             AttributeType>;
-
-        template<typename T>
-        using attribute_type = std::
-            conditional_t<ParserMods::omit_attr, detail::nope, char_type<T>>;
 
         template<
             typename Iter,
@@ -6648,9 +7110,13 @@ namespace boost { namespace parser {
             Context const & context,
             SkipParser const & skip,
             detail::flags flags,
-            bool & success) const -> attribute_type<decltype(*first)>
+            bool & success) const
+            -> detail::
+                final_attribute_type<char_type<decltype(*first)>, ParserMods>
         {
-            attribute_type<decltype(*first)> retval{};
+            detail::
+                final_attribute_type<char_type<decltype(*first)>, ParserMods>
+                    retval{};
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -6796,23 +7262,23 @@ namespace boost { namespace parser {
             return parser_interface(char_parser_t(chars, mods_));
         }
 
-        template<typename ParserMods2>
-        constexpr auto with_parser_mods(ParserMods2 mods)
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
         {
-            return char_parser<Expected, AttributeType, ParserMods2>{
-                expected_, std::move(mods)};
+            return parser::char_parser(expected_, f(mods_));
         }
 
         Expected expected_;
         [[no_unique_address]] ParserMods mods_;
     };
 
+    template<typename ParserMods>
     struct digit_parser
     {
         constexpr digit_parser() {}
-
-        template<typename T>
-        using attribute_type = std::decay_t<T>;
+        constexpr explicit digit_parser(ParserMods mods) :
+            mods_(std::move(mods))
+        {}
 
         template<
             typename Iter,
@@ -6825,9 +7291,12 @@ namespace boost { namespace parser {
             Context const & context,
             SkipParser const & skip,
             detail::flags flags,
-            bool & success) const -> attribute_type<decltype(*first)>
+            bool & success) const
+            -> detail::
+                final_attribute_type<detail::iter_value_t<Iter>, ParserMods>
         {
-            attribute_type<decltype(*first)> retval{};
+            detail::final_attribute_type<detail::iter_value_t<Iter>, ParserMods>
+                retval{};
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -6854,7 +7323,7 @@ namespace boost { namespace parser {
                 success = false;
                 return;
             }
-            attribute_type<decltype(*first)> const x = *first;
+            detail::iter_value_t<Iter> const x = *first;
             char32_t const x_cmp = x;
             if (x_cmp < U'\x0100' && (x_cmp < U'0' || U'9' < x_cmp)) {
                 success = false;
@@ -6867,7 +7336,8 @@ namespace boost { namespace parser {
                 success = false;
                 return;
             }
-            detail::assign(retval, x);
+            if constexpr (detail::gen_attrs<ParserMods>())
+                detail::assign(retval, x);
             ++first;
         }
 
@@ -6944,9 +7414,17 @@ namespace boost { namespace parser {
             U'\U0001E950', // U+1E950 ADLAM DIGIT ZERO
             U'\U0001FBF0'  // U+1FBF0 SEGMENTED DIGIT ZERO
         };
+
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            return parser::digit_parser(f(mods_));
+        }
+
+        [[no_unique_address]] ParserMods mods_;
     };
 
-    template<typename Tag>
+    template<typename Tag, typename ParserMods>
     struct char_set_parser
     {
         BOOST_PARSER_ALGO_CONSTEXPR char_set_parser()
@@ -6961,9 +7439,10 @@ namespace boost { namespace parser {
             if (it != last)
                 one_byte_offset_ = int(it - first);
         }
-
-        template<typename T>
-        using attribute_type = std::decay_t<T>;
+        BOOST_PARSER_ALGO_CONSTEXPR
+        char_set_parser(int offset, ParserMods mods) :
+            one_byte_offset_(offset), mods_(std::move(mods))
+        {}
 
         template<
             typename Iter,
@@ -6976,9 +7455,12 @@ namespace boost { namespace parser {
             Context const & context,
             SkipParser const & skip,
             detail::flags flags,
-            bool & success) const -> attribute_type<decltype(*first)>
+            bool & success) const
+            -> detail::
+                final_attribute_type<detail::iter_value_t<Iter>, ParserMods>
         {
-            attribute_type<decltype(*first)> retval{};
+            detail::final_attribute_type<detail::iter_value_t<Iter>, ParserMods>
+                retval{};
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -7007,7 +7489,7 @@ namespace boost { namespace parser {
             }
 
             auto const & chars = detail::char_set<Tag>::chars;
-            attribute_type<decltype(*first)> const x = *first;
+            detail::iter_value_t<Iter> const x = *first;
             uint32_t const x_cmp = x;
             if (x_cmp < U'\x0100') {
                 uint32_t const * it = std::lower_bound(
@@ -7015,7 +7497,8 @@ namespace boost { namespace parser {
                     std::begin(chars) + one_byte_offset_,
                     x_cmp);
                 if (it != std::end(chars) && *it == x_cmp) {
-                    detail::assign(retval, x_cmp);
+                    if constexpr (detail::gen_attrs<ParserMods>())
+                        detail::assign(retval, x_cmp);
                     ++first;
                 } else {
                     success = false;
@@ -7026,7 +7509,8 @@ namespace boost { namespace parser {
             uint32_t const * it = std::lower_bound(
                 std::begin(chars) + one_byte_offset_, std::end(chars), x_cmp);
             if (it != std::end(chars) && *it == x_cmp) {
-                detail::assign(retval, x_cmp);
+                if constexpr (detail::gen_attrs<ParserMods>())
+                    detail::assign(retval, x_cmp);
                 ++first;
                 return;
             }
@@ -7034,16 +7518,25 @@ namespace boost { namespace parser {
             success = false;
         }
 
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            auto mods = f(mods_);
+            return char_set_parser<Tag, decltype(mods)>{
+                one_byte_offset_, std::move(mods)};
+        }
+
         int one_byte_offset_ = 0;
+        [[no_unique_address]] ParserMods mods_;
     };
 
-    template<typename Tag>
+    template<typename Tag, typename ParserMods>
     struct char_subrange_parser
     {
         constexpr char_subrange_parser() {}
-
-        template<typename T>
-        using attribute_type = std::decay_t<T>;
+        constexpr explicit char_subrange_parser(ParserMods mods) :
+            mods_(std::move(mods))
+        {}
 
         template<
             typename Iter,
@@ -7056,9 +7549,12 @@ namespace boost { namespace parser {
             Context const & context,
             SkipParser const & skip,
             detail::flags flags,
-            bool & success) const -> attribute_type<decltype(*first)>
+            bool & success) const
+            -> detail::
+                final_attribute_type<detail::iter_value_t<Iter>, ParserMods>
         {
-            attribute_type<decltype(*first)> retval{};
+            detail::final_attribute_type<detail::iter_value_t<Iter>, ParserMods>
+                retval{};
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -7085,18 +7581,28 @@ namespace boost { namespace parser {
                 success = false;
                 return;
             }
-            attribute_type<decltype(*first)> const x = *first;
+            detail::iter_value_t<Iter> const x = *first;
             char32_t const x_cmp = x;
             success = false;
             for (auto subrange : detail::char_subranges<Tag>::ranges) {
                 if (subrange.lo_ <= x_cmp && x_cmp <= subrange.hi_) {
                     success = true;
-                    detail::assign(retval, x);
+                    if constexpr (detail::gen_attrs<ParserMods>())
+                        detail::assign(retval, x);
                     ++first;
                     return;
                 }
             }
         }
+
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            auto mods = f(mods_);
+            return char_subrange_parser<Tag, decltype(mods)>(std::move(mods));
+        }
+
+        [[no_unique_address]] ParserMods mods_;
     };
 
 #endif
@@ -7164,9 +7670,6 @@ namespace boost { namespace parser {
     template<typename StrIter, typename StrSentinel, typename ParserMods>
     struct string_parser
     {
-        using attribute_type = std::
-            conditional_t<ParserMods::omit_attr, detail::nope, std::string>;
-
         constexpr string_parser() = default;
 
 #if BOOST_PARSER_USE_CONCEPTS
@@ -7183,7 +7686,7 @@ namespace boost { namespace parser {
         {}
 
         constexpr string_parser(StrIter f, StrSentinel l, ParserMods mods) :
-            expected_first_(f), expected_last_(l), mods_(mods)
+            expected_first_(f), expected_last_(l), mods_(std::move(mods))
         {}
 
         template<
@@ -7191,15 +7694,16 @@ namespace boost { namespace parser {
             typename Sentinel,
             typename Context,
             typename SkipParser>
-        attribute_type call(
+        auto call(
             Iter & first,
             Sentinel last,
             Context const & context,
             SkipParser const & skip,
             detail::flags flags,
             bool & success) const
+            -> detail::final_attribute_type<std::string, ParserMods>
         {
-            attribute_type retval;
+            detail::final_attribute_type<std::string, ParserMods> retval;
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -7227,6 +7731,8 @@ namespace boost { namespace parser {
                 return;
             }
 
+            constexpr auto gen_attrs = detail::gen_attrs<ParserMods>();
+
             if constexpr (std::is_same_v<
                               detail::remove_cv_ref_t<decltype(*first)>,
                               char32_t>) {
@@ -7245,13 +7751,8 @@ namespace boost { namespace parser {
                     return;
                 }
 
-                if constexpr (!ParserMods::omit_attr) {
-                    detail::append(
-                        retval,
-                        first,
-                        mismatch.first,
-                        detail::gen_attrs(flags));
-                }
+                if constexpr (gen_attrs.value)
+                    detail::append(retval, first, mismatch.first);
 
                 first = mismatch.first;
             } else {
@@ -7266,23 +7767,19 @@ namespace boost { namespace parser {
                     return;
                 }
 
-                if constexpr (!ParserMods::omit_attr) {
-                    detail::append(
-                        retval,
-                        first,
-                        mismatch.first,
-                        detail::gen_attrs(flags));
-                }
+                if constexpr (gen_attrs.value)
+                    detail::append(retval, first, mismatch.first);
 
                 first = mismatch.first;
             }
         }
 
-        template<typename ParserMods2>
-        constexpr auto with_parser_mods(ParserMods2 mods)
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
         {
-            return string_parser<StrIter, StrSentinel, ParserMods2>{
-                expected_first_, expected_last_, std::move(mods)};
+            auto mods = f(mods_);
+            return string_parser<StrIter, StrSentinel, decltype(mods)>(
+                expected_first_, expected_last_, std::move(mods));
         }
 
         StrIter expected_first_;
@@ -7314,58 +7811,31 @@ namespace boost { namespace parser {
         return parser_interface{string_parser(str)};
     }
 
-    template<typename Quotes, typename Escapes>
+    template<typename Quotes, typename Escapes, typename ParserMods>
     struct quoted_string_parser
     {
         constexpr quoted_string_parser() : chs_(), ch_('"') {}
-
-#if BOOST_PARSER_USE_CONCEPTS
-        template<parsable_range_like R>
-#else
-        template<
-            typename R,
-            typename Enable =
-                std::enable_if_t<detail::is_parsable_range_like_v<R>>>
-#endif
-        constexpr quoted_string_parser(R && r) : chs_((R &&) r), ch_(0)
-        {
-            BOOST_PARSER_DEBUG_ASSERT(r.begin() != r.end());
-        }
-
-#if BOOST_PARSER_USE_CONCEPTS
-        template<parsable_range_like R>
-#else
-        template<
-            typename R,
-            typename Enable =
-                std::enable_if_t<detail::is_parsable_range_like_v<R>>>
-#endif
-        constexpr quoted_string_parser(R && r, Escapes escapes) :
-            chs_((R &&) r), escapes_(escapes), ch_(0)
-        {
-            BOOST_PARSER_DEBUG_ASSERT(r.begin() != r.end());
-        }
-
-        constexpr quoted_string_parser(char32_t cp) : chs_(), ch_(cp) {}
-
-        constexpr quoted_string_parser(char32_t cp, Escapes escapes) :
-            chs_(), escapes_(escapes), ch_(cp)
+        constexpr quoted_string_parser(
+            Quotes chs, Escapes escapes, char32_t ch, ParserMods mods) :
+            chs_(chs), escapes_(escapes), ch_(ch), mods_(std::move(mods))
         {}
+        constexpr quoted_string_parser(char32_t cp) : chs_(), ch_(cp) {}
 
         template<
             typename Iter,
             typename Sentinel,
             typename Context,
             typename SkipParser>
-        std::string call(
+        auto call(
             Iter & first,
             Sentinel last,
             Context const & context,
             SkipParser const & skip,
             detail::flags flags,
             bool & success) const
+            -> detail::final_attribute_type<std::string, ParserMods>
         {
-            std::string retval;
+            detail::final_attribute_type<std::string, ParserMods> retval;
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -7395,9 +7865,9 @@ namespace boost { namespace parser {
 
             auto const prev_first = first;
 
-            auto append = [&retval,
-                           gen_attrs = detail::gen_attrs(flags)](auto & ctx) {
-                detail::move_back(retval, _attr(ctx), gen_attrs);
+            auto append = [&retval](auto & ctx) {
+                if constexpr (detail::gen_attrs<ParserMods>())
+                    detail::move_back(retval, _attr(ctx));
             };
 
             auto quote_ch = [&]() {
@@ -7456,7 +7926,8 @@ namespace boost { namespace parser {
                 success);
 
             if (!success) {
-                retval = Attribute();
+                if constexpr (detail::gen_attrs<ParserMods>())
+                    retval = Attribute();
                 first = prev_first;
             }
         }
@@ -7515,10 +7986,16 @@ namespace boost { namespace parser {
                      "'quoted_string(char-range)(char-range)'.  Quit it!'"));
             }
             return parser_interface(
-                quoted_string_parser<decltype(BOOST_PARSER_SUBRANGE(
-                    detail::make_view_begin(r), detail::make_view_end(r)))>(
+                quoted_string_parser<
+                    decltype(BOOST_PARSER_SUBRANGE(
+                        detail::make_view_begin(r), detail::make_view_end(r))),
+                    detail::nope,
+                    ParserMods>(
                     BOOST_PARSER_SUBRANGE(
-                        detail::make_view_begin(r), detail::make_view_end(r))));
+                        detail::make_view_begin(r), detail::make_view_end(r)),
+                    escapes_,
+                    ch_,
+                    mods_));
         }
 
         /** Returns a `parser_interface` containing a `quoted_string_parser`
@@ -7546,8 +8023,10 @@ namespace boost { namespace parser {
                      "it!'"));
             }
             auto symbols = symbol_parser(escapes.parser_);
-            auto parser = quoted_string_parser<detail::nope, decltype(symbols)>(
-                char32_t(x), symbols);
+            auto parser = quoted_string_parser<
+                detail::nope,
+                decltype(symbols),
+                ParserMods>(chs_, symbols, char32_t(x), mods_);
             return parser_interface(parser);
         }
 
@@ -7588,15 +8067,23 @@ namespace boost { namespace parser {
             auto symbols = symbol_parser(escapes.parser_);
             auto quotes = BOOST_PARSER_SUBRANGE(
                 detail::make_view_begin(r), detail::make_view_end(r));
-            auto parser =
-                quoted_string_parser<decltype(quotes), decltype(symbols)>(
-                    quotes, symbols);
+            auto parser = quoted_string_parser<
+                decltype(quotes),
+                decltype(symbols),
+                ParserMods>(quotes, symbols, ch_, mods_);
             return parser_interface(parser);
+        }
+
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            return parser::quoted_string_parser(chs_, escapes_, ch_, f(mods_));
         }
 
         Quotes chs_;
         Escapes escapes_;
         char32_t ch_;
+        [[no_unique_address]] ParserMods mods_;
     };
 
     /** Parses a string delimited by quotation marks.  This parser can be used
@@ -7628,16 +8115,18 @@ namespace boost { namespace parser {
 #endif
     constexpr auto lit(R && str) noexcept
     {
-        return parser_interface{parser::string(str).parser_.with_parser_mods(
-            parser_modifiers<true>{})};
+        return parser_interface{
+            parser::string(str).parser_.with_parser_mods(detail::omit_attr)};
     }
 
 #ifndef BOOST_PARSER_DOXYGEN
 
-    template<bool NewlinesOnly, bool NoNewlines>
+    template<bool NewlinesOnly, bool NoNewlines, typename ParserMods>
     struct ws_parser
     {
         constexpr ws_parser() {}
+        constexpr explicit ws_parser(ParserMods mods) : mods_(std::move(mods))
+        {}
 
         static_assert(!NewlinesOnly || !NoNewlines);
 
@@ -7739,6 +8228,16 @@ namespace boost { namespace parser {
                 success = false;
             }
         }
+
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            auto mods = f(mods_);
+            return ws_parser<NewlinesOnly, NoNewlines, decltype(mods)>(
+                std::move(mods));
+        }
+
+        [[no_unique_address]] ParserMods mods_;
     };
 
 #endif
@@ -7746,76 +8245,88 @@ namespace boost { namespace parser {
     /** The end-of-line parser.  This matches "\r\n", or any one of the line
         break code points from the Unicode Line Break Algorithm, described in
         https://unicode.org/reports/tr14.  Produces no attribute. */
-    inline constexpr parser_interface<ws_parser<true, false>> eol;
+    inline constexpr parser_interface<
+        ws_parser<true, false, parser_modifiers<>>>
+        eol;
 
     /** The whitespace parser.  This matches "\r\n", or any one of the Unicode
         code points with the White_Space property, as defined in
         https://www.unicode.org/Public/UCD/latest/ucd/PropList.txt.  Produces
         no attribute. */
-    inline constexpr parser_interface<ws_parser<false, false>> ws;
+    inline constexpr parser_interface<
+        ws_parser<false, false, parser_modifiers<>>>
+        ws;
 
     /** The whitespace parser that does not match end-of-line.  This matches
         any one of the Unicode code points with the White_Space property, as
         defined in https://www.unicode.org/Public/UCD/latest/ucd/PropList.txt,
         except for the ones matched by `eol`.  Produces no attribute. */
-    inline constexpr parser_interface<ws_parser<false, true>> blank;
+    inline constexpr parser_interface<
+        ws_parser<false, true, parser_modifiers<>>>
+        blank;
 
     /** The decimal digit parser.  Matches the full set of Unicode decimal
         digits; in other words, all Unicode code points with the "Nd"
         character property.  Note that this covers all Unicode scripts, only a
         few of which are Latin. */
-    inline constexpr parser_interface<digit_parser> digit;
+    inline constexpr parser_interface<digit_parser<parser_modifiers<>>> digit;
 
     /** The hexidecimal digit parser.  Matches the full set of Unicode
         hexidecimal digits (upper or lower case); in other words, all Unicode
         code points with the "Hex_Digit" character property. */
     inline constexpr parser_interface<
-        char_subrange_parser<detail::hex_digit_subranges>>
+        char_subrange_parser<detail::hex_digit_subranges, parser_modifiers<>>>
         hex_digit;
 
     /** The control character parser.  Matches the all Unicode code points
         with the "Cc" ("control character") character property. */
     inline constexpr parser_interface<
-        char_subrange_parser<detail::control_subranges>>
+        char_subrange_parser<detail::control_subranges, parser_modifiers<>>>
         control;
 
     /** The punctuation character parser.  Matches the full set of Unicode
         punctuation clases (specifically, "Pc", "Pd", "Pe", "Pf", "Pi", "Ps",
         and "Po"). */
-    inline BOOST_PARSER_ALGO_CONSTEXPR
-        parser_interface<char_set_parser<detail::punct_chars>>
-            punct;
+    inline BOOST_PARSER_ALGO_CONSTEXPR parser_interface<
+        char_set_parser<detail::punct_chars, parser_modifiers<>>>
+        punct;
 
     /** The lower case character parser.  Matches the full set of Unicode
         lower case code points (class "Ll"). */
-    inline BOOST_PARSER_ALGO_CONSTEXPR
-        parser_interface<char_set_parser<detail::lower_case_chars>>
-            lower;
+    inline BOOST_PARSER_ALGO_CONSTEXPR parser_interface<
+        char_set_parser<detail::lower_case_chars, parser_modifiers<>>>
+        lower;
 
     /** The lower case character parser.  Matches the full set of Unicode
         lower case code points (class "Lu"). */
-    inline BOOST_PARSER_ALGO_CONSTEXPR
-        parser_interface<char_set_parser<detail::upper_case_chars>>
-            upper;
+    inline BOOST_PARSER_ALGO_CONSTEXPR parser_interface<
+        char_set_parser<detail::upper_case_chars, parser_modifiers<>>>
+        upper;
 
 #ifndef BOOST_PARSER_DOXYGEN
 
+    template<typename ParserMods>
     struct bool_parser
     {
+        constexpr bool_parser() {}
+        constexpr explicit bool_parser(ParserMods mods) : mods_(std::move(mods))
+        {}
+
         template<
             typename Iter,
             typename Sentinel,
             typename Context,
             typename SkipParser>
-        bool call(
+        auto call(
             Iter & first,
             Sentinel last,
             Context const & context,
             SkipParser const & skip,
             detail::flags flags,
             bool & success) const
+            -> detail::final_attribute_type<bool, ParserMods>
         {
-            bool retval{};
+            detail::final_attribute_type<bool, ParserMods> retval{};
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -7851,25 +8362,35 @@ namespace boost { namespace parser {
             if (detail::mismatch(t, t + 4, first, last, compare).first ==
                 t + 4) {
                 std::advance(first, 4);
-                detail::assign(retval, true);
+                if constexpr (detail::gen_attrs<ParserMods>())
+                    detail::assign(retval, true);
                 return;
             }
             char const f[] = "false";
             if (detail::mismatch(f, f + 5, first, last, compare).first ==
                 f + 5) {
                 std::advance(first, 5);
-                detail::assign(retval, false);
+                if constexpr (detail::gen_attrs<ParserMods>())
+                    detail::assign(retval, false);
                 return;
             }
             success = false;
         }
+
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            return parser::bool_parser(f(mods_));
+        }
+
+        [[no_unique_address]] ParserMods mods_;
     };
 
 #endif
 
     /** The Boolean parser.  Parses "true" and "false", producing attributes
         `true` and `false`, respectively, and fails on any other input. */
-    inline constexpr parser_interface<bool_parser> bool_;
+    inline constexpr parser_interface<bool_parser<parser_modifiers<>>> bool_;
 
 #ifndef BOOST_PARSER_DOXYGEN
 
@@ -7878,7 +8399,8 @@ namespace boost { namespace parser {
         int Radix,
         int MinDigits,
         int MaxDigits,
-        typename Expected>
+        typename Expected,
+        typename ParserMods>
     struct uint_parser
     {
         static_assert(2 <= Radix && Radix <= 36, "Unsupported radix.");
@@ -7886,21 +8408,24 @@ namespace boost { namespace parser {
         constexpr uint_parser() {}
         explicit constexpr uint_parser(Expected expected) : expected_(expected)
         {}
+        constexpr uint_parser(Expected expected, ParserMods mods) :
+            expected_(expected), mods_(std::move(mods))
+        {}
 
         template<
             typename Iter,
             typename Sentinel,
             typename Context,
             typename SkipParser>
-        T call(
+        auto call(
             Iter & first,
             Sentinel last,
             Context const & context,
             SkipParser const & skip,
             detail::flags flags,
-            bool & success) const
+            bool & success) const -> detail::final_attribute_type<T, ParserMods>
         {
-            T retval{};
+            detail::final_attribute_type<T, ParserMods> retval{};
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -7929,8 +8454,10 @@ namespace boost { namespace parser {
                     first, last, attr);
             if (first == initial || attr != detail::resolve(context, expected_))
                 success = false;
-            if (success)
-                detail::assign(retval, attr);
+            if constexpr (detail::gen_attrs<ParserMods>()) {
+                if (success)
+                    detail::assign(retval, attr);
+            }
         }
 
         /** Returns a `parser_interface` containing a `uint_parser` that
@@ -7942,12 +8469,31 @@ namespace boost { namespace parser {
                 (detail::is_nope_v<Expected> &&
                  "If you're seeing this, you tried to chain calls on this "
                  "parser, like 'uint_(2)(3)'.  Quit it!'"));
-            using parser_t =
-                uint_parser<T, Radix, MinDigits, MaxDigits, Expected2>;
-            return parser_interface{parser_t{expected}};
+            using parser_t = uint_parser<
+                T,
+                Radix,
+                MinDigits,
+                MaxDigits,
+                Expected2,
+                ParserMods>;
+            return parser_interface{parser_t{expected, mods_}};
+        }
+
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            auto mods = f(mods_);
+            return uint_parser<
+                T,
+                Radix,
+                MinDigits,
+                MaxDigits,
+                Expected,
+                decltype(mods)>{expected_, std::move(mods)};
         }
 
         Expected expected_;
+        [[no_unique_address]] ParserMods mods_;
     };
 
 #endif
@@ -7988,7 +8534,8 @@ namespace boost { namespace parser {
         int Radix,
         int MinDigits,
         int MaxDigits,
-        typename Expected>
+        typename Expected,
+        typename ParserMods>
     struct int_parser
     {
         static_assert(
@@ -7998,21 +8545,24 @@ namespace boost { namespace parser {
         constexpr int_parser() {}
         explicit constexpr int_parser(Expected expected) : expected_(expected)
         {}
+        constexpr int_parser(Expected expected, ParserMods mods) :
+            expected_(expected), mods_(std::move(mods))
+        {}
 
         template<
             typename Iter,
             typename Sentinel,
             typename Context,
             typename SkipParser>
-        T call(
+        auto call(
             Iter & first,
             Sentinel last,
             Context const & context,
             SkipParser const & skip,
             detail::flags flags,
-            bool & success) const
+            bool & success) const -> detail::final_attribute_type<T, ParserMods>
         {
-            T retval{};
+            detail::final_attribute_type<T, ParserMods> retval{};
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -8041,8 +8591,10 @@ namespace boost { namespace parser {
                     first, last, attr);
             if (first == initial || attr != detail::resolve(context, expected_))
                 success = false;
-            if (success)
-                detail::assign(retval, attr);
+            if constexpr (detail::gen_attrs<ParserMods>()) {
+                if (success)
+                    detail::assign(retval, attr);
+            }
         }
 
         /** Returns a `parser_interface` containing an `int_parser` that
@@ -8054,12 +8606,31 @@ namespace boost { namespace parser {
                 (detail::is_nope_v<Expected> &&
                  "If you're seeing this, you tried to chain calls on this "
                  "parser, like 'int_(2)(3)'.  Quit it!'"));
-            using parser_t =
-                int_parser<T, Radix, MinDigits, MaxDigits, Expected2>;
-            return parser_interface{parser_t{expected}};
+            using parser_t = int_parser<
+                T,
+                Radix,
+                MinDigits,
+                MaxDigits,
+                Expected2,
+                ParserMods>;
+            return parser_interface{parser_t{expected, mods_}};
+        }
+
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            auto mods = f(mods_);
+            return int_parser<
+                T,
+                Radix,
+                MinDigits,
+                MaxDigits,
+                Expected,
+                decltype(mods)>{expected_, std::move(mods)};
         }
 
         Expected expected_;
+        [[no_unique_address]] ParserMods mods_;
     };
 
 #endif
@@ -8082,25 +8653,28 @@ namespace boost { namespace parser {
 
 #ifndef BOOST_PARSER_DOXYGEN
 
-    template<typename T>
+    template<typename T, typename ParserMods>
     struct float_parser
     {
         constexpr float_parser() {}
+        explicit constexpr float_parser(ParserMods mods) :
+            mods_(std::move(mods))
+        {}
 
         template<
             typename Iter,
             typename Sentinel,
             typename Context,
             typename SkipParser>
-        T call(
+        auto call(
             Iter & first,
             Sentinel last,
             Context const & context,
             SkipParser const & skip,
             detail::flags flags,
-            bool & success) const
+            bool & success) const -> detail::final_attribute_type<T, ParserMods>
         {
-            T retval = 0;
+            detail::final_attribute_type<T, ParserMods> retval{};
             call(first, last, context, skip, flags, success, retval);
             return retval;
         }
@@ -8127,18 +8701,31 @@ namespace boost { namespace parser {
             success = detail::numeric::parse_real(first, last, attr);
             if (first == initial)
                 success = false;
-            if (success)
-                detail::assign(retval, attr);
+            if constexpr (detail::gen_attrs<ParserMods>()) {
+                if (success)
+                    detail::assign(retval, attr);
+            }
         }
+
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            auto mods = f(mods_);
+            return float_parser<T, decltype(mods)>(std::move(mods));
+        }
+
+        [[no_unique_address]] ParserMods mods_;
     };
 
 #endif
 
     /** The `float` parser.  Produces a `float` attribute. */
-    inline constexpr parser_interface<float_parser<float>> float_;
+    inline constexpr parser_interface<float_parser<float, parser_modifiers<>>>
+        float_;
 
     /** The `double` parser.  Produces a `double` attribute. */
-    inline constexpr parser_interface<float_parser<double>> double_;
+    inline constexpr parser_interface<float_parser<double, parser_modifiers<>>>
+        double_;
 
 
     /** Represents a sequence parser, the first parser of which is an
@@ -8184,13 +8771,19 @@ namespace boost { namespace parser {
 
 #ifndef BOOST_PARSER_DOXYGEN
 
-    template<typename SwitchValue, typename OrParser>
+    template<typename SwitchValue, typename OrParser, typename ParserMods>
     struct switch_parser
     {
         switch_parser() {}
         switch_parser(SwitchValue switch_value) : switch_value_(switch_value) {}
         switch_parser(SwitchValue switch_value, OrParser or_parser) :
             switch_value_(switch_value), or_parser_(or_parser)
+        {}
+        switch_parser(
+            SwitchValue switch_value, OrParser or_parser, ParserMods mods) :
+            switch_value_(switch_value),
+            or_parser_(or_parser),
+            mods_(std::move(mods))
         {}
 
         template<
@@ -8211,9 +8804,11 @@ namespace boost { namespace parser {
                  "It looks like you tried to write switch_(val).  You need at "
                  "least one alternative, like: switch_(val)(value_1, "
                  "parser_1)(value_2, parser_2)..."));
-            using attr_t = decltype(or_parser_.call(
-                first, last, context, skip, flags, success));
-            attr_t attr{};
+            detail::final_attribute_type<
+                decltype(or_parser_.call(
+                    first, last, context, skip, flags, success)),
+                ParserMods>
+                attr{};
             [[maybe_unused]] auto _ =
                 detail::scoped_trace(*this, first, last, context, flags, attr);
             attr = or_parser_.call(first, last, context, skip, flags, success);
@@ -8255,9 +8850,9 @@ namespace boost { namespace parser {
                 switch_value_, value_};
             auto or_parser = make_or_parser(or_parser_, eps(match) >> rhs);
             using switch_parser_type =
-                switch_parser<SwitchValue, decltype(or_parser)>;
+                switch_parser<SwitchValue, decltype(or_parser), ParserMods>;
             return parser_interface{
-                switch_parser_type{switch_value_, or_parser}};
+                switch_parser_type{switch_value_, or_parser, mods_}};
         }
 
 #ifndef BOOST_PARSER_DOXYGEN
@@ -8278,8 +8873,16 @@ namespace boost { namespace parser {
 
 #endif
 
+        template<typename F>
+        constexpr auto with_parser_mods(F f) const
+        {
+            return parser::switch_parser(
+                switch_value_, or_parser_with_parser_mods(f), f(mods_));
+        }
+
         SwitchValue switch_value_;
         OrParser or_parser_;
+        [[no_unique_address]] ParserMods mods_;
     };
 
 #endif
@@ -9515,7 +10118,8 @@ namespace boost { namespace parser {
                 char const *,
                 char const *,
                 default_error_handler>;
-            using skipper_t = parser_interface<ws_parser<false, false>>;
+            using skipper_t =
+                parser_interface<ws_parser<false, false, parser_modifiers<>>>;
             using use_parser_t = dummy_use_parser_t<
                 char const *,
                 char const *,

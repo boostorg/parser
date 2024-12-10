@@ -116,7 +116,9 @@ namespace boost::parser {
                 return BOOST_PARSER_SUBRANGE(first, first);
 
             auto const search_parser = omit[*(char_ - parser)] >> -raw[parser];
-            if constexpr (std::is_same_v<SkipParser, eps_parser<phony>>) {
+            if constexpr (std::is_same_v<
+                              SkipParser,
+                              eps_parser<phony, parser_modifiers<>>>) {
                 auto result = parser::prefix_parse(
                     first, last, search_parser, trace_mode);
                 if (*result)
@@ -255,9 +257,9 @@ namespace boost::parser {
         trace trace_mode = trace::off)
     {
         return parser::search(
-            (R &&) r,
+            (R &&)r,
             parser,
-            parser_interface<eps_parser<detail::phony>>{},
+            parser_interface<eps_parser<detail::phony, parser_modifiers<>>>{},
             trace_mode);
     }
 
@@ -292,7 +294,7 @@ namespace boost::parser {
         return parser::search(
             BOOST_PARSER_SUBRANGE(first, last),
             parser,
-            parser_interface<eps_parser<detail::phony>>{},
+            parser_interface<eps_parser<detail::phony, parser_modifiers<>>>{},
             trace_mode);
     }
 
@@ -483,7 +485,7 @@ namespace boost::parser {
             Parser,
             GlobalState,
             ErrorHandler,
-            parser_interface<eps_parser<detail::phony>>>;
+            parser_interface<eps_parser<detail::phony, parser_modifiers<>>>>;
 
     template<
         typename V,
@@ -496,7 +498,7 @@ namespace boost::parser {
             Parser,
             GlobalState,
             ErrorHandler,
-            parser_interface<eps_parser<detail::phony>>>;
+            parser_interface<eps_parser<detail::phony, parser_modifiers<>>>>;
 
     namespace detail {
         template<
@@ -569,7 +571,8 @@ namespace boost::parser {
                             Parser,
                             GlobalState,
                             ErrorHandler,
-                            parser_interface<eps_parser<detail::phony>>>
+                            parser_interface<
+                                eps_parser<detail::phony, parser_modifiers<>>>>
             [[nodiscard]] constexpr auto operator()(
                 R && r,
                 parser_interface<Parser, GlobalState, ErrorHandler> const &
@@ -579,7 +582,8 @@ namespace boost::parser {
                 return (*this)(
                     (R &&)r,
                     parser,
-                    parser_interface<eps_parser<detail::phony>>{},
+                    parser_interface<
+                        eps_parser<detail::phony, parser_modifiers<>>>{},
                     trace_mode);
             }
 
@@ -590,8 +594,8 @@ namespace boost::parser {
                 typename Parser,
                 typename GlobalState,
                 typename ErrorHandler,
-                typename SkipParser =
-                    parser_interface<eps_parser<detail::phony>>,
+                typename SkipParser = parser_interface<
+                    eps_parser<detail::phony, parser_modifiers<>>>,
                 typename Trace = trace,
                 typename Enable = std::enable_if_t<is_parsable_range_v<R>>>
             [[nodiscard]] constexpr auto operator()(
@@ -607,9 +611,10 @@ namespace boost::parser {
                     std::is_same_v<Trace, trace>) {
                     // (r, parser, trace) case
                     return impl(
-                        (R &&) r,
+                        (R &&)r,
                         parser,
-                        parser_interface<eps_parser<detail::phony>>{},
+                        parser_interface<
+                            eps_parser<detail::phony, parser_modifiers<>>>{},
                         skip);
                 } else if constexpr (
                     detail::is_parser_iface<SkipParser> &&

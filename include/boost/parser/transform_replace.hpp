@@ -254,7 +254,9 @@ namespace boost::parser {
                     BOOST_PARSER_SUBRANGE(first, first), parse_result{});
             }
 
-            if constexpr (std::is_same_v<SkipParser, eps_parser<phony>>) {
+            if constexpr (std::is_same_v<
+                              SkipParser,
+                              eps_parser<phony, parser_modifiers<>>>) {
                 auto result = parser::prefix_parse(
                     first, last, search_parser, trace_mode);
                 if (*result) {
@@ -578,7 +580,7 @@ namespace boost::parser {
             Parser,
             GlobalState,
             ErrorHandler,
-            parser_interface<eps_parser<detail::phony>>>;
+            parser_interface<eps_parser<detail::phony, parser_modifiers<>>>>;
 
     template<
         typename V,
@@ -594,7 +596,7 @@ namespace boost::parser {
             Parser,
             GlobalState,
             ErrorHandler,
-            parser_interface<eps_parser<detail::phony>>>;
+            parser_interface<eps_parser<detail::phony, parser_modifiers<>>>>;
 
     namespace detail {
         template<
@@ -697,7 +699,8 @@ namespace boost::parser {
                              Parser,
                              GlobalState,
                              ErrorHandler,
-                             parser_interface<eps_parser<detail::phony>>>
+                             parser_interface<
+                                 eps_parser<detail::phony, parser_modifiers<>>>>
             [[nodiscard]] constexpr auto operator()(
                 R && r,
                 parser_interface<Parser, GlobalState, ErrorHandler> const &
@@ -708,7 +711,8 @@ namespace boost::parser {
                 return (*this)(
                     (R &&)r,
                     parser,
-                    parser_interface<eps_parser<detail::phony>>{},
+                    parser_interface<
+                        eps_parser<detail::phony, parser_modifiers<>>>{},
                     (F &&)f,
                     trace_mode);
             }
@@ -753,10 +757,11 @@ namespace boost::parser {
                     std::is_same_v<Trace, trace>) {
                     // (r, parser, f, trace) case
                     return impl(
-                        to_range<R>::call((R &&) r),
+                        to_range<R>::call((R &&)r),
                         parser,
-                        parser_interface<eps_parser<detail::phony>>{},
-                        (SkipParser &&) skip,
+                        parser_interface<
+                            eps_parser<detail::phony, parser_modifiers<>>>{},
+                        (SkipParser &&)skip,
                         f);
                 } else {
                     static_assert(

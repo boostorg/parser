@@ -165,20 +165,21 @@ namespace boost { namespace parser {
         typename Parser,
         typename DelimiterParser = detail::nope,
         typename MinType = int64_t,
-        typename MaxType = int64_t>
+        typename MaxType = int64_t,
+        typename ParserMods = parser_modifiers<>>
     struct repeat_parser;
 
     /** Repeats the application of another parser `p` of type `Parser`, `[0,
         Inf)` times.  The parse always succeeds.  The attribute produced is a
         sequence of the type of attribute produced by `Parser`. */
-    template<typename Parser>
+    template<typename Parser, typename ParserMods>
     struct zero_plus_parser;
 
     /** Repeats the application of another parser `p` of type `Parser`, `[1,
         Inf)` times.  The parse succeeds iff `p` succeeds at least once.  The
         attribute produced is a sequence of the type of attribute produced by
         `Parser`. */
-    template<typename Parser>
+    template<typename Parser, typename ParserMods>
     struct one_plus_parser;
 
     /** Repeats the application of another parser `p` of type `Parser`, `[1,
@@ -187,14 +188,14 @@ namespace boost { namespace parser {
         succeeds at least once, and `d` succeeds each time it is applied.  The
         attribute produced is a sequence of the type of attribute produced by
         `Parser`. */
-    template<typename Parser, typename DelimiterParser>
+    template<typename Parser, typename DelimiterParser, typename ParserMods>
     struct delimited_seq_parser;
 
     /** Repeats the application of another parser of type `Parser`, `[0, 1]`
         times.  The parse always succeeds.  The attribute produced is a
         `std::optional<T>`, where `T` is the type of attribute produced by
         `Parser`. */
-    template<typename Parser>
+    template<typename Parser, typename ParserMods>
     struct opt_parser;
 
     /** Applies each parser in `ParserTuple`, in order, stopping after the
@@ -202,7 +203,7 @@ namespace boost { namespace parser {
         one of the sub-parsers succeeds.  The attribute produced is a
         `std::variant` over the types of attribute produced by the parsers in
         `ParserTuple`. */
-    template<typename ParserTuple>
+    template<typename ParserTuple, typename ParserMods>
     struct or_parser;
 
     /** Applies each parsers in `ParserTuple`, an any order, stopping after
@@ -213,7 +214,7 @@ namespace boost { namespace parser {
         `ParserTuple`, not the order of the parsers' matches.  It is an error
         to specialize `perm_parser` with a `ParserTuple` template parameter
         that includes an `eps_parser`. */
-    template<typename ParserTuple>
+    template<typename ParserTuple, typename ParserMods>
     struct perm_parser;
 
     /** Applies each parser in `ParserTuple`, in order.  The parse succeeds
@@ -226,14 +227,15 @@ namespace boost { namespace parser {
     template<
         typename ParserTuple,
         typename BacktrackingTuple,
-        typename CombiningGroups>
+        typename CombiningGroups,
+        typename ParserMods>
     struct seq_parser;
 
     /** Applies the given parser `p` of type `Parser` and an invocable `a` of
         type `Action`.  `Action` shall model `semantic_action`, and `a` will
         only be invoked if `p` succeeds.  The parse succeeds iff `p` succeeds.
         Produces no attribute. */
-    template<typename Parser, typename Action>
+    template<typename Parser, typename Action, typename ParserMods>
     struct action_parser;
 
     /** Applies the given parser `p` of type `Parser`.  The attribute produced
@@ -241,21 +243,14 @@ namespace boost { namespace parser {
         only be invoked if `p` succeeds and sttributes are currently being
         generated.  The parse succeeds iff `p` succeeds.  The attribute
         produced is the the result of the call to `f`. */
-    template<typename Parser, typename F>
+    template<typename Parser, typename F, typename ParserMods>
     struct transform_parser;
-
-    /** Applies the given parser `p` of type `Parser`.  This parser produces
-        no attribute, and suppresses the production of any attributes that
-        would otherwise be produced by `p`.  The parse succeeds iff `p`
-        succeeds. */
-    template<typename Parser>
-    struct omit_parser;
 
     /** Applies the given parser `p` of type `Parser`; regardless of the
         attribute produced by `Parser`, this parser's attribute is equivalent
         to `_where(ctx)` within a semantic action on `p`.  The parse succeeds
         iff `p` succeeds. */
-    template<typename Parser>
+    template<typename Parser, typename ParserMods>
     struct raw_parser;
 
 #if defined(BOOST_PARSER_DOXYGEN) || BOOST_PARSER_USE_CONCEPTS
@@ -268,34 +263,37 @@ namespace boost { namespace parser {
         non-contiguous, code using `string_view_parser` is ill-formed.  The
         parse succeeds iff `p` succeeds.  This parser is only available in
         C++20 and later. */
-    template<typename Parser>
+    template<typename Parser, typename ParserMods>
     struct string_view_parser;
 #endif
 
     /** Applies the given parser `p` of type `Parser`, disabling the current
         skipper in use, if any.  The parse succeeds iff `p` succeeds.  The
         attribute produced is the type of attribute produced by `Parser`. */
-    template<typename Parser>
+    template<typename Parser, typename ParserMods>
     struct lexeme_parser;
 
     /** Applies the given parser `p` of type `Parser`, enabling
         case-insensitive matching, based on Unicode case folding.  The parse
         succeeds iff `p` succeeds.  The attribute produced is the type of
         attribute produced by `Parser`. */
-    template<typename Parser>
+    template<typename Parser, typename ParserMods>
     struct no_case_parser;
 
     /** Applies the given parser `p` of type `Parser`, using a parser of type
         `SkipParser` as the skipper.  The parse succeeds iff `p` succeeds.
         The attribute produced is the type of attribute produced by
         `Parser`. */
-    template<typename Parser, typename SkipParser = detail::nope>
+    template<
+        typename Parser,
+        typename SkipParser = detail::nope,
+        typename ParserMods = parser_modifiers<>>
     struct skip_parser;
 
     /** Applies the given parser `p` of type `Parser`, producing no attributes
         and consuming no input.  The parse succeeds iff `p`'s success is
         unequal to `FailOnMatch`. */
-    template<typename Parser, bool FailOnMatch>
+    template<typename Parser, bool FailOnMatch, typename ParserMods>
     struct expect_parser;
 
     /** Matches one of a set S of possible inputs, each of which is associated
@@ -304,7 +302,7 @@ namespace boost { namespace parser {
         from S dynamically, during parsing; any such changes are reverted at
         the end of parsing.  The parse succeeds iff an element of S is
         matched.  \see `symbols` */
-    template<typename T>
+    template<typename T, typename ParserMods>
     struct symbol_parser;
 
     /** Applies another parser `p`, associated with this parser via `TagType`.
@@ -323,22 +321,24 @@ namespace boost { namespace parser {
         typename TagType,
         typename Attribute,
         typename LocalState,
-        typename ParamsTuple>
+        typename ParamsTuple,
+        typename ParserMods>
     struct rule_parser;
 
     /** Matches anything, and consumes no input.  If `Predicate` is anything
         other than `detail::nope` (which it is by default), and `pred_(ctx)`
         evaluates to false, where `ctx` is the parser context, the parse
         fails. */
-    template<typename Predicate>
+    template<typename Predicate, typename ParserMods>
     struct eps_parser;
 
     /** Matches only the end of input.  Produces no attribute. */
+    template<typename ParserMods>
     struct eoi_parser;
 
     /** Matches anything, consumes no input, and produces an attribute of type
         `RESOLVE(Attribute)`. */
-    template<typename Attribute>
+    template<typename Attribute, typename ParserMods>
     struct attr_parser;
 
     /** A tag type that can be passed as the first parameter to `char_()` when
@@ -366,7 +366,7 @@ namespace boost { namespace parser {
         characters for matching Unicode character classes like punctuation or
         lower case.  Attribute type is the attribute type of the character
         being matched. */
-    template<typename Tag>
+    template<typename Tag, typename ParserMods>
     struct char_set_parser;
 
     /** Matches a single code point that falls into one of the subranges of
@@ -374,12 +374,13 @@ namespace boost { namespace parser {
         sets of characters for matching Unicode character classes like hex
         digits or control characters.  Attribute type is the attribute type of
         the character being matched. */
-    template<typename Tag>
+    template<typename Tag, typename ParserMods>
     struct char_subrange_parser;
 
     /** Matches a single decimal digit code point, using the Unicode character
         class Hex_Digit.  Attribute type is the attribute type of the
         character being matched. */
+    template<typename ParserMods>
     struct digit_parser;
 
     /** Matches a particular string, delimited by an iterator sentinel pair;
@@ -389,7 +390,10 @@ namespace boost { namespace parser {
 
     /** Matches a string delimited by quotation marks; produces a
         `std::string` attribute. */
-    template<typename Quotes = detail::nope, typename Escapes = detail::nope>
+    template<
+        typename Quotes = detail::nope,
+        typename Escapes = detail::nope,
+        typename ParserMods = parser_modifiers<>>
     struct quoted_string_parser;
 
     /** Matches an end-of-line (`NewlinesOnly == true`), whitespace
@@ -397,11 +401,12 @@ namespace boost { namespace parser {
         but not newline) code point, based on the Unicode definitions of each
         (also matches the two code points `"\r\n"`).  Produces no
         attribute. */
-    template<bool NewlinesOnly, bool NoNewlines>
+    template<bool NewlinesOnly, bool NoNewlines, typename ParserMods>
     struct ws_parser;
 
     /** Matches the strings "true" and "false", producing an attribute of
         `true` or `false`, respectively, and fails on any other input. */
+    template<typename ParserMods>
     struct bool_parser;
 
     /** Matches an unsigned number of radix `Radix`, of at least `MinDigits`
@@ -415,7 +420,8 @@ namespace boost { namespace parser {
         int Radix = 10,
         int MinDigits = 1,
         int MaxDigits = -1,
-        typename Expected = detail::nope>
+        typename Expected = detail::nope,
+        typename ParserMods = parser_modifiers<>>
     struct uint_parser;
 
     /** Matches a signed number of radix `Radix`, of at least `MinDigits` and
@@ -429,12 +435,13 @@ namespace boost { namespace parser {
         int Radix = 10,
         int MinDigits = 1,
         int MaxDigits = -1,
-        typename Expected = detail::nope>
+        typename Expected = detail::nope,
+        typename ParserMods = parser_modifiers<>>
     struct int_parser;
 
     /** Matches a floating point number, producing an attribute of type
         `T`. */
-    template<typename T>
+    template<typename T, typename ParserMods>
     struct float_parser;
 
     /** Applies at most one of the parsers in `OrParser`.  If `switch_value_`
@@ -442,7 +449,10 @@ namespace boost { namespace parser {
         first such parser is applied, and the success or failure and attribute
         of the parse are those of the applied parser.  Otherwise, the parse
         fails. */
-    template<typename SwitchValue, typename OrParser = detail::nope>
+    template<
+        typename SwitchValue,
+        typename OrParser = detail::nope,
+        typename ParserMods = parser_modifiers<>>
     struct switch_parser;
 
     /** A wrapper for parsers that provides the operations that must be

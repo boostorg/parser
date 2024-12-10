@@ -451,7 +451,7 @@ namespace boost::parser {
             Parser,
             GlobalState,
             ErrorHandler,
-            parser_interface<eps_parser<detail::phony>>>;
+            parser_interface<eps_parser<detail::phony, parser_modifiers<>>>>;
 
     template<
         typename V,
@@ -469,7 +469,7 @@ namespace boost::parser {
             Parser,
             GlobalState,
             ErrorHandler,
-            parser_interface<eps_parser<detail::phony>>>;
+            parser_interface<eps_parser<detail::phony, parser_modifiers<>>>>;
 
     namespace detail {
         template<
@@ -571,7 +571,8 @@ namespace boost::parser {
                              Parser,
                              GlobalState,
                              ErrorHandler,
-                             parser_interface<eps_parser<detail::phony>>>
+                             parser_interface<
+                                 eps_parser<detail::phony, parser_modifiers<>>>>
             [[nodiscard]] constexpr auto operator()(
                 R && r,
                 parser_interface<Parser, GlobalState, ErrorHandler> const &
@@ -582,7 +583,8 @@ namespace boost::parser {
                 return (*this)(
                     (R &&)r,
                     parser,
-                    parser_interface<eps_parser<detail::phony>>{},
+                    parser_interface<
+                        eps_parser<detail::phony, parser_modifiers<>>>{},
                     (ReplacementR &&)replacement,
                     trace_mode);
             }
@@ -623,10 +625,11 @@ namespace boost::parser {
                     std::is_same_v<Trace, trace>) {
                     // (r, parser, replacement, trace) case
                     return impl(
-                        (R &&) r,
+                        (R &&)r,
                         parser,
-                        parser_interface<eps_parser<detail::phony>>{},
-                        (SkipParser &&) skip,
+                        parser_interface<
+                            eps_parser<detail::phony, parser_modifiers<>>>{},
+                        (SkipParser &&)skip,
                         replacement);
                 } else {
                     static_assert(

@@ -68,12 +68,6 @@ namespace boost { namespace parser {
         return BOOST_PARSER_SUBRANGE(ptr, detail::text::null_sentinel);
     }
 
-    template<bool OmitAttr = false>
-    struct parser_modifiers
-    {
-        static constexpr bool omit_attr = OmitAttr;
-    };
-
     namespace detail {
         template<typename T>
         constexpr bool is_optional_v = enable_optional<T>;
@@ -154,6 +148,14 @@ namespace boost { namespace parser {
         struct upper_case_chars
         {};
     }
+
+    template<bool OmitAttr = false, typename Action = detail::nope>
+    struct parser_modifiers
+    {
+        static constexpr bool omit_attr = OmitAttr;
+
+        [[no_unique_address]] Action action;
+    };
 
     /** Repeats the application of another parser `p` of type `Parser`,
         optionally applying another parser `d` of type `DelimiterParser` in

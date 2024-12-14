@@ -2965,20 +2965,44 @@ namespace boost { namespace parser {
         template<typename F, typename... Parsers>
         auto modify_parsers(F f, tuple<Parsers...> parsers)
         {
-            return modify_parsers_impl(
-                f,
-                parsers,
-                std::make_integer_sequence<int, sizeof...(Parsers)>{});
+            if constexpr (f.recursive) {
+                return modify_parsers_impl(
+                    f,
+                    parsers,
+                    std::make_integer_sequence<int, sizeof...(Parsers)>{});
+            } else {
+                return parsers;
+            }
         }
 
         inline constexpr struct omit_attr_t
         {
+            static constexpr std::true_type recursive{};
             template<bool OmitAttr>
             constexpr auto operator()(parser_modifiers<OmitAttr> const &) const
             {
                 return parser_modifiers<true>{};
             }
         } omit_attr;
+
+        template<typename Action>
+        struct action_t
+        {
+            static constexpr std::false_type recursive{};
+            template<bool OmitAttr, typename OldAction>
+            constexpr auto
+            operator()(parser_modifiers<OmitAttr, OldAction> const &) const
+            {
+                return parser_modifiers<true, Action>{action};
+            }
+            Action action;
+        };
+
+        template<typename Action>
+        constexpr auto action(Action action)
+        {
+            return action_t<Action>{std::move(action)};
+        }
 
         template<typename Attribute, bool OmitAttr>
         using final_attribute_type_impl =
@@ -3421,7 +3445,11 @@ namespace boost { namespace parser {
         template<typename F>
         constexpr auto with_parser_mods(F f) const
         {
-            if constexpr (std::is_same_v<DelimiterParser, detail::nope>) {
+            if constexpr (!f.recursive) {
+                return parser::repeat_parser(
+                    parser_, detail::nope{}, min_, max_, f(mods_));
+            } else if constexpr (std::
+                                     is_same_v<DelimiterParser, detail::nope>) {
                 return parser::repeat_parser(
                     parser_.with_parser_mods(f),
                     detail::nope{},
@@ -3461,8 +3489,12 @@ namespace boost { namespace parser {
         template<typename F>
         constexpr auto with_parser_mods(F f) const
         {
-            return parser::zero_plus_parser(
-                this->parser_.with_parser_mods(f), f(this->mods_));
+            if constexpr (f.recursive) {
+                return parser::zero_plus_parser(
+                    this->parser_.with_parser_mods(f), f(this->mods_));
+            } else {
+                return parser::zero_plus_parser(this->parser_, f(this->mods_));
+            }
         }
     };
 
@@ -3481,8 +3513,12 @@ namespace boost { namespace parser {
         template<typename F>
         constexpr auto with_parser_mods(F f) const
         {
-            return parser::one_plus_parser(
-                this->parser_.with_parser_mods(f), f(this->mods_));
+            if constexpr (f.recursive) {
+                return parser::one_plus_parser(
+                    this->parser_.with_parser_mods(f), f(this->mods_));
+            } else {
+                return parser::one_plus_parser(this->parser_, f(this->mods_));
+            }
         }
     };
 
@@ -3505,10 +3541,15 @@ namespace boost { namespace parser {
         template<typename F>
         constexpr auto with_parser_mods(F f) const
         {
-            return parser::delimited_seq_parser(
-                this->parser_.with_parser_mods(f),
-                this->delimiter_parser_.with_parser_mods(f),
-                f(this->mods_));
+            if constexpr (f.recursive) {
+                return parser::delimited_seq_parser(
+                    this->parser_.with_parser_mods(f),
+                    this->delimiter_parser_.with_parser_mods(f),
+                    f(this->mods_));
+            } else {
+                return parser::delimited_seq_parser(
+                    this->parser_, this->delimiter_parser_, f(this->mods_));
+            }
          }
     };
 
@@ -3589,7 +3630,12 @@ namespace boost { namespace parser {
         template<typename F>
         constexpr auto with_parser_mods(F f) const
         {
-            return parser::opt_parser(parser_.with_parser_mods(f), f(mods_));
+            if constexpr (f.recursive) {
+                return parser::opt_parser(
+                    parser_.with_parser_mods(f), f(mods_));
+            } else {
+                return parser::opt_parser(parser_, f(mods_));
+            }
         }
 
         //[ opt_parser_end
@@ -4914,8 +4960,12 @@ namespace boost { namespace parser {
         template<typename F>
         constexpr auto with_parser_mods(F f) const
         {
-            return parser::action_parser(
-                parser_.with_parser_mods(f), action_, f(mods_));
+            if constexpr (f.recursive) {
+                return parser::action_parser(
+                    parser_.with_parser_mods(f), action_, f(mods_));
+            } else {
+                return parser::action_parser(parser_, action_, f(mods_));
+            }
         }
 
         Parser parser_;
@@ -4989,8 +5039,12 @@ namespace boost { namespace parser {
         template<typename F2>
         constexpr auto with_parser_mods(F2 f) const
         {
-            return parser::transform_parser(
-                parser_.with_parser_mods(f), f_, f(mods_));
+            if constexpr (f.recursive) {
+                return parser::transform_parser(
+                    parser_.with_parser_mods(f), f_, f(mods_));
+            } else {
+                return parser::transform_parser(parser_, f_, f(mods_));
+            }
         }
 
         Parser parser_;
@@ -5066,7 +5120,12 @@ namespace boost { namespace parser {
         template<typename F>
         constexpr auto with_parser_mods(F f) const
         {
-            return parser::raw_parser(parser_.with_parser_mods(f), f(mods_));
+            if constexpr (f.recursive) {
+                return parser::raw_parser(
+                    parser_.with_parser_mods(f), f(mods_));
+            } else {
+                return parser::raw_parser(parser_, f(mods_));
+            }
         }
 
         Parser parser_;
@@ -5166,8 +5225,12 @@ namespace boost { namespace parser {
         template<typename F>
         constexpr auto with_parser_mods(F f) const
         {
-            return parser::string_view_parser(
-                parser_.with_parser_mods(f), f(mods_));
+            if constexpr (f.recursive) {
+                return parser::string_view_parser(
+                    parser_.with_parser_mods(f), f(mods_));
+            } else {
+                return parser::string_view_parser(parser_, f(mods_));
+            }
         }
 
         Parser parser_;
@@ -5235,7 +5298,12 @@ namespace boost { namespace parser {
         template<typename F>
         constexpr auto with_parser_mods(F f) const
         {
-            return parser::lexeme_parser(parser_.with_parser_mods(f), f(mods_));
+            if constexpr (f.recursive) {
+                return parser::lexeme_parser(
+                    parser_.with_parser_mods(f), f(mods_));
+            } else {
+                return parser::lexeme_parser(parser_, f(mods_));
+            }
         }
 
         Parser parser_;
@@ -5301,8 +5369,12 @@ namespace boost { namespace parser {
         template<typename F>
         constexpr auto with_parser_mods(F f) const
         {
-            return parser::no_case_parser(
-                parser_.with_parser_mods(f), f(mods_));
+            if constexpr (f.recursive) {
+                return parser::no_case_parser(
+                    parser_.with_parser_mods(f), f(mods_));
+            } else {
+                return parser::no_case_parser(parser_, f(mods_));
+            }
         }
 
         Parser parser_;
@@ -5381,10 +5453,14 @@ namespace boost { namespace parser {
         template<typename F>
         constexpr auto with_parser_mods(F f) const
         {
-            return parser::skip_parser(
-                parser_.with_parser_mods(f),
-                skip_parser_.with_parser_mods(f),
-                f(mods_));
+            if constexpr (f.recursive) {
+                return parser::skip_parser(
+                    parser_.with_parser_mods(f),
+                    skip_parser_.with_parser_mods(f),
+                    f(mods_));
+            } else {
+                return parser::skip_parser(parser_, skip_parser_, f(mods_));
+            }
         }
 
         Parser parser_;
@@ -5454,10 +5530,16 @@ namespace boost { namespace parser {
         constexpr auto with_parser_mods(F f) const
         {
             auto mods = f(mods_);
-            return expect_parser<
-                decltype(parser_.with_parser_mods(f)),
-                FailOnMatch,
-                decltype(mods)>{parser_.with_parser_mods(f), std::move(mods)};
+            if constexpr (f.recursive) {
+                return expect_parser<
+                    decltype(parser_.with_parser_mods(f)),
+                    FailOnMatch,
+                    decltype(mods)>{
+                    parser_.with_parser_mods(f), std::move(mods)};
+            } else {
+                return expect_parser<Parser, FailOnMatch, decltype(mods)>{
+                    parser_, std::move(mods)};
+            }
         }
 
         Parser parser_;
@@ -6091,9 +6173,8 @@ namespace boost { namespace parser {
         template<typename Action>
         constexpr auto operator[](Action action) const
         {
-            using action_parser_t =
-                action_parser<parser_type, Action, parser_modifiers<>>;
-            return parser::parser_interface{action_parser_t{parser_, action}};
+            return parser::parser_interface{
+                parser_.with_parser_mods(detail::action(std::move(action)))};
         }
 
         /** Returns `parser_((Arg &&)arg, (Args &&)args...)`.  This is useful
@@ -8895,8 +8976,13 @@ namespace boost { namespace parser {
         template<typename F>
         constexpr auto with_parser_mods(F f) const
         {
-            return parser::switch_parser(
-                switch_value_, or_parser_with_parser_mods(f), f(mods_));
+            if constexpr (f.recursive) {
+                return parser::switch_parser(
+                    switch_value_, or_parser_.with_parser_mods(f), f(mods_));
+            } else {
+                return parser::switch_parser(
+                    switch_value_, or_parser_, f(mods_));
+            }
         }
 
         SwitchValue switch_value_;

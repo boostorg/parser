@@ -3004,13 +3004,15 @@ namespace boost { namespace parser {
             return action_t<Action>{std::move(action)};
         }
 
-        template<typename Attribute, bool OmitAttr>
-        using final_attribute_type_impl =
-            std::conditional_t<OmitAttr, nope, Attribute>;
+        template<typename Attribute, bool OmitAttr, typename ActionType>
+        using final_attribute_type_impl = std::
+            conditional_t<OmitAttr || !is_nope_v<ActionType>, nope, Attribute>;
 
         template<typename Attribute, typename ParserMods>
-        using final_attribute_type =
-            final_attribute_type_impl<Attribute, ParserMods::omit_attr>;
+        using final_attribute_type = final_attribute_type_impl<
+            Attribute,
+            ParserMods::omit_attr,
+            typename ParserMods::action_type>;
 
         template<typename Action, typename Attribute>
         using action_direct_call_expr =
@@ -3080,32 +3082,23 @@ namespace boost { namespace parser {
             std::is_same_v<typename Context::rule_tag, TagType> &&
             !std::is_same_v<typename Context::rule_tag, void>;
 
-        template<
-            typename Parser,
-            typename Action,
-            typename Iter,
-            typename Sentinel,
-            typename Context,
-            typename SkipParser>
-        void use_action(
-            Parser const & parser,
-            Action const & action,
-            Iter & first,
-            Sentinel last,
-            Context const & context,
-            SkipParser const & skip,
-            detail::flags flags,
-            bool & success)
-        {
-            auto const initial_first = first;
-            auto attr = parser.call(
-                first,
-                last,
-                context,
-                skip,
-                detail::enable_attrs(flags),
-                success);
+        template<typename ParserMods>
+        constexpr bool has_action_v =
+            !is_nope_v<typename ParserMods::action_type>;
 
+        template<
+            typename Action,
+            typename Attribute,
+            typename Iter,
+            typename Context>
+        void use_action(
+            Action const & action,
+            Attribute attr,
+            Iter initial_first,
+            Iter first,
+            Context const & context,
+            bool success)
+        {
             if (!success)
                 return;
 
@@ -3361,6 +3354,8 @@ namespace boost { namespace parser {
                                                : flags,
                 retval);
 
+            Iter const initial_first = first;
+
             if constexpr (detail::is_optional_v<Attribute>) {
                 detail::optional_type<Attribute> attr;
                 detail::apply_parser(
@@ -3439,6 +3434,16 @@ namespace boost { namespace parser {
                     if constexpr (detail::gen_attrs<ParserMods>())
                         detail::move_back(retval, std::move(attr));
                 }
+
+                if constexpr (detail::has_action_v<ParserMods>) {
+                    detail::use_action(
+                        mods_.action,
+                        std::move(retval),
+                        initial_first,
+                        first,
+                        context,
+                        success);
+                }
             }
         }
 
@@ -3474,6 +3479,7 @@ namespace boost { namespace parser {
     };
 #endif
 
+    // TODO: Can these three conveniently be removed?
     template<typename Parser, typename ParserMods>
     struct zero_plus_parser
         : repeat_parser<Parser, detail::nope, int64_t, int64_t, ParserMods>
@@ -3613,6 +3619,8 @@ namespace boost { namespace parser {
             //]
 
             //[ opt_parser_no_gen_attr_path
+            Iter const initial_first = first;
+
             if (!detail::gen_attrs<ParserMods>()) {
                 parser_.call(first, last, context, skip, flags, success);
                 success = true;
@@ -3624,9 +3632,25 @@ namespace boost { namespace parser {
             parser_.call(first, last, context, skip, flags, success, retval);
             success = true;
             //]
+
+            // TODO: Update the "writing your own parsers" section to reflect
+            // this and other changes, like with_parser_mods().
+
+            //[ opt_parser_apply_action
+            if constexpr (detail::has_action_v<ParserMods>) {
+                detail::use_action(
+                    mods_.action,
+                    std::move(retval),
+                    initial_first,
+                    first,
+                    context,
+                    success);
+            }
+            //]
         }
         //]
 
+        //[ opt_parser_with_parser_mods
         template<typename F>
         constexpr auto with_parser_mods(F f) const
         {
@@ -3637,6 +3661,7 @@ namespace boost { namespace parser {
                 return parser::opt_parser(parser_, f(mods_));
             }
         }
+        //]
 
         //[ opt_parser_end
         Parser parser_;
@@ -3787,6 +3812,8 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
+            Iter const initial_first = first;
+
             use_parser_t<Iter, Sentinel, Context, SkipParser> const use_parser{
                 first, last, context, skip, flags, success};
 
@@ -3812,6 +3839,16 @@ namespace boost { namespace parser {
 
             if (!done)
                 success = false;
+
+            if constexpr (detail::has_action_v<ParserMods>) {
+                detail::use_action(
+                    mods_.action,
+                    std::move(retval),
+                    initial_first,
+                    first,
+                    context,
+                    success);
+            }
         }
 
 #ifndef BOOST_PARSER_DOXYGEN
@@ -3955,6 +3992,8 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first_, last, context, flags, retval);
 
+            Iter const initial_first = first;
+
             Iter first = first_;
             use_parser_t<Iter, Sentinel, Context, SkipParser> const use_parser{
                 first, last, context, skip, flags, success};
@@ -4041,6 +4080,16 @@ namespace boost { namespace parser {
 
             if (success)
                 first_ = first;
+
+            if constexpr (detail::has_action_v<ParserMods>) {
+                detail::use_action(
+                    mods_.action,
+                    std::move(retval),
+                    initial_first,
+                    first,
+                    context,
+                    success);
+            }
         }
 
         template<
@@ -4953,8 +5002,22 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
+            auto const initial_first = first;
+            auto attr = parser.call(
+                first,
+                last,
+                context,
+                skip,
+                detail::enable_attrs(flags),
+                success);
+
             detail::use_action(
-                parser_, action_, first, last, context, skip, flags, success);
+                action_,
+                std::move(attr),
+                initial_first,
+                first,
+                context,
+                success);
         }
 
         template<typename F>

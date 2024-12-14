@@ -152,6 +152,8 @@ namespace boost { namespace parser {
     template<bool OmitAttr = false, typename Action = detail::nope>
     struct parser_modifiers
     {
+        using action_type = Action;
+
         static constexpr bool omit_attr = OmitAttr;
 
         [[no_unique_address]] Action action;

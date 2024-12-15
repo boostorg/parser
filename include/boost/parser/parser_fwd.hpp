@@ -68,18 +68,6 @@ namespace boost { namespace parser {
         return BOOST_PARSER_SUBRANGE(ptr, detail::text::null_sentinel);
     }
 
-    enum struct omit_attr_t { no, yes };
-    enum struct ignore_case_t { no, yes };
-
-    template<
-        omit_attr_t OmitAttr = omit_attr_t::no,
-        ignore_case_t IgnoreCase = ignore_case_t::no>
-    struct parser_modifiers
-    {
-        static constexpr omit_attr_t omit_attr = OmitAttr;
-        static constexpr ignore_case_t ignore_case = IgnoreCase;
-    };
-
     namespace detail {
         template<typename T>
         constexpr bool is_optional_v = enable_optional<T>;
@@ -160,6 +148,35 @@ namespace boost { namespace parser {
         struct upper_case_chars
         {};
     }
+
+    enum struct omit_attr_t { no, yes };
+    enum struct ignore_case_t { no, yes };
+    enum struct expect_match_t { no, yes };
+
+    template<typename Parser, expect_match_t ExpectMatch>
+    struct expected_parser
+    {
+        static constexpr expect_match_t expect_match = ExpectMatch;
+
+        Parser parser;
+    };
+
+    template<
+        omit_attr_t OmitAttr = omit_attr_t::no,
+        ignore_case_t IgnoreCase = ignore_case_t::no,
+        typename PreParser = detail::nope,
+        typename PostParser = detail::nope>
+    struct parser_modifiers
+    {
+        using pre_parser_type = PreParser;
+        using post_parser_type = PostParser;
+
+        static constexpr omit_attr_t omit_attr = OmitAttr;
+        static constexpr ignore_case_t ignore_case = IgnoreCase;
+
+        [[no_unique_address]] PreParser pre_parser;
+        [[no_unique_address]] PostParser post_parser;
+    };
 
     /** Repeats the application of another parser `p` of type `Parser`,
         optionally applying another parser `d` of type `DelimiterParser` in
@@ -290,9 +307,9 @@ namespace boost { namespace parser {
     struct skip_parser;
 
     /** Applies the given parser `p` of type `Parser`, producing no attributes
-        and consuming no input.  The parse succeeds iff `p`'s success is
-        unequal to `FailOnMatch`. */
-    template<typename Parser, bool FailOnMatch, typename ParserMods>
+        and consuming no input.  The parse succeeds iff `p`'s success is equal
+        to `ExpectMatch == expect_match_t::yes`. */
+    template<typename Parser, expect_match_t ExpectMatch, typename ParserMods>
     struct expect_parser;
 
     /** Matches one of a set S of possible inputs, each of which is associated

@@ -1039,6 +1039,14 @@ namespace boost { namespace parser {
         {};
 
         template<typename T>
+        struct is_expect_p : std::false_type
+        {};
+        template<typename T, expect_match_t ExpectMatch, typename ParserMods>
+        struct is_expect_p<expect_parser<T, ExpectMatch, ParserMods>>
+            : std::true_type
+        {};
+
+        template<typename T>
         struct is_utf8_view : std::false_type
         {};
         template<typename V>
@@ -2947,11 +2955,20 @@ namespace boost { namespace parser {
             static constexpr std::true_type recursive{};
             template<
                 parser::omit_attr_t OmitAttr,
-                parser::ignore_case_t IgnoreCase>
-            constexpr auto
-            operator()(parser_modifiers<OmitAttr, IgnoreCase> const &) const
+                parser::ignore_case_t IgnoreCase,
+                typename PreParser,
+                typename PostParser>
+            constexpr auto operator()(parser_modifiers<
+                                      OmitAttr,
+                                      IgnoreCase,
+                                      PreParser,
+                                      PostParser> const & mods) const
             {
-                return parser_modifiers<parser::omit_attr_t::yes, IgnoreCase>{};
+                return parser_modifiers<
+                    parser::omit_attr_t::yes,
+                    IgnoreCase,
+                    PreParser,
+                    PostParser>{mods.pre_parser, mods.post_parser};
             }
         } omit_attr;
 
@@ -2960,13 +2977,68 @@ namespace boost { namespace parser {
             static constexpr std::true_type recursive{};
             template<
                 parser::omit_attr_t OmitAttr,
-                parser::ignore_case_t IgnoreCase>
-            constexpr auto
-            operator()(parser_modifiers<OmitAttr, IgnoreCase> const &) const
+                parser::ignore_case_t IgnoreCase,
+                typename PreParser,
+                typename PostParser>
+            constexpr auto operator()(parser_modifiers<
+                                      OmitAttr,
+                                      IgnoreCase,
+                                      PreParser,
+                                      PostParser> const & mods) const
             {
-                return parser_modifiers<OmitAttr, parser::ignore_case_t::yes>{};
+                return parser_modifiers<
+                    OmitAttr,
+                    parser::ignore_case_t::yes,
+                    PreParser,
+                    PostParser>{mods.pre_parser, mods.post_parser};
             }
         } ignore_case;
+
+        template<bool Pre, typename Parser>
+        struct set_parser_t
+        {
+            static constexpr std::false_type recursive{};
+            template<
+                parser::omit_attr_t OmitAttr,
+                parser::ignore_case_t IgnoreCase,
+                typename PreParser,
+                typename PostParser>
+            constexpr auto operator()(parser_modifiers<
+                                      OmitAttr,
+                                      IgnoreCase,
+                                      PreParser,
+                                      PostParser> const & mods) const
+            {
+                if constexpr (Pre) {
+                    return parser_modifiers<
+                        OmitAttr,
+                        IgnoreCase,
+                        Parser,
+                        PostParser>{parser_, mods.post_parser};
+                } else {
+                    return parser_modifiers<
+                        OmitAttr,
+                        IgnoreCase,
+                        PreParser,
+                        Parser>{mods.pre_parser, parser_};
+                }
+            }
+            Parser parser_;
+        };
+
+        template<expect_match_t ExpectMatch, typename Parser>
+        constexpr auto set_pre_parser(Parser parser)
+        {
+            return set_parser_t<true, expected_parser<Parser, ExpectMatch>>{
+                expected_parser<Parser, ExpectMatch>{parser}};
+        }
+
+        template<expect_match_t ExpectMatch, typename Parser>
+        constexpr auto set_post_parser(Parser parser)
+        {
+            return set_parser_t<false, expected_parser<Parser, ExpectMatch>>{
+                expected_parser<Parser, ExpectMatch>{parser}};
+        }
 
         template<typename Attribute, bool OmitAttr>
         using final_attribute_type_impl =
@@ -2976,6 +3048,110 @@ namespace boost { namespace parser {
         using final_attribute_type = final_attribute_type_impl<
             Attribute,
             ParserMods::omit_attr == parser::omit_attr_t::yes>;
+
+        template<
+            typename Parser,
+            expect_match_t ExpectMatch,
+            typename Iter,
+            typename Sentinel,
+            typename Context,
+            typename SkipParser>
+        bool expected_parse_failed(
+            expected_parser<Parser, ExpectMatch> const & expected,
+            Iter first,
+            Sentinel last,
+            Context const & context,
+            SkipParser const & skip,
+            detail::flags flags,
+            bool & success)
+        {
+            // If some earlier parser already failed, return true now.
+            if (!success)
+                return true;
+
+            bool local_success = true;
+            expected.parser.call(
+                first, last, context, skip, flags, local_success);
+            if constexpr (expected.expect_match == expect_match_t::yes) {
+                if (!local_success)
+                    return !(success = false);
+            } else {
+                if (local_success)
+                    return !(success = false);
+            }
+            return false;
+        }
+
+        template<
+            typename ParserMods,
+            typename Iter,
+            typename Sentinel,
+            typename Context,
+            typename SkipParser>
+        bool pre_parse_failed(
+            ParserMods const & mods,
+            Iter first,
+            Sentinel last,
+            Context const & context,
+            SkipParser const & skip,
+            detail::flags flags,
+            bool & success)
+        {
+            if constexpr (!is_nope_v<typename ParserMods::pre_parser_type>) {
+                return detail::expected_parse_failed(
+                    mods.pre_parser,
+                    first,
+                    last,
+                    context,
+                    skip,
+                    flags,
+                    success);
+            }
+            return false;
+        }
+
+        template<
+            typename ParserMods,
+            typename Iter,
+            typename Sentinel,
+            typename Context,
+            typename SkipParser,
+            typename Attribute>
+        bool post_parse(
+            ParserMods const & mods,
+            Iter initial_first,
+            Iter & first,
+            Sentinel last,
+            Context const & context,
+            SkipParser const & skip,
+            detail::flags flags,
+            bool & success,
+            Attribute & attr)
+        {
+            if constexpr (!is_nope_v<typename ParserMods::post_parser_type>) {
+                if (detail::expected_parse_failed(
+                        mods.post_parser,
+                        first,
+                        last,
+                        context,
+                        skip,
+                        flags,
+                        success)) {
+                    attr = Attribute();
+                    first = initial_first;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        template<typename F>
+        struct scoped_call
+        {
+            scoped_call(F f) : f_(std::move(f)) {}
+            ~scoped_call() { f_(); }
+            F f_;
+        };
     }
 
 #ifndef BOOST_PARSER_DOXYGEN
@@ -2983,10 +3159,11 @@ namespace boost { namespace parser {
     // This constraint is only here to allow the alternate-call semantic
     // action metaprogramming logic to function on MSVC.
     template<typename Context>
-    auto _val(Context const & context) -> std::conditional_t<
-        detail::is_nope_v<decltype(*context.val_)>,
-        none,
-        decltype(*context.val_)>
+    auto _val(Context const & context)
+        -> std::conditional_t<
+            detail::is_nope_v<decltype(*context.val_)>,
+            none,
+            decltype(*context.val_)>
     {
         if constexpr (detail::is_nope_v<decltype(*context.val_)>)
             return none{};
@@ -3192,6 +3369,12 @@ namespace boost { namespace parser {
                                                : flags,
                 retval);
 
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
             if constexpr (detail::is_optional_v<Attribute>) {
                 detail::optional_type<Attribute> attr;
                 detail::apply_parser(
@@ -3271,6 +3454,17 @@ namespace boost { namespace parser {
                         detail::move_back(retval, std::move(attr));
                 }
             }
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
         }
 
         template<typename F>
@@ -3443,6 +3637,16 @@ namespace boost { namespace parser {
             detail::skip(first, last, skip, flags);
             //]
 
+            // TODO: The docs for writing parsers needs an update.
+
+            //[ opt_parser_pre_parse
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+            //]
+
             //[ opt_parser_no_gen_attr_path
             if (!detail::gen_attrs<ParserMods>()) {
                 parser_.call(first, last, context, skip, flags, success);
@@ -3454,6 +3658,19 @@ namespace boost { namespace parser {
             //[ opt_parser_gen_attr_path
             parser_.call(first, last, context, skip, flags, success, retval);
             success = true;
+            //]
+
+            //[ opt_parser_post_parse
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
             //]
         }
         //]
@@ -3620,6 +3837,12 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
             use_parser_t<Iter, Sentinel, Context, SkipParser> const use_parser{
                 first, last, context, skip, flags, success};
 
@@ -3645,6 +3868,17 @@ namespace boost { namespace parser {
 
             if (!done)
                 success = false;
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
         }
 
 #ifndef BOOST_PARSER_DOXYGEN
@@ -3893,6 +4127,12 @@ namespace boost { namespace parser {
             tuple<Ts...> & retval,
             std::integer_sequence<int, Is...>) const
         {
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
             std::array<bool, sizeof...(Ts)> used_parsers = {{}};
 
             // Use "parser" to fill in attribute "x", unless "parser" has
@@ -3923,6 +4163,17 @@ namespace boost { namespace parser {
 
             if (!success)
                 retval = tuple<Ts...>{};
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
         }
 
 #ifndef BOOST_PARSER_DOXYGEN
@@ -4602,6 +4853,12 @@ namespace boost { namespace parser {
             Indices const & indices,
             Merged const & merged) const
         {
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
             using detail::merge_wrap;
             using detail::merge_kind;
 
@@ -4712,6 +4969,17 @@ namespace boost { namespace parser {
             auto const parsers_and_indices =
                 detail::hl::zip(parsers_, indices, merged, backtracking{});
             detail::hl::for_each(parsers_and_indices, use_parser);
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
         }
 
         template<bool AllowBacktracking, typename Parser>
@@ -4856,7 +5124,12 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
-            auto const initial_first = first;
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
             auto attr = parser_.call(
                 first,
                 last,
@@ -4897,6 +5170,17 @@ namespace boost { namespace parser {
                     [[maybe_unused]] none n = action_(action_context);
                 }
             }
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
         }
 
         template<typename F>
@@ -4941,14 +5225,49 @@ namespace boost { namespace parser {
         {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, detail::global_nope);
-            auto attr =
+
+            using subattr_t = decltype(parser_.call(
+                first, last, context, skip, flags, success));
+
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                if constexpr (detail::gen_attrs<ParserMods>())
+                    return decltype(f_(std::declval<subattr_t>())){};
+                else
+                    return detail::nope{};
+            }
+
+            subattr_t attr =
                 parser_.call(first, last, context, skip, flags, success);
             if constexpr (detail::gen_attrs<ParserMods>()) {
-                if (success)
-                    return f_(std::move(attr));
-                else
+                detail::nope n;
+                if (!success || detail::post_parse(
+                                    mods_,
+                                    initial_first,
+                                    first,
+                                    last,
+                                    context,
+                                    skip,
+                                    flags,
+                                    success,
+                                    n)) {
                     return decltype(f_(std::move(attr))){};
+                } else {
+                    return f_(std::move(attr));
+                }
             } else {
+                detail::nope n;
+                detail::post_parse(
+                    mods_,
+                    initial_first,
+                    first,
+                    last,
+                    context,
+                    skip,
+                    flags,
+                    success,
+                    n);
                 return detail::nope{};
             }
         }
@@ -4970,12 +5289,30 @@ namespace boost { namespace parser {
         {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
             auto attr =
                 parser_.call(first, last, context, skip, flags, success);
             if constexpr (detail::gen_attrs<ParserMods>()) {
                 if (success)
                     detail::assign(retval, f_(std::move(attr)));
             }
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
         }
 
         template<typename F2>
@@ -5042,7 +5379,12 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
-            auto const initial_first = first;
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
             parser_.call(
                 first,
                 last,
@@ -5057,6 +5399,17 @@ namespace boost { namespace parser {
                         BOOST_PARSER_SUBRANGE<Iter>(initial_first, first));
                 }
             }
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
         }
 
         template<typename F>
@@ -5131,7 +5484,12 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
-            auto const initial_first = first;
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
             parser_.call(
                 first,
                 last,
@@ -5162,6 +5520,17 @@ namespace boost { namespace parser {
                             &*r.first, std::size_t(r.last - r.first)});
                 }
             }
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
         }
 
         template<typename F>
@@ -5227,12 +5596,29 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
             parser_.call(
                 first,
                 last,
                 context,
                 skip,
                 detail::disable_skip(flags),
+                success,
+                retval);
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
                 success,
                 retval);
         }
@@ -5300,6 +5686,12 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
             if constexpr (detail::is_nope_v<SkipParser>) {
                 parser_.call(
                     first,
@@ -5319,6 +5711,17 @@ namespace boost { namespace parser {
                     success,
                     retval);
             }
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
         }
 
         template<typename F>
@@ -5339,11 +5742,16 @@ namespace boost { namespace parser {
         [[no_unique_address]] ParserMods mods_;
     };
 
-    // TODO: Consider adding expactation (pass/fail) as a mod property, and
-    // adding pre and post expectation parsers to the mod properties.
-    template<typename Parser, bool FailOnMatch, typename ParserMods>
+    template<typename Parser, expect_match_t ExpectMatch, typename ParserMods>
     struct expect_parser
     {
+        static_assert(
+            ParserMods::omit_attr == omit_attr_t::yes,
+            "The parser used to construct expect_parser should use "
+            "parser_modifiers with omit_attr == omit_attr_t::yes.");
+
+        static constexpr expect_match_t expect_match = ExpectMatch;
+
         constexpr expect_parser(Parser parser) : parser_(parser) {}
         constexpr expect_parser(Parser parser, ParserMods mods) :
             parser_(parser), mods_(std::move(mods))
@@ -5385,6 +5793,12 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
             auto first_copy = first;
             parser_.call(
                 first_copy,
@@ -5393,8 +5807,19 @@ namespace boost { namespace parser {
                 skip,
                 detail::disable_attrs(flags),
                 success);
-            if (FailOnMatch)
+            if (ExpectMatch == expect_match_t::no)
                 success = !success;
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
         }
 
         template<typename F>
@@ -5404,11 +5829,11 @@ namespace boost { namespace parser {
             if constexpr (f.recursive) {
                 return expect_parser<
                     decltype(parser_.with_parser_mods(f)),
-                    FailOnMatch,
+                    ExpectMatch,
                     decltype(mods)>{
                     parser_.with_parser_mods(f), std::move(mods)};
             } else {
-                return expect_parser<Parser, FailOnMatch, decltype(mods)>{
+                return expect_parser<Parser, ExpectMatch, decltype(mods)>{
                     parser_, std::move(mods)};
             }
         }
@@ -5566,6 +5991,12 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
             auto [trie, _0] =
                 detail::get_trie<ParserMods::ignore_case>(context, this->ref());
             auto const lookup =
@@ -5580,6 +6011,17 @@ namespace boost { namespace parser {
             } else {
                 success = false;
             }
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
         }
 
         template<typename F>
@@ -5644,6 +6086,7 @@ namespace boost { namespace parser {
             detail::flags flags,
             bool & success) const
         {
+            // TODO: pre-/post_parse
             constexpr bool in_recursion =
                 detail::in_recursion<Context, tag_type>;
 
@@ -5794,21 +6237,27 @@ namespace boost { namespace parser {
         {}
 
         /** Returns a `parser_interface` containing a parser equivalent to an
-            `expect_parser` containing `parser_`, with `FailOnMatch ==
-            true`. */
+            `expect_parser` containing `parser_`, with `ExpectMatch ==
+            expect_match_t::no`. */
         constexpr auto operator!() const noexcept
         {
-            return parser::parser_interface{
-                expect_parser<parser_type, true, parser_modifiers<>>{parser_}};
+            auto parser = parser_.with_parser_mods(detail::omit_attr);
+            return parser::parser_interface{expect_parser<
+                decltype(parser),
+                expect_match_t::no,
+                parser_modifiers<omit_attr_t::yes>>{parser}};
         }
 
         /** Returns a `parser_interface` containing a parser equivalent to an
-            `expect_parser` containing `parser_`, with `FailOnMatch ==
-            false`. */
+            `expect_parser` containing `parser_`, with `ExpectMatch ==
+            expect_match_t::yes`. */
         constexpr auto operator&() const noexcept
         {
-            return parser::parser_interface{
-                expect_parser<parser_type, false, parser_modifiers<>>{parser_}};
+            auto parser = parser_.with_parser_mods(detail::omit_attr);
+            return parser::parser_interface{expect_parser<
+                decltype(parser),
+                expect_match_t::yes,
+                parser_modifiers<omit_attr_t::yes>>{parser}};
         }
 
         /** Returns a `parser_interface` containing a parser equivalent to a
@@ -5859,7 +6308,21 @@ namespace boost { namespace parser {
         constexpr auto
         operator>>(parser_interface<ParserType2> rhs) const noexcept
         {
-            if constexpr (detail::is_seq_p<parser_type>{}) {
+            if constexpr (
+                detail::is_expect_p<parser_type>{} &&
+                detail::is_nope_v<
+                    typename decltype(rhs.parser_.mods_)::pre_parser_type>) {
+                return parser::parser_interface{rhs.parser_.with_parser_mods(
+                    detail::set_pre_parser<parser_type::expect_match>(
+                        parser_.parser_))};
+            } else if constexpr (
+                detail::is_expect_p<ParserType2>{} &&
+                detail::is_nope_v<
+                    typename decltype(parser_.mods_)::pre_parser_type>) {
+                return parser::parser_interface{parser_.with_parser_mods(
+                    detail::set_post_parser<ParserType2::expect_match>(
+                        rhs.parser_.parser_))};
+            } else if constexpr (detail::is_seq_p<parser_type>{}) {
                 return parser_.template append<true>(rhs);
             } else if constexpr (detail::is_seq_p<ParserType2>{}) {
                 return rhs.parser_.template prepend<true>(*this);
@@ -5903,7 +6366,21 @@ namespace boost { namespace parser {
         constexpr auto
         operator>(parser_interface<ParserType2> rhs) const noexcept
         {
-            if constexpr (detail::is_seq_p<parser_type>{}) {
+            if constexpr (
+                detail::is_expect_p<parser_type>{} &&
+                detail::is_nope_v<
+                    typename decltype(rhs.parser_.mods_)::pre_parser_type>) {
+                return parser::parser_interface{rhs.parser_.with_parser_mods(
+                    detail::set_pre_parser<parser_type::expect_match>(
+                        parser_.parser_))};
+            } else if constexpr (
+                detail::is_expect_p<ParserType2>{} &&
+                detail::is_nope_v<
+                    typename decltype(parser_.mods_)::pre_parser_type>) {
+                return parser::parser_interface{parser_.with_parser_mods(
+                    detail::set_post_parser<ParserType2::expect_match>(
+                        rhs.parser_.parser_))};
+            } else if constexpr (detail::is_seq_p<parser_type>{}) {
                 return parser_.template append<false>(rhs);
             } else if constexpr (detail::is_seq_p<ParserType2>{}) {
                 return rhs.parser_.template prepend<false>(*this);
@@ -6896,6 +7373,13 @@ namespace boost { namespace parser {
         {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, detail::global_nope);
+
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return {};
+            }
+
             BOOST_PARSER_SUBRANGE const where(first, first);
             auto const predicate_context = detail::make_action_context(
                 context, detail::global_nope, where);
@@ -6904,6 +7388,19 @@ namespace boost { namespace parser {
             // the online docs if you don't know what that a parse predicate
             // is.
             success = pred_(predicate_context);
+
+            detail::nope n;
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                n);
+
             return {};
         }
 
@@ -6924,6 +7421,13 @@ namespace boost { namespace parser {
         {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
             BOOST_PARSER_SUBRANGE const where(first, first);
             auto const predicate_context = detail::make_action_context(
                 context, detail::global_nope, where);
@@ -6932,6 +7436,17 @@ namespace boost { namespace parser {
             // the online docs if you don't know what that a parse predicate
             // is.
             success = pred_(predicate_context);
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
         }
 
         /** Returns a `parser_interface` containing an `eps_parser` that will
@@ -6990,8 +7505,28 @@ namespace boost { namespace parser {
         {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, detail::global_nope);
+
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return {};
+            }
+
             if (first != last)
                 success = false;
+
+            detail::nope n;
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                n);
+
             return {};
         }
 
@@ -7012,8 +7547,26 @@ namespace boost { namespace parser {
         {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
             if (first != last)
                 success = false;
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
         }
 
         template<typename F>
@@ -7051,14 +7604,44 @@ namespace boost { namespace parser {
             Context const & context,
             SkipParser const &,
             detail::flags flags,
-            bool &) const
+            bool & success) const
         {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, detail::global_nope);
-            if constexpr (detail::gen_attrs<ParserMods>())
-                return detail::resolve(context, attr_);
-            else
-                return detail::nope{};
+
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return decltype(detail::resolve(context, attr_)){};
+            }
+
+            if constexpr (detail::gen_attrs<ParserMods>()) {
+                auto retval = detail::resolve(context, attr_);
+                detail::post_parse(
+                    mods_,
+                    initial_first,
+                    first,
+                    last,
+                    context,
+                    skip,
+                    flags,
+                    success,
+                    retval);
+                return std::move(retval);
+            } else {
+                detail::nope retval;
+                detail::post_parse(
+                    mods_,
+                    initial_first,
+                    first,
+                    last,
+                    context,
+                    skip,
+                    flags,
+                    success,
+                    retval);
+                return retval;
+            }
         }
 
         template<
@@ -7078,6 +7661,24 @@ namespace boost { namespace parser {
         {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
+
             if constexpr (detail::gen_attrs<ParserMods>())
                 detail::assign_copy(retval, detail::resolve(context, attr_));
         }
@@ -7164,6 +7765,12 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
             if (first == last) {
                 success = false;
                 return;
@@ -7177,6 +7784,17 @@ namespace boost { namespace parser {
             if constexpr (detail::gen_attrs<ParserMods>())
                 detail::assign(retval, x);
             ++first;
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
         }
 
         /** Returns a `parser_interface` containing a `char_parser` that
@@ -7345,6 +7963,12 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
             if (first == last) {
                 success = false;
                 return;
@@ -7365,6 +7989,17 @@ namespace boost { namespace parser {
             if constexpr (detail::gen_attrs<ParserMods>())
                 detail::assign(retval, x);
             ++first;
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
         }
 
         // Produced from
@@ -7509,6 +8144,24 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+            detail::scoped_call spp([&] {
+                detail::post_parse(
+                    mods_,
+                    initial_first,
+                    first,
+                    last,
+                    context,
+                    skip,
+                    flags,
+                    success,
+                    retval);
+            });
+
             if (first == last) {
                 success = false;
                 return;
@@ -7603,6 +8256,12 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
             if (first == last) {
                 success = false;
                 return;
@@ -7616,6 +8275,16 @@ namespace boost { namespace parser {
                     if constexpr (detail::gen_attrs<ParserMods>())
                         detail::assign(retval, x);
                     ++first;
+                    detail::post_parse(
+                        mods_,
+                        initial_first,
+                        first,
+                        last,
+                        context,
+                        skip,
+                        flags,
+                        success,
+                        retval);
                     return;
                 }
             }
@@ -7758,6 +8427,12 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
             if (first == last) {
                 success = false;
                 return;
@@ -7798,6 +8473,17 @@ namespace boost { namespace parser {
 
                 first = mismatch.first;
             }
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
         }
 
         template<typename F>
@@ -7884,6 +8570,12 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
             if (first == last) {
                 success = false;
                 return;
@@ -7955,7 +8647,19 @@ namespace boost { namespace parser {
                 if constexpr (detail::gen_attrs<ParserMods>())
                     retval = Attribute();
                 first = prev_first;
+                return;
             }
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
         }
 
         /** Returns a `parser_interface` containing a `quoted_string_parser`
@@ -8192,6 +8896,24 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+            detail::scoped_call spp([&] {
+                detail::post_parse(
+                    mods_,
+                    initial_first,
+                    first,
+                    last,
+                    context,
+                    skip,
+                    flags,
+                    success,
+                    retval);
+            });
+
             if (first == last) {
                 success = false;
                 return;
@@ -8375,6 +9097,24 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+            detail::scoped_call spp([&] {
+                detail::post_parse(
+                    mods_,
+                    initial_first,
+                    first,
+                    last,
+                    context,
+                    skip,
+                    flags,
+                    success,
+                    retval);
+            });
+
             auto compare = [](char32_t a, char32_t b) {
                 if constexpr (
                     ParserMods::ignore_case == parser::ignore_case_t::yes) {
@@ -8475,17 +9215,37 @@ namespace boost { namespace parser {
         {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
             T attr = 0;
-            auto const initial = first;
             success =
                 detail::numeric::parse_int<false, Radix, MinDigits, MaxDigits>(
                     first, last, attr);
-            if (first == initial || attr != detail::resolve(context, expected_))
+            if (first == initial_first ||
+                attr != detail::resolve(context, expected_)) {
                 success = false;
+                return;
+            }
             if constexpr (detail::gen_attrs<ParserMods>()) {
                 if (success)
                     detail::assign(retval, attr);
             }
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
         }
 
         /** Returns a `parser_interface` containing a `uint_parser` that
@@ -8612,18 +9372,38 @@ namespace boost { namespace parser {
         {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
             T attr = 0;
-            auto const initial = first;
             success =
                 detail::numeric::parse_int<true, Radix, MinDigits, MaxDigits>(
                     first, last, attr);
-            if (first == initial || attr != detail::resolve(context, expected_))
+            if (first == initial_first ||
+                attr != detail::resolve(context, expected_)) {
                 success = false;
+                return;
+            }
             if constexpr (detail::gen_attrs<ParserMods>()) {
                 if (success)
                     detail::assign(retval, attr);
             }
-        }
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
+         }
 
         /** Returns a `parser_interface` containing an `int_parser` that
             matches the exact value `expected`. */
@@ -8724,15 +9504,34 @@ namespace boost { namespace parser {
         {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
             T attr = 0;
-            auto const initial = first;
             success = detail::numeric::parse_real(first, last, attr);
-            if (first == initial)
+            if (first == initial_first) {
                 success = false;
+                return;
+            }
             if constexpr (detail::gen_attrs<ParserMods>()) {
                 if (success)
                     detail::assign(retval, attr);
             }
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
         }
 
         template<typename F>
@@ -8839,7 +9638,26 @@ namespace boost { namespace parser {
                 attr{};
             [[maybe_unused]] auto _ =
                 detail::scoped_trace(*this, first, last, context, flags, attr);
+
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return attr;
+            }
+
             attr = or_parser_.call(first, last, context, skip, flags, success);
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                attr);
+
             return attr;
         }
 
@@ -8865,7 +9683,25 @@ namespace boost { namespace parser {
                  "parser_1)(value_2, parser_2)..."));
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
-            or_parser_.call(first, last, context, skip, flags, success, retval);
+
+            Iter const initial_first = first;
+            if (detail::pre_parse_failed(
+                    mods_, first, last, context, skip, flags, success)) {
+                return;
+            }
+
+             or_parser_.call(first, last, context, skip, flags, success, retval);
+
+            detail::post_parse(
+                mods_,
+                initial_first,
+                first,
+                last,
+                context,
+                skip,
+                flags,
+                success,
+                retval);
         }
 
         /** Returns a `parser_interface` containing a `switch_parser`, with

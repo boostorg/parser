@@ -229,6 +229,16 @@ int main()
     PARSE(!char_);
     PARSE(!(*char_ >> char_));
 
+    PARSE(!char_ >> char_);
+    PARSE(*char_ >> !char_);
+    PARSE(!char_ >> *char_ >> char_ >> !char_);
+    try {
+        PARSE((!char_) > char_);
+    } catch (...) {
+    }
+    PARSE(*char_ > !char_);
+    PARSE((!char_) > *char_ >> char_ > !char_);
+
     std::cout << "\n\n"
               << "----------------------------------------\n"
               << "| operator&                             |\n"
@@ -236,6 +246,16 @@ int main()
 
     PARSE(&char_);
     PARSE(&(*char_ >> char_));
+
+    PARSE(&char_ >> char_);
+    PARSE(*char_ >> &char_);
+    PARSE(&char_ >> *char_ >> char_ >> &char_);
+    try {
+        PARSE(&char_ > char_);
+    } catch (...) {
+    }
+    PARSE(*char_ > &char_);
+    PARSE(&char_ >>*char_ >> char_ > &char_);
 
     std::cout << "\n\n"
               << "----------------------------------------\n"

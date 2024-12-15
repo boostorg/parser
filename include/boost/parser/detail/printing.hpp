@@ -157,11 +157,11 @@ namespace boost { namespace parser { namespace detail {
     template<
         typename Context,
         typename Parser,
-        bool FailOnMatch,
+        expect_match_t ExpectMatch,
         typename ParserMods>
     void print_parser_impl(
         Context const & context,
-        expect_parser<Parser, FailOnMatch, ParserMods> const & parser,
+        expect_parser<Parser, ExpectMatch, ParserMods> const & parser,
         std::ostream & os,
         int components);
 
@@ -380,7 +380,7 @@ namespace boost { namespace parser { namespace detail {
         std::ostream & os,
         int components);
 
-    template<typename Context, typename Parser>
+    template<bool SuppressOmit = false, typename Context, typename Parser>
     void print_parser(
         Context const & context,
         Parser const & parser,

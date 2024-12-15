@@ -273,7 +273,7 @@ namespace boost { namespace parser { namespace detail {
                     os << (backtrack ? " >> " : " > ");
                 if (group != prev_group && group)
                     os << (group == -1 ? "separate[" : "merge[");
-                detail::print_parser_impl(context, parser, os, components);
+                detail::print_parser(context, parser, os, components);
                 ++components;
                 ++i;
                 prev_group = (int)group;
@@ -385,18 +385,18 @@ namespace boost { namespace parser { namespace detail {
     template<
         typename Context,
         typename Parser,
-        bool FailOnMatch,
+        expect_match_t ExpectMatch,
         typename ParserMods>
     void print_parser_impl(
         Context const & context,
-        expect_parser<Parser, FailOnMatch, ParserMods> const & parser,
+        expect_parser<Parser, ExpectMatch, ParserMods> const & parser,
         std::ostream & os,
         int components)
     {
-        if (FailOnMatch)
-            os << "!";
-        else
+        if constexpr (ExpectMatch == expect_match_t::yes)
             os << "&";
+        else
+            os << "!";
         constexpr bool n_ary_child = n_aray_parser_v<Parser>;
         if (n_ary_child)
             os << "(";
@@ -935,32 +935,71 @@ namespace boost { namespace parser { namespace detail {
             context, parser.or_parser_, os, components);
     }
 
-    template<typename ParserMods>
+    template<typename Context, typename Parser>
     struct scoped_print_parser_mods
     {
-        template<typename Parser>
-        scoped_print_parser_mods(std::ostream & os, Parser const & parser) :
-            os_(os), mods_(parser.mods_)
+        using parser_mods = decltype(std::declval<Parser>().mods_);
+
+        scoped_print_parser_mods(
+            Context const & context,
+            Parser const & parser,
+            std::ostream & os,
+            int & components,
+            bool suppress_omit) :
+            context_(context),
+            parser_(parser),
+            os_(os),
+            components_(components),
+            skip_omit_(suppress_omit)
         {
-            if constexpr (ParserMods::omit_attr == parser::omit_attr_t::yes) {
-                skip_omit_ = skip_omit(parser);
-                if (!skip_omit_)
+            if constexpr (parser_mods::omit_attr == parser::omit_attr_t::yes) {
+                if (!skip_omit_ && !skip_omit(parser_))
                     os_ << "omit[";
             }
             if constexpr (
-                ParserMods::ignore_case == parser::ignore_case_t::yes) {
+                parser_mods::ignore_case == parser::ignore_case_t::yes) {
                 os_ << "no_case[";
+            }
+            if constexpr (!is_nope_v<typename parser_mods::pre_parser_type>) {
+                print_expected_operator<
+                    typename parser_mods::pre_parser_type>();
+                detail::print_parser<true>(
+                    context_,
+                    parser_.mods_.pre_parser.parser,
+                    os_,
+                    components_);
+                os_ << " >> ";
             }
         }
         ~scoped_print_parser_mods()
         {
+            if constexpr (!is_nope_v<typename parser_mods::post_parser_type>) {
+                os_ << " >> ";
+                print_expected_operator<
+                    typename parser_mods::post_parser_type>();
+                detail::print_parser<true>(
+                    context_,
+                    parser_.mods_.post_parser.parser,
+                    os_,
+                    components_);
+            }
             if constexpr (
-                ParserMods::ignore_case == parser::ignore_case_t::yes) {
+                parser_mods::ignore_case == parser::ignore_case_t::yes) {
                 os_ << "]";
             }
-            if constexpr (ParserMods::omit_attr == parser::omit_attr_t::yes) {
-                if (!skip_omit_)
+            if constexpr (parser_mods::omit_attr == parser::omit_attr_t::yes) {
+                if (!skip_omit_ && !skip_omit(parser_))
                     os_ << "]";
+            }
+        }
+
+        template<typename ExpectedParser>
+        void print_expected_operator()
+        {
+            if constexpr (ExpectedParser::expect_match == expect_match_t::yes) {
+                os_ << "&";
+            } else {
+                os_ << "!";
             }
         }
 
@@ -969,39 +1008,47 @@ namespace boost { namespace parser { namespace detail {
         {
             return false;
         }
-        template<
-            typename Expected,
-            typename AttributeType,
-            typename ParserMods2>
+        template<typename Expected, typename AttributeType, typename ParserMods>
         static bool
-        skip_omit(char_parser<Expected, AttributeType, ParserMods2> const &)
+        skip_omit(char_parser<Expected, AttributeType, ParserMods> const &)
         {
             return !std::is_same_v<Expected, detail::nope>;
         }
-        template<typename StrIter, typename StrSentinel, typename ParserMods2>
+        template<typename StrIter, typename StrSentinel, typename ParserMods>
         static bool
-        skip_omit(string_parser<StrIter, StrSentinel, ParserMods2> const &)
+        skip_omit(string_parser<StrIter, StrSentinel, ParserMods> const &)
+        {
+            return true;
+        }
+        template<
+            typename Parser2,
+            expect_match_t ExpectMatch,
+            typename ParserMods>
+        static bool
+        skip_omit(expect_parser<Parser2, ExpectMatch, ParserMods> const &)
         {
             return true;
         }
 
+        Context const & context_;
+        Parser const & parser_;
         std::ostream & os_;
-        ParserMods const & mods_;
-        bool skip_omit_ = false;
+        int & components_;
+        bool skip_omit_;
     };
 
     // TODO: Document how recursive directives like 'omit[]' and
     // `no_case[]`will reappear for subparsers sometimes, as in
     // omt[*omit[char_]] (see test/tracing.cpp).
-    template<typename Context, typename Parser>
+    template<bool SuppressOmit, typename Context, typename Parser>
     void print_parser(
         Context const & context,
         Parser const & parser,
         std::ostream & os,
         int components)
     {
-        scoped_print_parser_mods<std::decay_t<decltype(parser.mods_)>> _(
-            os, parser);
+        scoped_print_parser_mods _(
+            context, parser, os, components, SuppressOmit);
         detail::print_parser_impl(context, parser, os, components);
     }
 

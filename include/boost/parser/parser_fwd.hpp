@@ -68,10 +68,16 @@ namespace boost { namespace parser {
         return BOOST_PARSER_SUBRANGE(ptr, detail::text::null_sentinel);
     }
 
-    template<bool OmitAttr = false>
+    enum struct omit_attr_t { no, yes };
+    enum struct ignore_case_t { no, yes };
+
+    template<
+        omit_attr_t OmitAttr = omit_attr_t::no,
+        ignore_case_t IgnoreCase = ignore_case_t::no>
     struct parser_modifiers
     {
-        static constexpr bool omit_attr = OmitAttr;
+        static constexpr omit_attr_t omit_attr = OmitAttr;
+        static constexpr ignore_case_t ignore_case = IgnoreCase;
     };
 
     namespace detail {
@@ -272,13 +278,6 @@ namespace boost { namespace parser {
         attribute produced is the type of attribute produced by `Parser`. */
     template<typename Parser, typename ParserMods>
     struct lexeme_parser;
-
-    /** Applies the given parser `p` of type `Parser`, enabling
-        case-insensitive matching, based on Unicode case folding.  The parse
-        succeeds iff `p` succeeds.  The attribute produced is the type of
-        attribute produced by `Parser`. */
-    template<typename Parser, typename ParserMods>
-    struct no_case_parser;
 
     /** Applies the given parser `p` of type `Parser`, using a parser of type
         `SkipParser` as the skipper.  The parse succeeds iff `p` succeeds.

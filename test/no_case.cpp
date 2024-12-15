@@ -39,7 +39,7 @@ constexpr auto double_s = u8"sS";       // U+0073 U+0073
 
 // basic)
 {
-    constexpr auto char_p = no_case[char_('a') | char_('B')];
+    auto char_p = no_case[char_('a') | char_('B')];
 
     {
         auto const result = parse("a", char_p);
@@ -461,12 +461,12 @@ constexpr auto double_s = u8"sS";       // U+0073 U+0073
 {
     constexpr auto mixed_sharp_s1 = U"ẞs";
     constexpr auto mixed_sharp_s2 = U"sẞ";
-    auto const result = detail::no_case_aware_string_mismatch(
-        mixed_sharp_s1,
-        detail::text::null_sentinel,
-        mixed_sharp_s2,
-        detail::text::null_sentinel,
-        true);
+    auto const result =
+        detail::no_case_aware_string_mismatch<ignore_case_t::yes>(
+            mixed_sharp_s1,
+            detail::text::null_sentinel,
+            mixed_sharp_s2,
+            detail::text::null_sentinel);
     BOOST_TEST(result.first == detail::text::null_sentinel);
     BOOST_TEST(result.second == detail::text::null_sentinel);
 }

@@ -358,17 +358,6 @@ namespace boost { namespace parser { namespace detail {
             context, "lexeme", parser.parser_, os, components);
     }
 
-    template<typename Context, typename Parser, typename ParserMods>
-    void print_parser_impl(
-        Context const & context,
-        no_case_parser<Parser, ParserMods> const & parser,
-        std::ostream & os,
-        int components)
-    {
-        detail::print_directive(
-            context, "no_case", parser.parser_, os, components);
-    }
-
     template<
         typename Context,
         typename Parser,
@@ -598,7 +587,7 @@ namespace boost { namespace parser { namespace detail {
         std::ostream & os,
         int components)
     {
-        if constexpr (parser.mods_.omit_attr) {
+        if constexpr (parser.mods_.omit_attr == parser::omit_attr_t::yes) {
             if constexpr (is_nope_v<Expected>) {
                 os << "char_";
             } else {
@@ -692,7 +681,7 @@ namespace boost { namespace parser { namespace detail {
         std::ostream & os,
         int components)
     {
-        if constexpr (!parser.mods_.omit_attr) {
+        if constexpr (parser.mods_.omit_attr == parser::omit_attr_t::no) {
             os << "string(";
         }
         os << "\"";
@@ -702,7 +691,7 @@ namespace boost { namespace parser { namespace detail {
             detail::print_char(os, c);
         }
         os << "\"";
-        if constexpr (!parser.mods_.omit_attr) {
+        if constexpr (parser.mods_.omit_attr == parser::omit_attr_t::no) {
             os << ")";
         }
     }
@@ -953,15 +942,23 @@ namespace boost { namespace parser { namespace detail {
         scoped_print_parser_mods(std::ostream & os, Parser const & parser) :
             os_(os), mods_(parser.mods_)
         {
-            if constexpr (ParserMods::omit_attr) {
+            if constexpr (ParserMods::omit_attr == parser::omit_attr_t::yes) {
                 skip_omit_ = skip_omit(parser);
                 if (!skip_omit_)
                     os_ << "omit[";
             }
+            if constexpr (
+                ParserMods::ignore_case == parser::ignore_case_t::yes) {
+                os_ << "no_case[";
+            }
         }
         ~scoped_print_parser_mods()
         {
-            if constexpr (ParserMods::omit_attr) {
+            if constexpr (
+                ParserMods::ignore_case == parser::ignore_case_t::yes) {
+                os_ << "]";
+            }
+            if constexpr (ParserMods::omit_attr == parser::omit_attr_t::yes) {
                 if (!skip_omit_)
                     os_ << "]";
             }
@@ -993,8 +990,9 @@ namespace boost { namespace parser { namespace detail {
         bool skip_omit_ = false;
     };
 
-    // TODO: Document how 'omit[]' will reappear for subparsers sometimes, as
-    // in omt[*omit[char_]] (see test/tracing.cpp).
+    // TODO: Document how recursive directives like 'omit[]' and
+    // `no_case[]`will reappear for subparsers sometimes, as in
+    // omt[*omit[char_]] (see test/tracing.cpp).
     template<typename Context, typename Parser>
     void print_parser(
         Context const & context,

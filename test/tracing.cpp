@@ -144,7 +144,7 @@ int main()
 
     std::cout << "\n\n"
               << "----------------------------------------\n"
-              << "| transform)f_[]                        |\n"
+              << "| transform(f)[]                        |\n"
               << "----------------------------------------\n";
 
     auto f = [](auto x) { return x; };
@@ -189,6 +189,15 @@ int main()
 
     PARSE(skip[char_]);
     PARSE(skip(ws)[char_]);
+
+    std::cout << "\n\n"
+              << "----------------------------------------\n"
+              << "| no_case[]                             |\n"
+              << "----------------------------------------\n";
+
+    PARSE(no_case[char_]);
+    PARSE(no_case[no_case[char_]]);
+    PARSE(no_case[*no_case[char_]]);
 
     std::cout << "\n\n"
               << "----------------------------------------\n"

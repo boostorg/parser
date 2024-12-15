@@ -1357,7 +1357,8 @@ namespace boost { namespace parser {
         template<typename ParserMods>
         constexpr auto gen_attrs()
         {
-            return std::bool_constant<!ParserMods::omit_attr>{};
+            return std::bool_constant<
+                ParserMods::omit_attr == omit_attr_t::no>{};
         }
 
         template<typename Container, typename T>
@@ -1689,7 +1690,7 @@ namespace boost { namespace parser {
             pending_operations.clear();
         }
 
-        template<typename Context, typename T>
+        template<parser::ignore_case_t IgnoreCase, typename Context, typename T>
         auto get_trie(
             Context const & context, symbol_parser_impl<T> const & sym_parser)
         {
@@ -1701,7 +1702,8 @@ namespace boost { namespace parser {
             auto & [any, has_case_folded] =
                 symbol_table_tries[(void *)&sym_parser.ref()];
 
-            bool const needs_case_folded = context.no_case_depth_;
+            constexpr bool needs_case_folded =
+                IgnoreCase == parser::ignore_case_t::yes;
 
             if (!any.has_value()) {
                 any = trie_t{};
@@ -1805,52 +1807,6 @@ namespace boost { namespace parser {
                     {}, std::nullopt, detail::symbol_table_op::clear});
             }
 
-            template<typename Context>
-            parser::detail::text::optional_ref<T>
-            find(Context const & context, std::string_view str) const
-            {
-                auto [trie, has_case_folded] = detail::get_trie(context, ref());
-                if (context.no_case_depth_) {
-                    return trie[detail::case_fold_view(
-                        str | detail::text::as_utf32)];
-                } else {
-                    return trie[str | detail::text::as_utf32];
-                }
-            }
-
-            template<typename Context>
-            void
-            insert(Context const & context, std::string_view str, T && x) const
-            {
-                auto [trie, has_case_folded] = detail::get_trie(context, ref());
-                if (context.no_case_depth_) {
-                    trie.insert(
-                        detail::case_fold_view(str | detail::text::as_utf32),
-                        std::move(x));
-                } else {
-                    trie.insert(str | detail::text::as_utf32, std::move(x));
-                }
-            }
-
-            template<typename Context>
-            void erase(Context const & context, std::string_view str) const
-            {
-                auto [trie, has_case_folded] = detail::get_trie(context, ref());
-                if (context.no_case_depth_) {
-                    trie.erase(
-                        detail::case_fold_view(str | detail::text::as_utf32));
-                } else {
-                    trie.erase(str | detail::text::as_utf32);
-                }
-            }
-
-            template<typename Context>
-            void clear(Context const & context) const
-            {
-                auto [trie, _] = detail::get_trie(context, ref());
-                trie.clear();
-            }
-
             mutable std::vector<std::pair<std::string, T>> initial_elements_;
             symbol_parser_impl const * copied_from_;
 
@@ -1891,14 +1847,14 @@ namespace boost { namespace parser {
         template<typename Iter, typename Sentinel, bool SortedUTF32>
         struct char_range
         {
-            template<typename T, typename Context>
-            bool contains(T c_, Context const & context) const
+            template<parser::ignore_case_t IgnoreCase, typename T>
+            bool contains(T c_) const
             {
                 if constexpr (SortedUTF32) {
                     return std::binary_search(chars_.begin(), chars_.end(), c_);
                 }
 
-                if (context.no_case_depth_) {
+                if constexpr (IgnoreCase == parser::ignore_case_t::yes) {
                     case_fold_array_t folded;
                     auto folded_last = detail::case_fold(c_, folded.begin());
                     if constexpr (std::is_same_v<T, char32_t>) {
@@ -1959,11 +1915,11 @@ namespace boost { namespace parser {
             }
         }
 
-        template<bool Equal, typename Context>
-        auto no_case_aware_compare(Context const & context)
+        template<parser::ignore_case_t IgnoreCase, bool Equal>
+        auto no_case_aware_compare()
         {
-            return [no_case = context.no_case_depth_](char32_t a, char32_t b) {
-                if (no_case) {
+            return [](char32_t a, char32_t b) {
+                if (IgnoreCase == parser::ignore_case_t::yes) {
                     case_fold_array_t folded_a = {0, 0, 0};
                     detail::case_fold(a, folded_a.begin());
                     case_fold_array_t folded_b = {0, 0, 0};
@@ -1984,6 +1940,7 @@ namespace boost { namespace parser {
             decltype(std::declval<T &>() == std::declval<U &>());
 
         template<
+            parser::ignore_case_t IgnoreCase,
             typename Context,
             typename CharType,
             typename Expected,
@@ -1999,34 +1956,43 @@ namespace boost { namespace parser {
                                   CharType,
                                   decltype(resolved)>) {
                     auto const compare =
-                        detail::no_case_aware_compare<true>(context);
+                        detail::no_case_aware_compare<IgnoreCase, true>();
                     return !compare(c, resolved);
                 } else {
-                    return !resolved.contains(c, context);
+                    return !resolved.template contains<IgnoreCase>(c);
                 }
             }
         };
 
-        template<typename Context, typename CharType, typename Expected>
-        struct unequal_impl<Context, CharType, Expected, true>
+        template<
+            parser::ignore_case_t IgnoreCase,
+            typename Context,
+            typename CharType,
+            typename Expected>
+        struct unequal_impl<IgnoreCase, Context, CharType, Expected, true>
         {
             static bool
             call(Context const & context, CharType c, Expected expected)
             {
 
-                return !detail::no_case_aware_compare<true>(context)(
+                return !detail::no_case_aware_compare<IgnoreCase, true>()(
                     c, expected);
             }
         };
 
-        template<typename Context, typename CharType, typename Expected>
+        template<
+            parser::ignore_case_t IgnoreCase,
+            typename Context,
+            typename CharType,
+            typename Expected>
         bool unequal(Context const & context, CharType c, Expected expected)
         {
-            return unequal_impl<Context, CharType, Expected>::call(
+            return unequal_impl<IgnoreCase, Context, CharType, Expected>::call(
                 context, c, expected);
         }
 
         template<
+            parser::ignore_case_t IgnoreCase,
             typename Context,
             typename CharType,
             typename LoType,
@@ -2036,7 +2002,8 @@ namespace boost { namespace parser {
             CharType c,
             char_pair<LoType, HiType> const & expected)
         {
-            auto const less = detail::no_case_aware_compare<false>(context);
+            auto const less =
+                detail::no_case_aware_compare<IgnoreCase, false>();
             {
                 auto lo = detail::resolve(context, expected.lo_);
                 if (less(c, lo))
@@ -2050,7 +2017,10 @@ namespace boost { namespace parser {
             return false;
         }
 
-        template<typename Context, typename CharType>
+        template<
+            parser::ignore_case_t IgnoreCase,
+            typename Context,
+            typename CharType>
         bool unequal(Context const &, CharType, nope)
         {
             return false;
@@ -2796,18 +2766,15 @@ namespace boost { namespace parser {
         }
 
         template<
+            parser::ignore_case_t IgnoreCase,
             typename Iter1,
             typename Sentinel1,
             typename Iter2,
             typename Sentinel2>
         std::pair<Iter1, Iter2> no_case_aware_string_mismatch(
-            Iter1 first1,
-            Sentinel1 last1,
-            Iter2 first2,
-            Sentinel2 last2,
-            bool no_case)
+            Iter1 first1, Sentinel1 last1, Iter2 first2, Sentinel2 last2)
         {
-            if (no_case) {
+            if (IgnoreCase == parser::ignore_case_t::yes) {
                 auto it1 = no_case_iter(first1, last1);
                 auto it2 = no_case_iter(first2, last2);
                 auto const mismatch = detail::mismatch(
@@ -2978,20 +2945,37 @@ namespace boost { namespace parser {
         inline constexpr struct omit_attr_t
         {
             static constexpr std::true_type recursive{};
-            template<bool OmitAttr>
-            constexpr auto operator()(parser_modifiers<OmitAttr> const &) const
+            template<
+                parser::omit_attr_t OmitAttr,
+                parser::ignore_case_t IgnoreCase>
+            constexpr auto
+            operator()(parser_modifiers<OmitAttr, IgnoreCase> const &) const
             {
-                return parser_modifiers<true>{};
+                return parser_modifiers<parser::omit_attr_t::yes, IgnoreCase>{};
             }
         } omit_attr;
+
+        inline constexpr struct ignore_case_t
+        {
+            static constexpr std::true_type recursive{};
+            template<
+                parser::omit_attr_t OmitAttr,
+                parser::ignore_case_t IgnoreCase>
+            constexpr auto
+            operator()(parser_modifiers<OmitAttr, IgnoreCase> const &) const
+            {
+                return parser_modifiers<OmitAttr, parser::ignore_case_t::yes>{};
+            }
+        } ignore_case;
 
         template<typename Attribute, bool OmitAttr>
         using final_attribute_type_impl =
             std::conditional_t<OmitAttr, nope, Attribute>;
 
         template<typename Attribute, typename ParserMods>
-        using final_attribute_type =
-            final_attribute_type_impl<Attribute, ParserMods::omit_attr>;
+        using final_attribute_type = final_attribute_type_impl<
+            Attribute,
+            ParserMods::omit_attr == parser::omit_attr_t::yes>;
     }
 
 #ifndef BOOST_PARSER_DOXYGEN
@@ -3068,12 +3052,6 @@ namespace boost { namespace parser {
             return none{};
         else
             return *context.globals_;
-    }
-
-    template<typename Context>
-    decltype(auto) _no_case(Context const & context)
-    {
-        return context.no_case_depth_;
     }
 
     template<typename Context>
@@ -5274,77 +5252,6 @@ namespace boost { namespace parser {
         [[no_unique_address]] ParserMods mods_;
     };
 
-    // TODO: -> mod
-    template<typename Parser, typename ParserMods>
-    struct no_case_parser
-    {
-        constexpr no_case_parser(Parser parser) : parser_(parser) {}
-        constexpr no_case_parser(Parser parser, ParserMods mods) :
-            parser_(parser), mods_(std::move(mods))
-        {}
-
-        template<
-            typename Iter,
-            typename Sentinel,
-            typename Context,
-            typename SkipParser>
-        auto call(
-            Iter & first,
-            Sentinel last,
-            Context const & context_,
-            SkipParser const & skip,
-            detail::flags flags,
-            bool & success) const
-        {
-            auto context = context_;
-            ++context.no_case_depth_;
-
-            using attr_t = decltype(parser_.call(
-                first, last, context, skip, flags, success));
-            detail::final_attribute_type<attr_t, ParserMods> retval{};
-            call(first, last, context, skip, flags, success, retval);
-            return retval;
-        }
-
-        template<
-            typename Iter,
-            typename Sentinel,
-            typename Context,
-            typename SkipParser,
-            typename Attribute>
-        void call(
-            Iter & first,
-            Sentinel last,
-            Context const & context_,
-            SkipParser const & skip,
-            detail::flags flags,
-            bool & success,
-            Attribute & retval) const
-        {
-            auto context = context_;
-            ++context.no_case_depth_;
-
-            [[maybe_unused]] auto _ = detail::scoped_trace(
-                *this, first, last, context, flags, retval);
-
-            parser_.call(first, last, context, skip, flags, success, retval);
-        }
-
-        template<typename F>
-        constexpr auto with_parser_mods(F f) const
-        {
-            if constexpr (f.recursive) {
-                return parser::no_case_parser(
-                    parser_.with_parser_mods(f), f(mods_));
-            } else {
-                return parser::no_case_parser(parser_, f(mods_));
-            }
-        }
-
-        Parser parser_;
-        [[no_unique_address]] ParserMods mods_;
-    };
-
     template<typename Parser, typename SkipParser, typename ParserMods>
     struct skip_parser
     {
@@ -5558,31 +5465,70 @@ namespace boost { namespace parser {
         template<typename Context>
         void clear_for_next_parse(Context const & context);
 
+#endif
+
         /** Uses UTF-8 string `str` to look up an attribute in the table
             during parsing, returning it as an optional reference.  The lookup
             is done on the copy of the symbol table inside the parse context
             `context`. */
         template<typename Context>
         parser::detail::text::optional_ref<T>
-        find(Context const & context, std::string_view str) const;
+        find(Context const & context, std::string_view str) const
+        {
+            auto [trie, has_case_folded] =
+                detail::get_trie<ParserMods::ignore_case>(context, this->ref());
+            if constexpr (
+                ParserMods::ignore_case == parser::ignore_case_t::yes) {
+                return trie[detail::case_fold_view(
+                    str | detail::text::as_utf32)];
+            } else {
+                return trie[str | detail::text::as_utf32];
+            }
+        }
 
         /** Inserts an entry consisting of a UTF-8 string `str` to match, and
             an associtated attribute `x`, to the copy of the symbol table
             inside the parse context `context`. */
         template<typename Context>
-        void insert(Context const & context, std::string_view str, T && x) const;
+        void insert(Context const & context, std::string_view str, T && x) const
+        {
+            auto [trie, has_case_folded] =
+                detail::get_trie<ParserMods::ignore_case>(context, this->ref());
+            if constexpr (
+                ParserMods::ignore_case == parser::ignore_case_t::yes) {
+                trie.insert(
+                    detail::case_fold_view(str | detail::text::as_utf32),
+                    std::move(x));
+            } else {
+                trie.insert(str | detail::text::as_utf32, std::move(x));
+            }
+        }
 
         /** Erases the entry whose UTF-8 match string is `str` from the copy
             of the symbol table inside the parse context `context`. */
         template<typename Context>
-        void erase(Context const & context, std::string_view str) const;
+        void erase(Context const & context, std::string_view str) const
+        {
+            auto [trie, has_case_folded] =
+                detail::get_trie<ParserMods::ignore_case>(context, this->ref());
+            if constexpr (
+                ParserMods::ignore_case == parser::ignore_case_t::yes) {
+                trie.erase(
+                    detail::case_fold_view(str | detail::text::as_utf32));
+            } else {
+                trie.erase(str | detail::text::as_utf32);
+            }
+        }
 
         /** Erases the entry whose UTF-8 match string is `str` from the copy
             of the symbol table inside the parse context `context`. */
         template<typename Context>
-        void clear(Context const & context) const;
-
-#endif
+        void clear(Context const & context) const
+        {
+            auto [trie, _] =
+                detail::get_trie<ParserMods::ignore_case>(context, this->ref());
+            trie.clear();
+        }
 
         template<
             typename Iter,
@@ -5620,11 +5566,13 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
-            auto [trie, _0] = detail::get_trie(context, this->ref());
-            auto const lookup = context.no_case_depth_
-                                    ? trie.longest_match(detail::case_fold_view(
-                                          BOOST_PARSER_SUBRANGE(first, last)))
-                                    : trie.longest_match(first, last);
+            auto [trie, _0] =
+                detail::get_trie<ParserMods::ignore_case>(context, this->ref());
+            auto const lookup =
+                ParserMods::ignore_case == parser::ignore_case_t::yes
+                    ? trie.longest_match(detail::case_fold_view(
+                          BOOST_PARSER_SUBRANGE(first, last)))
+                    : trie.longest_match(first, last);
             if (lookup.match) {
                 std::advance(first, lookup.size);
                 if constexpr (detail::gen_attrs<ParserMods>())
@@ -6735,10 +6683,22 @@ namespace boost { namespace parser {
         `parser_interface<P>`. */
     inline constexpr directive<lexeme_parser> lexeme;
 
-    /** The `no_case` directive, whose `operator[]` returns a
-        `parser_interface<no_case_parser<P>>` from a given parser of type
-        `parser_interface<P>`. */
-    inline constexpr directive<no_case_parser> no_case;
+    /** Transforms the attribute type of the given parser to `none`, as in
+        (e.g. `no_case[other_parser]`). */
+    struct no_case_directive
+    {
+        template<typename Parser>
+        constexpr auto operator[](parser_interface<Parser> rhs) const noexcept
+        {
+            return parser_interface{
+                rhs.parser_.with_parser_mods(detail::ignore_case)};
+        }
+    };
+
+    /** The global `no_case_directive` object, whose `operator[]` returns a
+        new `parser_interface<P>` that ignores case, from a given parser of
+        type `parser_interface<P>`. */
+    inline constexpr no_case_directive no_case;
 
     /** Represents a `repeat_parser` as a directive
         (e.g. `repeat[other_parser]`). */
@@ -7209,11 +7169,12 @@ namespace boost { namespace parser {
                 return;
             }
             char_type<decltype(*first)> const x = *first;
-            if (detail::unequal(context, x, expected_)) {
+            if (detail::unequal<ParserMods::ignore_case>(
+                    context, x, expected_)) {
                 success = false;
                 return;
             }
-            if constexpr (!ParserMods::omit_attr)
+            if constexpr (detail::gen_attrs<ParserMods>())
                 detail::assign(retval, x);
             ++first;
         }
@@ -7710,24 +7671,30 @@ namespace boost { namespace parser {
     /** Returns a literal code point parser that produces no attribute. */
     inline constexpr auto lit(char c) noexcept
     {
-        return parser_interface<
-            char_parser<detail::nope, void, parser_modifiers<true>>>{}(c);
+        return parser_interface<char_parser<
+            detail::nope,
+            void,
+            parser_modifiers<omit_attr_t::yes>>>{}(c);
     }
 
 #if defined(__cpp_char8_t) || defined(BOOST_PARSER_DOXYGEN)
     /** Returns a literal code point parser that produces no attribute. */
     inline constexpr auto lit(char8_t c) noexcept
     {
-        return parser_interface<
-            char_parser<detail::nope, void, parser_modifiers<true>>>{}(c);
+        return parser_interface<char_parser<
+            detail::nope,
+            void,
+            parser_modifiers<omit_attr_t::yes>>>{}(c);
     }
 #endif
 
     /** Returns a literal code point parser that produces no attribute. */
     inline constexpr auto lit(char32_t c) noexcept
     {
-        return parser_interface<
-            char_parser<detail::nope, void, parser_modifiers<true>>>{}(c);
+        return parser_interface<char_parser<
+            detail::nope,
+            void,
+            parser_modifiers<omit_attr_t::yes>>>{}(c);
     }
 
 #ifndef BOOST_PARSER_DOXYGEN
@@ -7805,12 +7772,9 @@ namespace boost { namespace parser {
                     BOOST_PARSER_SUBRANGE(expected_first_, expected_last_) |
                     detail::text::as_utf32;
 
-                auto const mismatch = detail::no_case_aware_string_mismatch(
-                    first,
-                    last,
-                    cps.begin(),
-                    cps.end(),
-                    context.no_case_depth_);
+                auto const mismatch = detail::no_case_aware_string_mismatch<
+                    ParserMods::ignore_case>(
+                    first, last, cps.begin(), cps.end());
                 if (mismatch.second != cps.end()) {
                     success = false;
                     return;
@@ -7821,12 +7785,9 @@ namespace boost { namespace parser {
 
                 first = mismatch.first;
             } else {
-                auto const mismatch = detail::no_case_aware_string_mismatch(
-                    first,
-                    last,
-                    expected_first_,
-                    expected_last_,
-                    context.no_case_depth_);
+                auto const mismatch = detail::no_case_aware_string_mismatch<
+                    ParserMods::ignore_case>(
+                    first, last, expected_first_, expected_last_);
                 if (mismatch.second != expected_last_) {
                     success = false;
                     return;
@@ -8414,12 +8375,14 @@ namespace boost { namespace parser {
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
 
-            auto compare =
-                [no_case = context.no_case_depth_](char32_t a, char32_t b) {
-                    if (no_case && 0x41 <= b && b < 0x5b)
+            auto compare = [](char32_t a, char32_t b) {
+                if constexpr (
+                    ParserMods::ignore_case == parser::ignore_case_t::yes) {
+                    if (0x41 <= b && b < 0x5b)
                         b += 0x20;
-                    return a == b;
-                };
+                }
+                return a == b;
+            };
 
             // The lambda quiets a signed/unsigned mismatch warning when
             // comparing the chars here to code points.

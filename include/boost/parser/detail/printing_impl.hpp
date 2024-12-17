@@ -695,10 +695,14 @@ namespace boost { namespace parser { namespace detail {
         os << "\"";
     }
 
-    template<typename Context, typename Quotes, typename Escapes>
+    template<
+        typename Context,
+        typename Quotes,
+        typename Escapes,
+        typename CharParser>
     void print_parser(
         Context const & context,
-        quoted_string_parser<Quotes, Escapes> const & parser,
+        quoted_string_parser<Quotes, Escapes, CharParser> const & parser,
         std::ostream & os,
         int components)
     {

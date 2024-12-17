@@ -380,7 +380,10 @@ namespace boost { namespace parser {
 
     /** Matches a string delimited by quotation marks; produces a
         `std::string` attribute. */
-    template<typename Quotes = detail::nope, typename Escapes = detail::nope>
+    template<
+        typename Quotes = detail::nope,
+        typename Escapes = detail::nope,
+        typename CharParser = char_parser<detail::nope>>
     struct quoted_string_parser;
 
     /** Matches an end-of-line (`NewlinesOnly == true`), whitespace

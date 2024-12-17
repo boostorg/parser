@@ -836,6 +836,14 @@ escaped quote character, since those always work.
 
 [quoted_string_example_5]
 
+Additionally, with each of the forms shown above, you can optionally provide a
+parser as a final argument, to will be used to parse each character inside the
+quotes.  You have to provide an actual full parser here; you cannot provide a
+character or string literal.  If you do not provide a character parser, _ch_
+is used.
+
+[quoted_string_example_6]
+
 [endsect]
 
 [section Parsing In Detail]

@@ -7252,7 +7252,7 @@ namespace boost { namespace parser {
         return parser_interface{string_parser(str)};
     }
 
-    template<typename Quotes, typename Escapes>
+    template<typename Quotes, typename Escapes, typename CharParser>
     struct quoted_string_parser
     {
         constexpr quoted_string_parser() : chs_(), ch_('"') {}
@@ -7265,7 +7265,11 @@ namespace boost { namespace parser {
             typename Enable =
                 std::enable_if_t<detail::is_parsable_range_like_v<R>>>
 #endif
-        constexpr quoted_string_parser(R && r) : chs_((R &&) r), ch_(0)
+        constexpr quoted_string_parser(
+            R && r,
+            parser_interface<CharParser> char_p =
+                parser_interface{CharParser()}) :
+            chs_((R &&)r), char_p_(char_p), ch_(0)
         {
             BOOST_PARSER_DEBUG_ASSERT(r.begin() != r.end());
         }
@@ -7278,16 +7282,29 @@ namespace boost { namespace parser {
             typename Enable =
                 std::enable_if_t<detail::is_parsable_range_like_v<R>>>
 #endif
-        constexpr quoted_string_parser(R && r, Escapes escapes) :
-            chs_((R &&) r), escapes_(escapes), ch_(0)
+        constexpr quoted_string_parser(
+            R && r,
+            Escapes escapes,
+            parser_interface<CharParser> char_p =
+                parser_interface{CharParser()}) :
+            chs_((R &&)r), escapes_(escapes), char_p_(char_p), ch_(0)
         {
             BOOST_PARSER_DEBUG_ASSERT(r.begin() != r.end());
         }
 
-        constexpr quoted_string_parser(char32_t cp) : chs_(), ch_(cp) {}
+        constexpr quoted_string_parser(
+            char32_t cp,
+            parser_interface<CharParser> char_p =
+                parser_interface{CharParser()}) :
+            chs_(), char_p_(char_p), ch_(cp)
+        {}
 
-        constexpr quoted_string_parser(char32_t cp, Escapes escapes) :
-            chs_(), escapes_(escapes), ch_(cp)
+        constexpr quoted_string_parser(
+            char32_t cp,
+            Escapes escapes,
+            parser_interface<CharParser> char_p =
+                parser_interface{CharParser()}) :
+            chs_(), escapes_(escapes), char_p_(char_p), ch_(cp)
         {}
 
         template<
@@ -7376,11 +7393,11 @@ namespace boost { namespace parser {
             auto make_parser = [&]() {
                 if constexpr (detail::is_nope_v<Escapes>) {
                     return *((lit('\\') >> back_delim) |
-                             (char_ - back_delim))[append] > ch;
+                             (char_p_ - back_delim))[append] > ch;
                 } else {
                     return *((lit('\\') >> back_delim)[append] |
                              (lit('\\') >> parser_interface(escapes_))[append] |
-                             (char_ - back_delim)[append]) > ch;
+                             (char_p_ - back_delim)[append]) > ch;
                 }
             };
 
@@ -7402,15 +7419,17 @@ namespace boost { namespace parser {
         /** Returns a `parser_interface` containing a `quoted_string_parser`
             that uses `x` as its quotation marks. */
 #if BOOST_PARSER_USE_CONCEPTS
-        template<typename T>
+        template<typename T, typename Parser = char_parser<detail::nope>>
             requires(!parsable_range_like<T>)
 #else
         template<
             typename T,
+            typename Parser = char_parser<detail::nope>,
             typename Enable =
                 std::enable_if_t<!detail::is_parsable_range_like_v<T>>>
 #endif
-        constexpr auto operator()(T x) const noexcept
+        constexpr auto
+        operator()(T x, parser_interface<Parser> char_p = char_) const noexcept
         {
             if constexpr (!detail::is_nope_v<Quotes>) {
                 BOOST_PARSER_ASSERT(
@@ -7419,7 +7438,9 @@ namespace boost { namespace parser {
                      "quoted_string, like 'quoted_string('\"')('\\'')'.  Quit "
                      "it!'"));
             }
-            return parser_interface(quoted_string_parser(std::move(x)));
+            return parser_interface(
+                quoted_string_parser<detail::nope, detail::nope, Parser>(
+                    std::move(x), char_p));
         }
 
         /** Returns a `parser_interface` containing a `quoted_string_parser`
@@ -7430,14 +7451,18 @@ namespace boost { namespace parser {
             character begin matched is directly compared to the elements of
             `r`. */
 #if BOOST_PARSER_USE_CONCEPTS
-        template<parsable_range_like R>
+        template<
+            parsable_range_like R,
+            typename Parser = char_parser<detail::nope>>
 #else
         template<
             typename R,
+            typename Parser = char_parser<detail::nope>,
             typename Enable =
                 std::enable_if_t<detail::is_parsable_range_like_v<R>>>
 #endif
-        constexpr auto operator()(R && r) const noexcept
+        constexpr auto operator()(
+            R && r, parser_interface<Parser> char_p = char_) const noexcept
         {
             BOOST_PARSER_ASSERT(((
                 !std::is_rvalue_reference_v<R &&> ||
@@ -7453,10 +7478,14 @@ namespace boost { namespace parser {
                      "'quoted_string(char-range)(char-range)'.  Quit it!'"));
             }
             return parser_interface(
-                quoted_string_parser<decltype(BOOST_PARSER_SUBRANGE(
-                    detail::make_view_begin(r), detail::make_view_end(r)))>(
+                quoted_string_parser<
+                    decltype(BOOST_PARSER_SUBRANGE(
+                        detail::make_view_begin(r), detail::make_view_end(r))),
+                    detail::nope,
+                    Parser>(
                     BOOST_PARSER_SUBRANGE(
-                        detail::make_view_begin(r), detail::make_view_end(r))));
+                        detail::make_view_begin(r), detail::make_view_end(r)),
+                    char_p));
         }
 
         /** Returns a `parser_interface` containing a `quoted_string_parser`
@@ -7465,16 +7494,23 @@ namespace boost { namespace parser {
             sequence, and what character(s) each escape sequence represents.
             Note that `"\\"` and `"\ch"` are always valid escape sequences. */
 #if BOOST_PARSER_USE_CONCEPTS
-        template<typename T, typename U>
+        template<
+            typename T,
+            typename U,
+            typename Parser = char_parser<detail::nope>>
             requires(!parsable_range_like<T>)
 #else
         template<
             typename T,
             typename U,
+            typename Parser = char_parser<detail::nope>,
             typename Enable =
                 std::enable_if_t<!detail::is_parsable_range_like_v<T>>>
 #endif
-        auto operator()(T x, symbols<U> const & escapes) const noexcept
+        auto operator()(
+            T x,
+            symbols<U> const & escapes,
+            parser_interface<Parser> char_p = char_) const noexcept
         {
             if constexpr (!detail::is_nope_v<Quotes>) {
                 BOOST_PARSER_ASSERT(
@@ -7484,8 +7520,9 @@ namespace boost { namespace parser {
                      "it!'"));
             }
             auto symbols = symbol_parser(escapes.parser_);
-            auto parser = quoted_string_parser<detail::nope, decltype(symbols)>(
-                char32_t(x), symbols);
+            auto parser =
+                quoted_string_parser<detail::nope, decltype(symbols), Parser>(
+                    char32_t(x), symbols, char_p);
             return parser_interface(parser);
         }
 
@@ -7500,15 +7537,22 @@ namespace boost { namespace parser {
             escape sequence represents.  Note that `"\\"` and `"\ch"` are
             always valid escape sequences. */
 #if BOOST_PARSER_USE_CONCEPTS
-        template<parsable_range_like R, typename T>
+        template<
+            parsable_range_like R,
+            typename T,
+            typename Parser = char_parser<detail::nope>>
 #else
         template<
             typename R,
             typename T,
+            typename Parser = char_parser<detail::nope>,
             typename Enable =
                 std::enable_if_t<detail::is_parsable_range_like_v<R>>>
 #endif
-        auto operator()(R && r, symbols<T> const & escapes) const noexcept
+        auto operator()(
+            R && r,
+            symbols<T> const & escapes,
+            parser_interface<Parser> char_p = char_) const noexcept
         {
             BOOST_PARSER_ASSERT(((
                 !std::is_rvalue_reference_v<R &&> ||
@@ -7526,14 +7570,16 @@ namespace boost { namespace parser {
             auto symbols = symbol_parser(escapes.parser_);
             auto quotes = BOOST_PARSER_SUBRANGE(
                 detail::make_view_begin(r), detail::make_view_end(r));
-            auto parser =
-                quoted_string_parser<decltype(quotes), decltype(symbols)>(
-                    quotes, symbols);
+            auto parser = quoted_string_parser<
+                decltype(quotes),
+                decltype(symbols),
+                Parser>(quotes, symbols, char_p);
             return parser_interface(parser);
         }
 
         Quotes chs_;
         Escapes escapes_;
+        parser_interface<CharParser> char_p_;
         char32_t ch_;
     };
 

@@ -1015,8 +1015,8 @@ namespace boost { namespace parser {
         template<typename T>
         struct is_perm_p : std::false_type
         {};
-        template<typename T>
-        struct is_perm_p<perm_parser<T>> : std::true_type
+        template<typename T, typename DelimiterParser>
+        struct is_perm_p<perm_parser<T, DelimiterParser>> : std::true_type
         {};
 
         template<typename T>
@@ -3413,10 +3413,14 @@ namespace boost { namespace parser {
         ParserTuple parsers_;
     };
 
-    template<typename ParserTuple>
+    template<typename ParserTuple, typename DelimiterParser>
     struct perm_parser
     {
         constexpr perm_parser(ParserTuple parsers) : parsers_(parsers) {}
+        constexpr perm_parser(
+            ParserTuple parsers, DelimiterParser delimiter_parser) :
+            parsers_(parsers), delimiter_parser_(delimiter_parser)
+        {}
 
 #ifndef BOOST_PARSER_DOXYGEN
 
@@ -3643,7 +3647,19 @@ namespace boost { namespace parser {
             };
             // Use one of the previously-unused parsers to parse one
             // alternative.
+            bool first_iteration = true;
             auto parsed_one = [&](auto) {
+                if constexpr (!detail::is_nope_v<DelimiterParser>) {
+                    if (!first_iteration) {
+                        detail::skip(first, last, skip, flags);
+                        bool local_success = true;
+                        delimiter_parser_.call(
+                            first, last, context, skip, flags, local_success);
+                        if (!local_success)
+                            return false;
+                    }
+                    first_iteration = false;
+                }
                 return (
                     parse_into(
                         Is,
@@ -3667,6 +3683,7 @@ namespace boost { namespace parser {
 #endif
 
         ParserTuple parsers_;
+        DelimiterParser delimiter_parser_;
     };
 
     namespace detail {
@@ -5605,7 +5622,7 @@ namespace boost { namespace parser {
                 return rhs.parser_.prepend(*this);
             } else {
                 return parser::parser_interface{
-                    perm_parser<tuple<parser_type, ParserType2>>{
+                    perm_parser<tuple<parser_type, ParserType2>, detail::nope>{
                         tuple<parser_type, ParserType2>{parser_, rhs.parser_}}};
             }
         }
@@ -6120,23 +6137,23 @@ namespace boost { namespace parser {
         }
     }
 
-    template<typename ParserTuple>
+    template<typename ParserTuple, typename DelimiterParser>
     template<typename Parser>
-    constexpr auto perm_parser<ParserTuple>::prepend(
+    constexpr auto perm_parser<ParserTuple, DelimiterParser>::prepend(
         parser_interface<Parser> parser) const noexcept
     {
         // If you're seeing this as a compile- or run-time failure, you've
         // tried to put an eps parser in a permutation-parser, such as "eps ||
         // int_".
         BOOST_PARSER_ASSERT(!detail::is_eps_p<Parser>{});
-        return parser_interface{perm_parser<decltype(detail::hl::prepend(
-            parsers_, parser.parser_))>{
-            detail::hl::prepend(parsers_, parser.parser_)}};
+        return parser_interface{perm_parser<
+            decltype(detail::hl::prepend(parsers_, parser.parser_)),
+            detail::nope>{detail::hl::prepend(parsers_, parser.parser_)}};
     }
 
-    template<typename ParserTuple>
+    template<typename ParserTuple, typename DelimiterParser>
     template<typename Parser>
-    constexpr auto perm_parser<ParserTuple>::append(
+    constexpr auto perm_parser<ParserTuple, DelimiterParser>::append(
         parser_interface<Parser> parser) const noexcept
     {
         // If you're seeing this as a compile- or run-time failure, you've
@@ -6144,13 +6161,14 @@ namespace boost { namespace parser {
         // || eps".
         BOOST_PARSER_ASSERT(!detail::is_eps_p<Parser>{});
         if constexpr (detail::is_perm_p<Parser>{}) {
-            return parser_interface{perm_parser<decltype(detail::hl::concat(
-                parsers_, parser.parser_.parsers_))>{
+            return parser_interface{perm_parser<
+                decltype(detail::hl::concat(parsers_, parser.parser_.parsers_)),
+                detail::nope>{
                 detail::hl::concat(parsers_, parser.parser_.parsers_)}};
         } else {
-            return parser_interface{perm_parser<decltype(detail::hl::append(
-                parsers_, parser.parser_))>{
-                detail::hl::append(parsers_, parser.parser_)}};
+            return parser_interface{perm_parser<
+                decltype(detail::hl::append(parsers_, parser.parser_)),
+                detail::nope>{detail::hl::append(parsers_, parser.parser_)}};
         }
     }
 

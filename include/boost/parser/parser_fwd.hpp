@@ -207,7 +207,7 @@ namespace boost { namespace parser {
         `ParserTuple`, not the order of the parsers' matches.  It is an error
         to specialize `perm_parser` with a `ParserTuple` template parameter
         that includes an `eps_parser`. */
-    template<typename ParserTuple>
+    template<typename ParserTuple, typename DelimiterParser>
     struct perm_parser;
 
     /** Applies each parser in `ParserTuple`, in order.  The parse succeeds

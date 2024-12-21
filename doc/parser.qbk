@@ -201,6 +201,7 @@
 [def _merge_               [globalref boost::parser::merge `merge[]`]]
 [def _sep_                 [globalref boost::parser::separate `separate[]`]]
 [def _transform_           [globalref boost::parser::transform `transform(f)[]`]]
+[def _delimiter_           [globalref boost::parser::delimiter `delimiter(p)[]`]]
 
 [def _omit_np_             [globalref boost::parser::omit `omit`]]
 [def _raw_np_              [globalref boost::parser::raw `raw`]]
@@ -211,6 +212,7 @@
 [def _merge_np_            [globalref boost::parser::merge `merge`]]
 [def _sep_np_              [globalref boost::parser::separate `separate`]]
 [def _transform_np_        [globalref boost::parser::transform `transform`]]
+[def _delimiter_np_        [globalref boost::parser::delimiter `delimiter`]]
 
 [def _blank_               [globalref boost::parser::blank `blank`]]
 [def _control_             [globalref boost::parser::control `control`]]

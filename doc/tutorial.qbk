@@ -65,7 +65,7 @@ subparsers does.
 
 Finally, there is a /permutation parser/; it is created using `operator||`,
 as in `p1 || p2 || p3`.  A permutation parser tries to match all of its
-subparsers to the input, in any order.  So the parser `p1 || p2 || p3` is equivalent to `(p1 >> p2 >> p3) | (p1 >> p3 >> p2) | (p2 >> p1 >> p3) | (p2 >> p3 >> p1) | (p3 >> p1 >> p2) | (p3 >> p2 >> p1)`.  Hopefully its terseness is self-explanatory.  It matches the
+subparsers to the input, in any order.  So the parser `p1 || p2 || p3` is equivalent to `(p1 >> p2 >> p3) | (p1 >> p3 >> p2) | (p2 >> p1 >> p3) | (p2 >> p3 >> p1) | (p3 >> p1 >> p2) | (p3 >> p2 >> p1)`.  Hopefully the advantage of its terseness is self-explanatory.  It matches the
 input iff all of its subparsers do, regardless of the order they match in.
 
 _Parser_ parsers each have an /attribute/ associated with them, or explicitly
@@ -1449,6 +1449,24 @@ section for more details on them.
 _merge_ and _sep_ create a copy of the given _seq_p_.
 
 _transform_ creates a _xfm_p_.
+
+[heading _delimiter_]
+
+The _delimiter_np_ directive enables the use of a delimiter within a
+permutation parser.  It *only* applies to permutation parsers, just as _merge_
+and _sep_ only apply to sequence parsers.  Consider this permutation parser.
+
+    constexpr auto parser = bp::int_ || bp::string("foo") || bp::char_('g');
+
+This will match all of: an integer, `"foo"`, and `'g'`, in any order (for
+example, `"foo g 42"`).  If you also want for those three elements to be
+delimited by commas, you could write this parser instead.
+
+    constexpr auto delimited_parser =
+        bp::delimiter(bp::lit(','))[bp::int_ || bp::string("foo") || bp::char_('g')];
+
+`delimited_parser` will parse the same elements as `parser`, but will also
+require commas between the elements (as in `"foo, g, 42"`).
 
 [endsect]
 

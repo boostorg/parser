@@ -6323,6 +6323,36 @@ namespace boost { namespace parser {
         return repeat_directive<MinType, MaxType>{min_, max_};
     }
 
+    /** A directive that represents a `perm_parser`, where the items parsed
+        are delimited by `DelimiterParser`,
+        (e.g. `delimiter(delimter_parser)[some_perm_parser]`).  This directive
+        only applies to `perm_parser`s. */
+    template<typename DelimiterParser>
+    struct delimiter_directive
+    {
+        template<typename ParserTuple, typename DelimiterParser2>
+        constexpr auto operator[](
+            parser_interface<perm_parser<ParserTuple, DelimiterParser2>> rhs)
+            const noexcept
+        {
+            using parser_type = perm_parser<ParserTuple, DelimiterParser>;
+            return parser_interface{
+                parser_type{rhs.parser_.parsers_, delimiter_parser_}};
+        }
+
+        DelimiterParser delimiter_parser_;
+    };
+
+    /** Returns a `delimiter_directive` whose `operator[]` returns a
+        `perm_parser`, where the items parsed are delimited by
+        `delimiter_parser`. */
+    template<typename DelimiterParser>
+    constexpr delimiter_directive<DelimiterParser>
+    delimiter(parser_interface<DelimiterParser> delimiter_parser) noexcept
+    {
+        return delimiter_directive<DelimiterParser>{delimiter_parser.parser_};
+    }
+
     /** Represents a skip parser as a directive.  When used without a skip
         parser, e.g. `skip[parser_in_which_to_do_skipping]`, the skipper for
         the entire parse is used.  When given another parser, e.g.

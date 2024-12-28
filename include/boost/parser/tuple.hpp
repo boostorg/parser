@@ -12,19 +12,20 @@
 
 #if BOOST_PARSER_USE_STD_TUPLE
 
+#include <boost/config.hpp>
 #include <tuple>
 
 #else
 
 // Silence very verbose warnings about std::is_pod/std::is_literal being
 // deprecated.
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(BOOST_GCC) || defined(__clang__)
 #    pragma GCC diagnostic push
 #    pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #    pragma GCC diagnostic ignored "-Wunused-value"
 #endif
 #include <boost/hana.hpp>
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(BOOST_GCC) || defined(__clang__)
 #    pragma GCC diagnostic pop
 #endif
 
@@ -185,7 +186,7 @@ namespace boost { namespace parser {
             template<typename T>
             operator T() const && noexcept
             {
-#if defined(__GNUC__) && __GNUC__ < 13
+#if defined(BOOST_GCC) && __GNUC__ < 13
                 // Yuck.
                 std::remove_reference_t<T> * ptr = nullptr;
                 ptr += 1; // warning mitigation

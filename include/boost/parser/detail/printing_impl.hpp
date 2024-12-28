@@ -3,15 +3,17 @@
 
 #include <boost/parser/detail/printing.hpp>
 
+#include <boost/config.hpp>
+
 #if __has_include(<boost/type_index.hpp>)
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(BOOST_GCC) || defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 #include <boost/type_index.hpp>
 #define BOOST_PARSER_HAVE_BOOST_TYPEINDEX 1
 #define BOOST_PARSER_TYPE_NAME_NS boost_type_index
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(BOOST_GCC) || defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
 #else

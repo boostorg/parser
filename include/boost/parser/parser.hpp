@@ -21,6 +21,7 @@
 #include <boost/parser/detail/text/trie_map.hpp>
 #include <boost/parser/detail/text/unpack.hpp>
 
+#include <boost/config.hpp>
 #include <type_traits>
 #include <variant>
 #include <vector>
@@ -9539,7 +9540,7 @@ namespace boost { namespace parser {
         {
             // This code chokes older GCCs.  I can't figure out why, and this
             // is an optional check, so I'm disabling it for those GCCs.
-#if !defined(__GNUC__) || 13 <= __GNUC__
+#if !(defined(BOOST_GCC) && 13 <= __GNUC__)
             using context_t = parse_context<
                 false,
                 false,

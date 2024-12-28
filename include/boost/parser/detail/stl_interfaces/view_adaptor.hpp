@@ -11,6 +11,7 @@
 
 #include <boost/parser/detail/detection.hpp>
 
+#include <boost/config.hpp>
 #include <tuple>
 #include <type_traits>
 
@@ -24,8 +25,9 @@
 #define BOOST_PARSER_USE_CPP23_STD_RANGE_ADAPTOR_CLOSURE 0
 #endif
 
-#if !BOOST_PARSER_USE_CPP23_STD_RANGE_ADAPTOR_CLOSURE &&               \
-    BOOST_PARSER_DETAIL_STL_INTERFACES_USE_CONCEPTS && defined(__GNUC__) && 12 <= __GNUC__
+#if !BOOST_PARSER_USE_CPP23_STD_RANGE_ADAPTOR_CLOSURE &&                       \
+    BOOST_PARSER_DETAIL_STL_INTERFACES_USE_CONCEPTS &&                         \
+    defined(BOOST_LIBSTDCXX_VERSION) && 13000 > BOOST_LIBSTDCXX_VERSION
 #define BOOST_PARSER_USE_LIBSTDCPP_GCC12_RANGE_ADAPTOR_CLOSURE 1
 #else
 #define BOOST_PARSER_USE_LIBSTDCPP_GCC12_RANGE_ADAPTOR_CLOSURE 0

@@ -8,6 +8,7 @@
 
 #include <boost/parser/replace.hpp>
 
+#include <boost/config.hpp>
 #include <boost/core/lightweight_test.hpp>
 
 #include "ill_formed.hpp"
@@ -134,7 +135,7 @@ int main()
         }
         BOOST_TEST(count == 4);
     }
-#if !defined(__GNUC__) || 12 <= __GNUC__
+#if !(defined(BOOST_LIBSTDCXX_VERSION) && 13000 > BOOST_LIBSTDCXX_VERSION)
     // Older GCCs don't like the use of temporaries like the
     // std::string("foo") below.
     {
@@ -380,7 +381,7 @@ int main()
     }
 }
 
-#if BOOST_PARSER_USE_CONCEPTS && (!defined(__GNUC__) || 12 <= __GNUC__)
+#if BOOST_PARSER_USE_CONCEPTS && !(defined(BOOST_LIBSTDCXX_VERSION) && 13000 > BOOST_LIBSTDCXX_VERSION)
 // Older GCCs don't like the use of temporaries like the std::string("foo")
 // below.  This causes | join to break.
 // join_compat)
@@ -453,7 +454,7 @@ int main()
         std::cout << "\n";
         assert(count == 3);
     }
-#if BOOST_PARSER_USE_CONCEPTS && (!defined(__GNUC__) || 12 <= __GNUC__)
+#if BOOST_PARSER_USE_CONCEPTS && !(defined(BOOST_LIBSTDCXX_VERSION) && 13000 > BOOST_LIBSTDCXX_VERSION)
     {
         namespace bp = boost::parser;
         auto card_number = bp::int_ >> bp::repeat(3)['-' >> bp::int_];

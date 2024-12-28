@@ -8,6 +8,7 @@
 
 #include <boost/parser/transform_replace.hpp>
 
+#include <boost/config.hpp>
 #include <boost/core/lightweight_test.hpp>
 
 #include "ill_formed.hpp"
@@ -15,7 +16,7 @@
 #include <list>
 
 #if (!defined(_MSC_VER) || BOOST_PARSER_USE_CONCEPTS) &&                       \
-    (!defined(__GNUC__) || 12 <= __GNUC__ || !BOOST_PARSER_USE_CONCEPTS)
+    (!(defined(BOOST_GCC) && 12 <= __GNUC__) || !BOOST_PARSER_USE_CONCEPTS)
 
 namespace bp = boost::parser;
 
@@ -681,7 +682,7 @@ int main()
     }
 }
 
-#if BOOST_PARSER_USE_CONCEPTS && (!defined(__GNUC__) || 12 <= __GNUC__)
+#if BOOST_PARSER_USE_CONCEPTS && !(defined(BOOST_LIBSTDCXX_VERSION) && 13000 > BOOST_LIBSTDCXX_VERSION)
 // Older GCCs don't like the use of temporaries like the std::string("foo")
 // below.  This causes | join to break.
 // join_compat)

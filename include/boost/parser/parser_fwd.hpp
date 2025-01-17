@@ -143,6 +143,8 @@ namespace boost { namespace parser {
 
         struct punct_chars
         {};
+        struct symb_chars
+        {};
         struct lower_case_chars
         {};
         struct upper_case_chars

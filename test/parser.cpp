@@ -2753,6 +2753,16 @@ int main()
         BOOST_TEST(result == std::vector<uint32_t>({0x21, 0xfda}));
     }
 
+    // symb_
+    {
+        auto parser = +symb;
+
+        std::u32string str = U"$^\u20AC!\u2194\u220F\U0001D7C6b\u2280\U0001FACE\U0001039F";
+        std::vector<uint32_t> result;
+        BOOST_TEST(parse(str, parser, char_ - symb, result));
+        BOOST_TEST(result == std::vector<uint32_t>({U'$', U'^', 0x20AC, 0x2194, 0x220F, 0x2280, 0x1FACE}));
+    }
+
     // lower_
     {
         auto parser = +lower;

@@ -9537,9 +9537,6 @@ namespace boost { namespace parser {
         template<typename... Args>
         constexpr void static_assert_merge_attributes(tuple<Args...> parsers)
         {
-            // This code chokes older GCCs.  I can't figure out why, and this
-            // is an optional check, so I'm disabling it for those GCCs.
-#if !defined(__GNUC__) || 13 <= __GNUC__
             using context_t = parse_context<
                 false,
                 false,
@@ -9586,7 +9583,7 @@ namespace boost { namespace parser {
                         "type as one of the others.");
                     if constexpr (!std::is_same_v<t, first_t>) {
                         [[maybe_unused]] detail::print_type<tuple<Args...>>
-                            tuple_types;
+                            tuple_types(parsers);
                         [[maybe_unused]] detail::print_type<all_types>
                             attribute_types;
                         [[maybe_unused]] detail::print_type<first_t> first_type;
@@ -9594,7 +9591,6 @@ namespace boost { namespace parser {
                     }
                 }
             });
-#endif
         }
     }
 }}

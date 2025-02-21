@@ -185,14 +185,10 @@ namespace boost { namespace parser {
             template<typename T>
             operator T() const && noexcept
             {
-#if defined(__GNUC__) && __GNUC__ < 13
                 // Yuck.
                 std::remove_reference_t<T> * ptr = nullptr;
                 ptr += 1; // warning mitigation
                 return *ptr;
-#else
-                return std::declval<T>();
-#endif
             }
         };
 

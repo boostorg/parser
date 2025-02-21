@@ -4,7 +4,8 @@
 #include <boost/parser/replace.hpp>
 
 #if (!defined(_MSC_VER) || BOOST_PARSER_USE_CONCEPTS) &&                       \
-    (!defined(__GNUC__) || 12 <= __GNUC__ || !BOOST_PARSER_USE_CONCEPTS)
+    (!defined(BOOST_PARSER_GCC) || 12 <= __GNUC__ ||                           \
+     !BOOST_PARSER_USE_CONCEPTS)
 
 
 namespace boost::parser {

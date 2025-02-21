@@ -7811,11 +7811,17 @@ namespace boost { namespace parser {
         control;
 
     /** The punctuation character parser.  Matches the full set of Unicode
-        punctuation clases (specifically, "Pc", "Pd", "Pe", "Pf", "Pi", "Ps",
+        punctuation classes (specifically, "Pc", "Pd", "Pe", "Pf", "Pi", "Ps",
         and "Po"). */
     inline BOOST_PARSER_ALGO_CONSTEXPR
         parser_interface<char_set_parser<detail::punct_chars>>
             punct;
+
+    /** The symbol character parser.  Matches the full set of Unicode
+        symbol classes (specifically, "Sc", "Sk", "Sm", and "So"). */
+    inline BOOST_PARSER_ALGO_CONSTEXPR
+        parser_interface<char_set_parser<detail::symb_chars>>
+            symb;
 
     /** The lower case character parser.  Matches the full set of Unicode
         lower case code points (class "Ll"). */

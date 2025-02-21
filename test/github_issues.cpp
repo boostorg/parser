@@ -246,6 +246,10 @@ void github_issue_209()
         std::end(bp::detail::char_set<detail::punct_chars>::chars)));
 
     BOOST_TEST(std::is_sorted(
+        std::begin(bp::detail::char_set<detail::symb_chars>::chars),
+        std::end(bp::detail::char_set<detail::symb_chars>::chars)));
+
+    BOOST_TEST(std::is_sorted(
         std::begin(bp::detail::char_set<detail::lower_case_chars>::chars),
         std::end(bp::detail::char_set<detail::lower_case_chars>::chars)));
 

@@ -132,6 +132,11 @@ the input they match unless otherwise stated in the table below.]
      [ The code point type in Unicode parsing, or `char` in non-Unicode parsing.  See the entry for _ch_. ]
      []]
 
+    [[ `_symb_` ]
+     [ Matches a single symbol code point. ]
+     [ The code point type in Unicode parsing, or `char` in non-Unicode parsing.  See the entry for _ch_. ]
+     []]
+
     [[ `_hex_digit_` ]
      [ Matches a single hexidecimal digit code point. ]
      [ The code point type in Unicode parsing, or `char` in non-Unicode parsing.  See the entry for _ch_. ]

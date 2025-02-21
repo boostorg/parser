@@ -218,6 +218,7 @@
 [def _control_             [globalref boost::parser::control `control`]]
 [def _digit_               [globalref boost::parser::digit `digit`]]
 [def _punct_               [globalref boost::parser::punct `punct`]]
+[def _symb_                [globalref boost::parser::symb `symb`]]
 [def _hex_digit_           [globalref boost::parser::hex_digit `hex_digit`]]
 [def _lower_               [globalref boost::parser::lower `lower`]]
 [def _upper_               [globalref boost::parser::upper `upper`]]

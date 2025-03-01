@@ -110,6 +110,7 @@
 
 
 [def _std_str_             `std::string`]
+[def _std_strs_            `std::string`s]
 [def _std_vec_char_        `std::vector<char>`]
 [def _std_vec_char32_      `std::vector<char32_t>`]
 
@@ -242,6 +243,7 @@
 [def _more_about_rules_    [link boost_parser.tutorial.more_about_rules More About Rules]]
 [def _unicode_             [link boost_parser.tutorial.unicode_support Unicode Support]]
 [def _concepts_            [link boost_parser.concepts Concepts]]
+[def _seq_parser_example_  [link boost_parser.tutorial.attribute_generation.a_sequence_parser_attribute_example A sequence parser attribute example]]
 [def _ex_json_             [link boost_parser.extended_examples.parsing_json Parsing JSON]]
 [def _ex_cb_json_          [link boost_parser.extended_examples.parsing_json_with_callbacks Parsing JSON With Callbacks]]
 [def _rationale_           [link boost_parser.rationale Rationale]]

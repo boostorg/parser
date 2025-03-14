@@ -128,7 +128,7 @@ namespace boost { namespace parser {
         /** A literal that can be used to concisely name `parser::llong`
             integral constants. */
         template<char... chars>
-        constexpr auto operator"" _c()
+        constexpr auto operator""_c()
         {
             constexpr long long n =
                 detail::parse_llong<sizeof...(chars)>({chars...});

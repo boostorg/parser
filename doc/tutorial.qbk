@@ -828,7 +828,7 @@ the same character must be used on both sides.
 [quoted_string_example_4]
 
 Another common thing to do in a quoted string parser is to recognize escape
-sequences.  If you have simple escape sequencecs that do not require any real
+sequences.  If you have simple escape sequences that do not require any real
 parsing, like say the simple escape sequences from C++, you can provide a
 _symbols_ object as well.  The template parameter `T` to _symbols_t_ must be
 `char` or `char32_t`.  You don't need to include the escaped backslash or the
@@ -837,10 +837,10 @@ escaped quote character, since those always work.
 [quoted_string_example_5]
 
 Additionally, with each of the forms shown above, you can optionally provide a
-parser as a final argument, to will be used to parse each character inside the
-quotes.  You have to provide an actual full parser here; you cannot provide a
-character or string literal.  If you do not provide a character parser, _ch_
-is used.
+parser as a final argument, which will be used to parse each character inside
+the quotes.  You have to provide an actual full parser here; you cannot
+provide a character or string literal.  If you do not provide a character
+parser, _ch_ is used.
 
 [quoted_string_example_6]
 
@@ -2577,7 +2577,7 @@ Also, consider this rule:
     bp::rule<struct ints_tag, std::vector<int>> ints = "ints";
     auto const ints_def = bp::int_ >> ints | bp::eps;
 
-What is the default attribute type for ints_def?  It sure looks like
+What is the default attribute type for `ints_def`?  It sure looks like
 `std::optional<std::vector<int>>`.  Inside the evaluation of `ints`, _Parser_
 must evaluate `ints_def`, and then produce a `std::vector<int>` _emdash_ the
 return type of `ints` _emdash_ from it.  How?  How do you turn a
@@ -2659,7 +2659,7 @@ semantics, is a lot easier to read, and is a lot less code.]
 
 The _r_ template takes another template parameter we have not discussed yet.
 You can pass a third parameter `LocalState` to _r_, which will be defaulted
-csontructed by the _r_, and made available within semantic actions used in the
+constructed by the _r_, and made available within semantic actions used in the
 rule as `_locals_np_(ctx)`.  This gives your rule some local state, if it
 needs it.  The type of `LocalState` can be anything regular.  It could be a
 single value, a struct containing multiple values, or a tuple, among others.
@@ -3786,7 +3786,7 @@ _Parser_ seldom allocates memory.  The exceptions to this are:
   which implies allocation.  You can avoid this allocation by explicitly using
   a different sequence container for the attribute that does not allocate.
   `boost::container::static_vector` or C++26's `std::inplace_vector` may be
-  useful as such replacements.
+  useful for such replacements.
 
 With the exception of allocating the name of the parser that was expected in a
 failed expectation situation, _Parser_ does not does not allocate unless you
@@ -3863,9 +3863,9 @@ Some things to note:
   want to know how to fix their input.  For either rule, the fix is the same:
   put a hexadecimal escape sequence there.
 
-- `single_escaped_char` has a terrible-looking name.  However, it's not really
-  used as a name anywhere per se.  In error messages, it works nicely, though.
-  The error will be "Expected '"', '\', '/', 'b', 'f', 'n', 'r', or 't' here",
+- `single_escaped_char` has a terrible-looking name.  However, it's not
+  actually used as a name.  In error messages, it works nicely, though.  The
+  error will be "Expected '"', '\', '/', 'b', 'f', 'n', 'r', or 't' here",
   which is pretty helpful.
 
 [heading Have a simple test that you can run to find ill-formed-code-as-asserts]

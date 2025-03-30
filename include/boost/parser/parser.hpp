@@ -7830,7 +7830,7 @@ namespace boost { namespace parser {
             lower;
 
     /** The lower case character parser.  Matches the full set of Unicode
-        lower case code points (class "Lu"). */
+        upper case code points (class "Lu"). */
     inline BOOST_PARSER_ALGO_CONSTEXPR
         parser_interface<char_set_parser<detail::upper_case_chars>>
             upper;

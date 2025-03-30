@@ -3399,9 +3399,9 @@ _w_eh_ (see _p_api_).  If you do not set one, _default_eh_ will be used.
 [heading How diagnostics are generated]
 
 _Parser_ only generates error messages like the ones in this page at failed
-expectation points, like `a > b`, where you have successfully parsed `a`, but
-then cannot successfully parse `b`.  This may seem limited to you.  It's
-actually the best that we can do.
+expectation points (like `a > b`, where you have successfully parsed `a`, but
+then cannot successfully parse `b`), and at an unexepcted end of input.  This
+may seem limited to you.  It's actually the best that we can do.
 
 In order for error handling to happen other than at expectation points, we
 have to know that there is no further processing that might take place.  This
@@ -3409,21 +3409,26 @@ is true because _Parser_ has `P1 | P2 | ... | Pn` parsers ("`or_parser`s").
 If any one of these parsers `Pi` fails to match, it is not allowed to fail the
 parse _emdash_ the next one (`Pi+1`) might match.  If we get to the end of the
 alternatives of the or_parser and `Pn` fails, we still cannot fail the
-top-level parse, because the `or_parser` might be a subparser within a parent
-`or_parser`.
+top-level parse, because this `or_parser` might be a subparser within a parent
+`or_parser`.  The only exception to this is when: we have finished the
+top-level parse; the top-level parse is *not* a prefix parse; and there is
+still a part of the input range that is left over.  In that case, there is an
+implicit expectation that the end of the parse and the end of input are the
+same location, and this implicit expectation has just been violated.
 
-Ok, so what might we do?  Perhaps we could at least indicate when we ran into
-end-of-input.  But we cannot, for exactly the same reason already stated.  For
-any parser `P`, reaching end-of-input is a failure for `P`, but not
-necessarily for the whole parse.
+Note that we cannot fail the top-level parse when we run into end-of-input.
+We cannot for exactly the same reason already stated.  For any parser `P`,
+reaching end-of-input is a failure for `P`, but not necessarily for the whole
+parse.
 
-Perhaps we could record the farthest point ever reached during the parse, and
-report that at the top level, if the top level parser fails.  That would be
-little help without knowing which parser was active when we reached that
-point.  This would require some sort of repeated memory allocation, since in
-_Parser_ the progress point of the parser is stored exclusively on the stack
-_emdash_ by the time we fail the top-level parse, all those far-reaching stack
-frames are long gone.  Not the best.
+Ok, so what other kinds of error reporting might we do?  Perhaps we could
+record the farthest point ever reached during the parse, and report that at
+the top level, if the top level parser fails.  That would be little help
+without knowing which parser was active when we reached that point.  This
+would require some sort of repeated memory allocation, since in _Parser_ the
+progress point of the parser is stored exclusively on the stack _emdash_ by
+the time we fail the top-level parse, all those far-reaching stack frames are
+long gone.  Not the best.
 
 Worse still, knowing how far you got in the parse and which parser was active
 is not very useful.  Consider this.
@@ -3440,15 +3445,16 @@ Was the error in the input putting the `'a'` at the beginning or putting the
 failed, and never mention `c_b`, you are potentially just steering them in the
 wrong direction.
 
-All error messages must come from failed expectation points.  Consider parsing
-JSON.  If you open a list with `'['`, you know that you're parsing a list, and
-if the list is ill-formed, you'll get an error message saying so.  If you open
-an object with `'{'`, the same thing is possible _emdash_ when missing the
-matching `'}'`, you can tell the user, "That's not an object", and this is
-useful feedback.  The same thing with a partially parsed number, etc.  If the
-JSON parser does not build in expectations like matched braces and brackets,
-how can _Parser_ know that a missing `'}'` is really a problem, and that no
-later parser will match the input even without the `'}'`?
+All error messages must come from failed expectation points (or unexpected end
+of input).  Consider parsing JSON.  If you open a list with `'['`, you know
+that you're parsing a list, and if the list is ill-formed, you'll get an error
+message saying so.  If you open an object with `'{'`, the same thing is
+possible _emdash_ when missing the matching `'}'`, you can tell the user,
+"That's not an object", and this is useful feedback.  The same thing with a
+partially parsed number, etc.  If the JSON parser does not build in
+expectations like matched braces and brackets, how can _Parser_ know that a
+missing `'}'` is really a problem, and that no later parser will match the
+input even without the `'}'`?
 
 [important The bottom line is that you should build expectation points into
 your parsers using `operator>` as much as possible.]

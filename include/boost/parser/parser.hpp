@@ -2715,20 +2715,28 @@ namespace boost { namespace parser {
             }
         }
 
-        template<typename I, typename S, typename T>
-        std::optional<T>
-        if_full_parse(I & first, S last, std::optional<T> retval)
+        template<typename I, typename S, typename ErrorHandler, typename T>
+        T if_full_parse(
+            I initial_first,
+            I & first,
+            S last,
+            ErrorHandler const & error_handler,
+            T retval)
         {
-            if (first != last)
-                retval = std::nullopt;
-            return retval;
-        }
-        template<typename I, typename S>
-        bool if_full_parse(I & first, S last, bool retval)
-        {
-            if (first != last)
-                retval = false;
-            return retval;
+            if (first != last) {
+                if (retval && error_handler(
+                                  initial_first,
+                                  last,
+                                  parse_error<I>(first, "end of input")) ==
+                                  error_handler_result::rethrow) {
+                    throw;
+                }
+                if constexpr (std::is_same_v<T, bool>)
+                    retval = false;
+                else
+                    retval = std::nullopt;
+            }
+            return std::move(retval);
         }
 
         // The notion of comaptibility is that, given a parser with the
@@ -8817,9 +8825,12 @@ namespace boost { namespace parser {
         auto r_ = detail::make_input_subrange(r);
         auto first = r_.begin();
         auto const last = r_.end();
+        auto const initial_first = first;
         return reset = detail::if_full_parse(
+                   initial_first,
                    first,
                    last,
+                   parser.error_handler_,
                    parser::prefix_parse(first, last, parser, attr, trace_mode));
     }
 
@@ -8922,8 +8933,13 @@ namespace boost { namespace parser {
         auto r_ = detail::make_input_subrange(r);
         auto first = r_.begin();
         auto const last = r_.end();
+        auto const initial_first = first;
         return detail::if_full_parse(
-            first, last, parser::prefix_parse(first, last, parser, trace_mode));
+            initial_first,
+            first,
+            last,
+            parser.error_handler_,
+            parser::prefix_parse(first, last, parser, trace_mode));
     }
 
     /** Parses `[first, last)` using `parser`, skipping all input recognized
@@ -9058,9 +9074,12 @@ namespace boost { namespace parser {
         auto r_ = detail::make_input_subrange(r);
         auto first = r_.begin();
         auto const last = r_.end();
+        auto const initial_first = first;
         return reset = detail::if_full_parse(
+                   initial_first,
                    first,
                    last,
+                   parser.error_handler_,
                    parser::prefix_parse(
                        first, last, parser, skip, attr, trace_mode));
     }
@@ -9169,9 +9188,12 @@ namespace boost { namespace parser {
         auto r_ = detail::make_input_subrange(r);
         auto first = r_.begin();
         auto const last = r_.end();
+        auto const initial_first = first;
         return detail::if_full_parse(
+            initial_first,
             first,
             last,
+            parser.error_handler_,
             parser::prefix_parse(first, last, parser, skip, trace_mode));
     }
 
@@ -9287,9 +9309,12 @@ namespace boost { namespace parser {
         auto r_ = detail::make_input_subrange(r);
         auto first = r_.begin();
         auto const last = r_.end();
+        auto const initial_first = first;
         return detail::if_full_parse(
+            initial_first,
             first,
             last,
+            parser.error_handler_,
             parser::callback_prefix_parse(first, last, parser, callbacks));
     }
 
@@ -9423,9 +9448,12 @@ namespace boost { namespace parser {
         auto r_ = detail::make_input_subrange(r);
         auto first = r_.begin();
         auto const last = r_.end();
+        auto const initial_first = first;
         return detail::if_full_parse(
+            initial_first,
             first,
             last,
+            parser.error_handler_,
             parser::callback_prefix_parse(
                 first, last, parser, skip, callbacks, trace_mode));
     }

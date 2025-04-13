@@ -1248,22 +1248,25 @@ these parsers is in a subsequent section.  The attributes are repeated here so
 you can use see all the properties of the parsers in one place.]
 
 If you have an integral type `IntType` that is not covered by any of the
-_Parser_ parsers, you can use a more verbose declaration to declare a parser
-for `IntType`.  If `IntType` were unsigned, you would use `uint_parser`.  If
-it were signed, you would use `int_parser`.  For example:
+_Parser_ parsers, you can explicitly specify a base/radix or bounds on the
+number of digits.  You do this by calling the `base()` and `digits()` member
+functions on an existing parser of the right intgral type.  So if `IntType`
+were unsigned, you would use `uint_`.  If it were signed, you would use
+`int_`.  For example:
 
-    constexpr parser_interface<int_parser<IntType>> hex_int;
+    constexpr auto hex_int = bp::uint_.base<16>();
 
-`uint_parser` and `int_parser` accept three more non-type template parameters
-after the type parameter.  They are `Radix`, `MinDigits`, and `MaxDigits`.
-`Radix` defaults to `10`, `MinDigits` to `1`, and `MaxDigits` to `-1`, which
-is a sentinel value meaning that there is no max number of digits.
+You simply chain together the contraints you want to use, like
+`.base<16>().digits<2>()` or .digits<4>().base<8>()`.
 
 So, if you wanted to parse exactly eight hexadecimal digits in a row in order
 to recognize Unicode character literals like C++ has (e.g. `\Udeadbeef`), you
 could use this parser for the digits at the end:
 
-    constexpr parser_interface<uint_parser<unsigned int, 16, 8, 8>> hex_int;
+    constexpr auto hex_4_def = bp::uint_.base<16>().digits<8>();
+
+If you want to specify an acceptable range of digits, use `.digits<LO, HI>()`.
+Both `HI` and `LO` are inclusive bounds.
 
 [endsect]
 

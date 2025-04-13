@@ -5421,6 +5421,29 @@ namespace boost { namespace parser {
 
 #endif
 
+    namespace detail {
+        template<typename T>
+        using base_member_function_template_expr =
+            decltype(std::declval<T>().template base<2>());
+        template<typename T>
+        constexpr bool has_base_member_function_template_v =
+            is_detected_v<base_member_function_template_expr, T>;
+
+        template<typename T>
+        using has_digits1_member_function_template_expr =
+            decltype(std::declval<T>().template digits<1>());
+        template<typename T>
+        constexpr bool has_digits1_member_function_template_v =
+            is_detected_v<has_digits1_member_function_template_expr, T>;
+
+        template<typename T>
+        using has_digits2_member_function_template_expr =
+            decltype(std::declval<T>().template digits<1, 2>());
+        template<typename T>
+        constexpr bool has_digits2_member_function_template_v =
+            is_detected_v<has_digits2_member_function_template_expr, T>;
+    }
+
     // Parser interface.
 
     template<typename Parser, typename GlobalState, typename ErrorHandler>
@@ -5760,7 +5783,7 @@ namespace boost { namespace parser {
             return parser_.call(first, last, context, skip, flags, success);
         }
 
-        /** Applies `parser_`, assiging the parsed attribute, if any, to
+        /** Applies `parser_`, assinging the parsed attribute, if any, to
             `attr`, unless the attribute is reported via callback. */
         template<
             typename Iter,
@@ -5778,6 +5801,60 @@ namespace boost { namespace parser {
             Attribute & attr) const
         {
             parser_.call(first, last, context, skip, flags, success, attr);
+        }
+
+        /** Returns a new `parser_interface` constructed from
+            `parser_.base<Radix2>()`.  Note that this only works for integral
+            numeric parsers like `int_` and `uint_`. */
+        template<int Radix2>
+        constexpr auto base() const noexcept
+        {
+            if constexpr (detail::has_base_member_function_template_v<
+                              parser_type>) {
+                return parser::parser_interface{
+                    parser_.template base<Radix2>()};
+            } else {
+                static_assert(
+                    detail::has_base_member_function_template_v<parser_type>,
+                    "Only certain parsers have a .base<>() member function. "
+                    "This is not one of them.");
+            }
+        }
+
+        /** Returns a new `parser_interface` constructed from
+            `parser_.digits<Digits>()`.  Note that this only works for
+            integral numeric parsers like `int_` and `uint_`. */
+        template<int Digits>
+        constexpr auto digits() const noexcept
+        {
+            if constexpr (detail::has_digits1_member_function_template_v<
+                              parser_type>) {
+                return parser::parser_interface{
+                    parser_.template digits<Digits>()};
+            } else {
+                static_assert(
+                    detail::has_digits1_member_function_template_v<parser_type>,
+                    "Only certain parsers have a .base<>() member function. "
+                    "This is not one of them.");
+            }
+        }
+
+        /** Returns a new `parser_interface` constructed from
+            `parser_.digits<MinDigits2, MaxDigits2>()`.  Note that this only
+            works for integral numeric parsers like `int_` and `uint_`. */
+        template<int MinDigits2, int MaxDigits2>
+        constexpr auto digits() const noexcept
+        {
+            if constexpr (detail::has_digits2_member_function_template_v<
+                              parser_type>) {
+                return parser::parser_interface{
+                    parser_.template digits<MinDigits2, MaxDigits2>()};
+            } else {
+                static_assert(
+                    detail::has_digits2_member_function_template_v<parser_type>,
+                    "Only certain parsers have a .base<>() member function. "
+                    "This is not one of them.");
+            }
         }
 
         parser_type parser_;
@@ -7926,7 +8003,11 @@ namespace boost { namespace parser {
         typename Expected>
     struct uint_parser
     {
-        static_assert(2 <= Radix && Radix <= 36, "Unsupported radix.");
+        static_assert(
+            Radix == 2 || Radix == 8 || Radix == 10 || Radix == 16,
+            "Unsupported radix.");
+        static_assert(1 <= MinDigits);
+        static_assert(MaxDigits == -1 || MinDigits <= MaxDigits);
 
         constexpr uint_parser() {}
         explicit constexpr uint_parser(Expected expected) : expected_(expected)
@@ -7992,6 +8073,33 @@ namespace boost { namespace parser {
             return parser_interface{parser_t{expected}};
         }
 
+        /** Returns a `uint_parser` identical to `*this`, except that it
+            parses digits as base-`Radix2` instead of base-`Radix`. */
+        template<int Radix2>
+        constexpr auto base() const noexcept
+        {
+            return uint_parser<T, Radix2, MinDigits, MaxDigits, Expected>{
+                expected_};
+        }
+
+        /** Returns a `uint_parser` identical to `*this`, except that it only
+            accepts numbers exactly `Digits` digits. */
+        template<int Digits>
+        constexpr auto digits() const noexcept
+        {
+            return uint_parser<T, Radix, Digits, Digits, Expected>{expected_};
+        }
+
+        /** Returns a `uint_parser` identical to `*this`, except that it
+            only accepts numbers `D` digits long, where `D` is in
+            [`MinDigits2`, MaxDigits2`]. */
+        template<int MinDigits2, int MaxDigits2>
+        constexpr auto digits() const noexcept
+        {
+            return uint_parser<T, Radix, MinDigits2, MaxDigits2, Expected>{
+                expected_};
+        }
+
         Expected expected_;
     };
 
@@ -8039,6 +8147,8 @@ namespace boost { namespace parser {
         static_assert(
             Radix == 2 || Radix == 8 || Radix == 10 || Radix == 16,
             "Unsupported radix.");
+        static_assert(1 <= MinDigits);
+        static_assert(MaxDigits == -1 || MinDigits <= MaxDigits);
 
         constexpr int_parser() {}
         explicit constexpr int_parser(Expected expected) : expected_(expected)
@@ -8102,6 +8212,33 @@ namespace boost { namespace parser {
             using parser_t =
                 int_parser<T, Radix, MinDigits, MaxDigits, Expected2>;
             return parser_interface{parser_t{expected}};
+        }
+
+        /** Returns an `int_parser` identical to `*this`, except that it
+            parses digits as base-`Radix2` instead of base-`Radix`. */
+        template<int Radix2>
+        constexpr auto base() const noexcept
+        {
+            return int_parser<T, Radix2, MinDigits, MaxDigits, Expected>{
+                expected_};
+        }
+
+        /** Returns an `int_parser` identical to `*this`, except that it only
+            accepts numbers exactly `Digits` digits. */
+        template<int Digits>
+        constexpr auto digits() const noexcept
+        {
+            return int_parser<T, Radix, Digits, Digits, Expected>{expected_};
+        }
+
+        /** Returns an `int_parser` identical to `*this`, except that it
+            only accepts numbers `D` digits long, where `D` is in
+            [`MinDigits2`, MaxDigits2`]. */
+        template<int MinDigits2, int MaxDigits2>
+        constexpr auto digits() const noexcept
+        {
+            return int_parser<T, Radix, MinDigits2, MaxDigits2, Expected>{
+                expected_};
         }
 
         Expected expected_;

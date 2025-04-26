@@ -161,7 +161,7 @@ namespace boost::parser::detail { namespace text {
             decltype(detail::function_for_tag<F>(0))
 #endif
             ;
-        using sentinel = project_view<V, F>::sentinel<Const>;
+        using sentinel = project_view<V, F>::template sentinel<Const>;
 
         friend boost::parser::detail::stl_interfaces::access;
         iterator_type & base_reference() noexcept { return it_; }

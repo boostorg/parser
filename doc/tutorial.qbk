@@ -584,7 +584,7 @@ things:
 
 * This rule object itself is called `doubles`.
 
-* We've given `doubles` the diagnstic text `"doubles"` so that _Parser_ knows
+* We've given `doubles` the diagnostic text `"doubles"` so that _Parser_ knows
   how to refer to it when producing a trace of the parser during debugging.
 
 Ok, so if `doubles` is a parser, what does it do?  We define the rule's
@@ -3608,7 +3608,7 @@ to `_trace_::off`.
 
 If we trace a substantial parser, we will see a *lot* of output.  Each code
 point of the input must be considered, one at a time, to see if a certain rule
-matches.  An an example, let's trace a parse using the JSON parser from
+matches.  As an example, let's trace a parse using the JSON parser from
 _ex_json_.  The input is `"null"`.  `null` is one of the types that a
 Javascript value can have; the top-level parser in the JSON parser example is:
 

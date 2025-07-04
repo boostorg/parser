@@ -1544,11 +1544,11 @@ namespace boost { namespace parser {
         enum : int64_t { unbounded = -1 };
 
         template<typename T>
-        std::optional<T> make_parse_result(T & x, bool success)
+        std::optional<T> make_parse_result(T x, bool success)
         {
             std::optional<T> retval;
             if (success)
-                retval = x;
+                retval = std::move(x);
             return retval;
         }
 
@@ -2389,14 +2389,14 @@ namespace boost { namespace parser {
                     success);
                 if (Debug)
                     detail::final_trace(context, flags, nope{});
-                return detail::make_parse_result(attr_, success);
+                return detail::make_parse_result(std::move(attr_), success);
             } catch (parse_error<Iter> const & e) {
                 if (error_handler(initial_first, last, e) ==
                     error_handler_result::rethrow) {
                     throw;
                 }
                 attr_t attr_{};
-                return detail::make_parse_result(attr_, false);
+                return detail::make_parse_result(std::move(attr_), false);
             }
         }
 
@@ -2548,14 +2548,14 @@ namespace boost { namespace parser {
                 detail::skip(first, last, skip, flags);
                 if (Debug)
                     detail::final_trace(context, flags, nope{});
-                return detail::make_parse_result(attr_, success);
+                return detail::make_parse_result(std::move(attr_), success);
             } catch (parse_error<Iter> const & e) {
                 if (error_handler(initial_first, last, e) ==
                     error_handler_result::rethrow) {
                     throw;
                 }
                 attr_t attr_{};
-                return detail::make_parse_result(attr_, false);
+                return detail::make_parse_result(std::move(attr_), false);
             }
         }
 

@@ -6148,7 +6148,7 @@ namespace boost { namespace parser {
         SkipParser const & skip,                                               \
         boost::parser::detail::flags flags,                                    \
         bool & success,                                                        \
-        bool & dont_assign,                                                    \
+        bool & /*dont_assign*/,                                                \
         Attribute & retval)                                                    \
     {                                                                          \
         auto const & parser = BOOST_PARSER_PP_CAT(rule_name_, _def);           \

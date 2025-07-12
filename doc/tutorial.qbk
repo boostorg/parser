@@ -1159,7 +1159,7 @@ erase and clear for the current parse, and another that applies only to
 subsequent parses.  The full set of operations can be found in the _symbols_
 API docs.
 
-[mpte There are two versions of each of the _symbols_ `*_for_next_parse()`
+[note There are two versions of each of the _symbols_ `*_for_next_parse()`
 functions _emdash_ one that takes a context, and one that does not.  The one
 with the context is meant to be used within a semantic action.  The one
 without the context is for use outside of any parse.]
@@ -1250,13 +1250,13 @@ you can use see all the properties of the parsers in one place.]
 If you have an integral type `IntType` that is not covered by any of the
 _Parser_ parsers, you can explicitly specify a base/radix or bounds on the
 number of digits.  You do this by calling the `base()` and `digits()` member
-functions on an existing parser of the right intgral type.  So if `IntType`
+functions on an existing parser of the right integral type.  So if `IntType`
 were unsigned, you would use `uint_`.  If it were signed, you would use
 `int_`.  For example:
 
     constexpr auto hex_int = bp::uint_.base<16>();
 
-You simply chain together the contraints you want to use, like
+You simply chain together the constraints you want to use, like
 `.base<16>().digits<2>()` or .digits<4>().base<8>()`.
 
 So, if you wanted to parse exactly eight hexadecimal digits in a row in order
@@ -1286,7 +1286,7 @@ parsers; we won't say much about them here.
 [heading Interaction with sequence, alternative, and permutation parsers]
 
 Sequence, alternative, and permutation parsers do not nest in most cases.
-(Let's consider just sequence parsers to keep thinkgs simple, but most of this
+(Let's consider just sequence parsers to keep things simple, but most of this
 logic applies to alternative parsers as well.)  `a >> b >> c` is the same as
 `(a >> b) >> c` and `a >> (b >> c)`, and they are each represented by a single
 _seq_p_ with three subparsers, `a`, `b`, and `c`.  However, if something
@@ -1695,7 +1695,7 @@ the following steps applied:
   wrapped in a `std::optional`, like `std::optional<std::variant</*...*/>>`;
 
 * duplicates in the `std::variant` template parameters `<T1, T2, ... Tn>` are
-  removed; every type that appears does so exacly once;
+  removed; every type that appears does so exactly once;
 
 * if the attribute is `std::variant<T>` or `std::optional<std::variant<T>>`,
   the attribute becomes instead `T` or `std::optional<T>`, respectively; and
@@ -2493,8 +2493,8 @@ the earlier expectation:
 ]
 
 Not nearly as nice.  The problem is that the expectation is on `(value %
-',')`.  So, even thought we gave `value` reasonable dianostic text, we put the
-text on the wrong thing.  We can introduce a new rule to put the diagnstic
+',')`.  So, even thought we gave `value` reasonable diagnostic text, we put the
+text on the wrong thing.  We can introduce a new rule to put the diagnostic
 text in the right place.
 
     namespace bp = boost::parser;
@@ -2588,7 +2588,7 @@ return type of `ints` _emdash_ from it.  How?  How do you turn a
 seems obvious, but the metaprogramming that properly handles this simple
 example and the general case is certainly beyond me.
 
-_Parser_ has a specific semantic for what consitutes a recursive rule.  Each
+_Parser_ has a specific semantic for what constitutes a recursive rule.  Each
 rule has a tag type associated with it, and if _Parser_ enters a rule with a
 certain tag `Tag`, and the currently-evaluating rule (if there is one) also
 has the tag `Tag`, then rule instance being entered is considered to be a
@@ -3403,7 +3403,7 @@ _w_eh_ (see _p_api_).  If you do not set one, _default_eh_ will be used.
 
 _Parser_ only generates error messages like the ones in this page at failed
 expectation points (like `a > b`, where you have successfully parsed `a`, but
-then cannot successfully parse `b`), and at an unexepcted end of input.  This
+then cannot successfully parse `b`), and at an unexpected end of input.  This
 may seem limited to you.  It's actually the best that we can do.
 
 In order for error handling to happen other than at expectation points, we
@@ -3560,7 +3560,7 @@ We just define a `logging_error_handler`, and pass it by reference to _w_eh_,
 which decorates the top-level parser with the error handler.  We *could not*
 have written `bp::with_error_handler(parser,
 logging_error_handler("parse.log"))`, because _w_eh_ does not accept rvalues.
-This is becuse the error handler eventually goes into the parse context.  The
+This is because the error handler eventually goes into the parse context.  The
 parse context only stores pointers and iterators, keeping it cheap to copy.
 
 If we run the example and give it the input `"1,"`, this shows up in the log

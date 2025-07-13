@@ -88,12 +88,12 @@ namespace boost::parser::detail { namespace text {
     {
         V base_ = V();
 
+    public:
         template<bool Const>
         class iterator;
         template<bool Const>
         class sentinel;
 
-    public:
         constexpr project_view()
 #if BOOST_PARSER_DETAIL_TEXT_USE_CONCEPTS
             requires std::default_initializable<V>

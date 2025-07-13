@@ -169,7 +169,7 @@ namespace boost::parser::detail { namespace text {
 
         iterator_type it_ = iterator_type();
 
-        friend project_view<V, F>::sentinel<Const>;
+        friend project_view<V, F>::template sentinel<Const>;
 
         template<bool OtherConst>
 #if BOOST_PARSER_DETAIL_TEXT_USE_CONCEPTS

@@ -5411,9 +5411,28 @@ namespace boost { namespace parser {
             if constexpr (CanUseCallbacks && Context::use_callbacks) {
                 call(first, last, context, skip, flags, success);
             } else {
-                auto attr = call(first, last, context, skip, flags, success);
-                if (success)
-                    detail::assign(retval, std::move(attr));
+                locals_type locals = detail::make_locals<locals_type>(context);
+                auto params = detail::resolve_rule_params(context, params_);
+                tag_type * const tag_ptr = nullptr;
+                auto const rule_context = detail::make_rule_context(
+                    context, tag_ptr, retval, locals, params);
+
+                [[maybe_unused]] auto _ = detail::scoped_trace(
+                    *this, first, last, rule_context, flags, retval);
+
+                bool dont_assign = false;
+                parse_rule(
+                    tag_ptr,
+                    first,
+                    last,
+                    rule_context,
+                    skip,
+                    flags,
+                    success,
+                    dont_assign,
+                    retval);
+                if (!success || dont_assign)
+                    retval = Attribute_();
             }
         }
 

@@ -287,6 +287,63 @@ void github_issue_223()
     }
 }
 
+namespace github_issue_248_ {
+    namespace bp = boost::parser;
+
+    static constexpr bp::rule<struct symbol, int> symbol = "//";
+    static constexpr bp::rule<struct vector, std::vector<int>> list =
+        "<int>(,<int>)*";
+    static constexpr bp::rule<struct working, std::vector<int>> working =
+        "working";
+    static constexpr bp::rule<struct failing, std::vector<int>> failing =
+        "failing";
+
+    static auto const symbol_def = bp::symbols<int>{{"//", 0}};
+    static constexpr auto list_def = bp::int_ % ',';
+    static constexpr auto working_def = -symbol >> (bp::int_ % ',');
+    static constexpr auto failing_def = -symbol >> list;
+
+    BOOST_PARSER_DEFINE_RULES(symbol, list, working, failing);
+}
+
+void github_issue_248()
+{
+    namespace bp = boost::parser;
+
+    using namespace github_issue_248_;
+
+    {
+        auto const result = bp::parse("//1,2,3", working, bp::ws);
+        auto const expected = std::vector<int>{0, 1, 2, 3};
+        BOOST_TEST(result.has_value());
+        bool const equal = std::equal(
+            result->begin(), result->end(), expected.begin(), expected.end());
+        BOOST_TEST(equal);
+        if (!equal) {
+            std::cout << "contents of *result:\n";
+            for (auto x : *result) {
+                std::cout << x << '\n';
+            }
+            std::cout << '\n';
+        }
+    }
+    {
+        auto const result = bp::parse("//1,2,3", failing, bp::ws);
+        auto const expected = std::vector<int>{0, 1, 2, 3};
+        BOOST_TEST(result.has_value());
+        bool const equal = std::equal(
+            result->begin(), result->end(), expected.begin(), expected.end());
+        BOOST_TEST(equal);
+        if (!equal) {
+            std::cout << "contents of *result:\n";
+            for (auto x : *result) {
+                std::cout << x << '\n';
+            }
+            std::cout << '\n';
+        }
+    }
+}
+
 
 int main()
 {
@@ -298,5 +355,6 @@ int main()
     github_issue_125();
     github_issue_209();
     github_issue_223();
+    github_issue_248();
     return boost::report_errors();
 }

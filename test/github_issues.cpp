@@ -271,12 +271,6 @@ void github_issue_223()
         BOOST_TEST(v.size() == 1);
         BOOST_TEST(v == std::vector<char>({'y'}));
 
-        std::cout << "v.size()=" << v.size() << "\n";
-        for (auto c : v) {
-            std::cout << std::hex << (int)c << ' ';
-        }
-        std::cout << "\n";
-
         // the assert fails since there are two elements in the vector: '\0'
         // and 'y'. Seems pretty surprising to me
     }
@@ -287,7 +281,7 @@ void github_issue_223()
         const auto result = bp::parse("xy", parser, bp::ws);
 
         BOOST_TEST(result->size() == 1);
-        BOOST_TEST(*result == std::vector<std::optional<char>>({'y'}));
+        BOOST_TEST(*(*result)[0] == 'y');
 
         // success, the vector has only one 'y' element
     }

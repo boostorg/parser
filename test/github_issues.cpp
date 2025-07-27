@@ -258,6 +258,41 @@ void github_issue_209()
         std::end(bp::detail::char_set<detail::upper_case_chars>::chars)));
 }
 
+void github_issue_223()
+{
+    namespace bp = boost::parser;
+
+    // failing case
+    {
+        std::vector<char> v;
+        const auto parser = *('x' | bp::char_('y'));
+        bp::parse("xy", parser, bp::ws, v);
+
+        BOOST_TEST(v.size() == 1);
+        BOOST_TEST(v == std::vector<char>({'y'}));
+
+        std::cout << "v.size()=" << v.size() << "\n";
+        for (auto c : v) {
+            std::cout << std::hex << (int)c << ' ';
+        }
+        std::cout << "\n";
+
+        // the assert fails since there are two elements in the vector: '\0'
+        // and 'y'. Seems pretty surprising to me
+    }
+
+    // working case
+    {
+        const auto parser = *('x' | bp::char_('y'));
+        const auto result = bp::parse("xy", parser, bp::ws);
+
+        BOOST_TEST(result->size() == 1);
+        BOOST_TEST(*result == std::vector<std::optional<char>>({'y'}));
+
+        // success, the vector has only one 'y' element
+    }
+}
+
 
 int main()
 {
@@ -268,5 +303,6 @@ int main()
     github_issue_90();
     github_issue_125();
     github_issue_209();
+    github_issue_223();
     return boost::report_errors();
 }

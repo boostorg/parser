@@ -2809,6 +2809,8 @@ namespace boost { namespace parser {
         {
             if constexpr (is_nope_v<ParserAttr>) {
                 return nope{};
+            } else if constexpr (is_optional_v<ParserAttr>) {
+                return ParserAttr{};
             } else {
                 using value_type = range_value_t<GivenContainerAttr>;
                 return std::conditional_t<

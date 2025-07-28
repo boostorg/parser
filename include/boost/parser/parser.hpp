@@ -413,6 +413,7 @@ namespace boost { namespace parser {
         };
 
         inline nope global_nope;
+        inline nope const global_const_nope;
 
         template<typename T>
         using parser_interface_tag_expr =
@@ -433,7 +434,7 @@ namespace boost { namespace parser {
             typename I,
             typename S,
             typename ErrorHandler,
-            typename GlobalState = nope,
+            typename GlobalState = nope const,
             typename Callbacks = nope,
             typename Attr = nope,
             typename Val = nope,
@@ -760,7 +761,7 @@ namespace boost { namespace parser {
                 success,
                 indent,
                 error_handler,
-                n,
+                global_const_nope,
                 symbol_table_tries,
                 pending_symbol_table_operations);
         }
@@ -824,7 +825,7 @@ namespace boost { namespace parser {
                 indent,
                 error_handler,
                 callbacks,
-                n,
+                global_const_nope,
                 symbol_table_tries,
                 pending_symbol_table_operations);
         }
@@ -1518,7 +1519,6 @@ namespace boost { namespace parser {
             bool success = true;
             int indent = 0;
             rethrow_error_handler eh;
-            nope n;
             symbol_table_tries_t symbol_table_tries;
             pending_symbol_table_operations_t pending_symbol_table_operations;
             auto const context = detail::make_context<false, false>(
@@ -1527,7 +1527,7 @@ namespace boost { namespace parser {
                 success,
                 indent,
                 eh,
-                n,
+                global_const_nope,
                 symbol_table_tries,
                 pending_symbol_table_operations);
             while (success) {

@@ -3389,7 +3389,7 @@ namespace boost { namespace parser {
 
             bool done = false;
             auto try_parser = [prev_first = first,
-                               use_parser,
+                               &use_parser,
                                &success,
                                flags,
                                &retval,

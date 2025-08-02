@@ -4352,11 +4352,11 @@ namespace boost { namespace parser {
                                &success,
                                &retval](auto const &
                                             parser_index_merged_and_backtrack) {
+                if (!success) // Someone earlier already failed...
+                    return;
                 auto flags = flags_;
                 using namespace literals;
                 detail::skip(first, last, skip, flags);
-                if (!success) // Someone earlier already failed...
-                    return;
 
                 auto const & parser =
                     parser::get(parser_index_merged_and_backtrack, 0_c);

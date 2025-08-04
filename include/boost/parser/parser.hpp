@@ -3087,6 +3087,23 @@ namespace boost { namespace parser {
 
                 for (int64_t end = detail::resolve(context, min_); count != end;
                      ++count) {
+                    if constexpr (!detail::is_nope_v<DelimiterParser>) {
+                        if (count != 0) {
+                            detail::skip(first, last, skip, flags);
+                            delimiter_parser_.call(
+                                first,
+                                last,
+                                context,
+                                skip,
+                                detail::disable_attrs(flags),
+                                success);
+                            if (!success) {
+                                detail::assign(retval, Attribute());
+                                return;
+                            }
+                        }
+                    }
+
                     detail::skip(first, last, skip, flags);
                     attr_t attr{};
                     parser_.call(
@@ -6403,6 +6420,16 @@ namespace boost { namespace parser {
                 repeat_parser<Parser2, detail::nope, MinType, MaxType>;
             return parser_interface{
                 repeat_parser_type{rhs.parser_, min_, max_}};
+        }
+
+
+        template<typename Parser2, typename DelimiterParser>
+        constexpr auto operator()(parser_interface<Parser2> rhs, parser_interface<DelimiterParser> delim) const noexcept
+        {
+            using repeat_parser_type =
+                repeat_parser<Parser2, DelimiterParser, MinType, MaxType>;
+            return parser_interface{
+                repeat_parser_type{rhs.parser_, min_, max_, delim.parser_}};
         }
 
         MinType min_;

@@ -287,6 +287,24 @@ void github_issue_223()
     }
 }
 
+void github_issue_231()
+{
+    namespace bp = boost::parser;
+
+    constexpr auto parser = bp::repeat(3,5)(+bp::char_('a', 'z'), bp::lit(','));
+
+    auto result = bp::parse("hello, world, ", parser, bp::ws);
+    BOOST_TEST(!result.has_value());
+    result = bp::parse("hello, world, there", parser, bp::ws);
+    BOOST_TEST(result.has_value());
+    BOOST_TEST(result->size() == 3);
+    result = bp::parse("hello, world, there, foo, nix", parser, bp::ws);
+    BOOST_TEST(result.has_value());
+    BOOST_TEST(result->size() == 5);
+    result = bp::parse("hello, world, there, foo, nix, bar", parser, bp::ws);
+    BOOST_TEST(!result.has_value());
+}
+
 namespace github_issue_248_ {
     namespace bp = boost::parser;
 
@@ -355,6 +373,7 @@ int main()
     github_issue_125();
     github_issue_209();
     github_issue_223();
+    github_issue_231();
     github_issue_248();
     return boost::report_errors();
 }

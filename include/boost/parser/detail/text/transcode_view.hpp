@@ -490,7 +490,9 @@ namespace boost::parser::detail { namespace text {
         template<format FromFormat, class I, class S>
         static constexpr auto make_begin(I first, S last)
         {
-            if constexpr (detail::bidirectional_iterator_v<I>) {
+            if constexpr (FromFormat == Format) {
+                return first;
+            } else if constexpr (detail::bidirectional_iterator_v<I>) {
                 return utf_iterator<FromFormat, Format, I, S>{first, first, last};
             } else {
                 return utf_iterator<FromFormat, Format, I, S>{first, last};
@@ -499,7 +501,9 @@ namespace boost::parser::detail { namespace text {
         template<format FromFormat, class I, class S>
         static constexpr auto make_end(I first, S last)
         {
-            if constexpr (!std::is_same_v<I, S>) {
+            if constexpr (FromFormat == Format) {
+                return last;
+            } else if constexpr (!std::is_same_v<I, S>) {
                 return last;
             } else if constexpr (detail::bidirectional_iterator_v<I>) {
                 return utf_iterator<FromFormat, Format, I, S>{first, last, last};

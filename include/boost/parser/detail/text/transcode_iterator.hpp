@@ -2614,6 +2614,7 @@ namespace boost::parser::detail { namespace text {
         static_assert(
             ToFormat == format::utf8 || ToFormat == format::utf16 ||
             ToFormat == format::utf32);
+        static_assert(FromFormat != ToFormat);
 
 #if !BOOST_PARSER_DETAIL_TEXT_USE_CONCEPTS
         template<typename T>

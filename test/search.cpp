@@ -673,8 +673,8 @@ int main()
         int count = 0;
         int const offsets[] = {2, 5, 10, 13};
         for (auto subrange : r) {
-            BOOST_TEST(subrange.begin().base() - str_ == offsets[count * 2 + 0]);
-            BOOST_TEST(subrange.end().base() - str_ == offsets[count * 2 + 1]);
+            BOOST_TEST(subrange.begin() - str_ == offsets[count * 2 + 0]);
+            BOOST_TEST(subrange.end() - str_ == offsets[count * 2 + 1]);
             ++count;
         }
         BOOST_TEST(count == 2);
@@ -712,8 +712,8 @@ int main()
         int count = 0;
         int const offsets[] = {0, 3, 5, 8, 13, 16, 16, 19};
         for (auto subrange : r) {
-            BOOST_TEST(subrange.begin().base() - str_ == offsets[count * 2 + 0]);
-            BOOST_TEST(subrange.end().base() - str_ == offsets[count * 2 + 1]);
+            BOOST_TEST(subrange.begin() - str_ == offsets[count * 2 + 0]);
+            BOOST_TEST(subrange.end() - str_ == offsets[count * 2 + 1]);
             ++count;
         }
         BOOST_TEST(count == 4);

@@ -2652,8 +2652,10 @@ namespace boost::parser::detail { namespace text {
 #endif
             : first_and_curr_{first, it}, last_(last)
         {
-            if (curr() != last_)
-                read();
+            if constexpr (FromFormat != ToFormat) {
+                if (curr() != last_)
+                    read();
+            }
         }
 #if !BOOST_PARSER_DETAIL_TEXT_USE_CONCEPTS
         template<
@@ -2667,8 +2669,10 @@ namespace boost::parser::detail { namespace text {
             :
             first_and_curr_{it}, last_(last)
         {
-            if (curr() != last_)
-                read();
+            if constexpr (FromFormat != ToFormat) {
+                if (curr() != last_)
+                    read();
+            }
         }
 
         template<
@@ -2723,31 +2727,40 @@ namespace boost::parser::detail { namespace text {
 
         constexpr value_type operator*() const
         {
-            BOOST_PARSER_DEBUG_ASSERT(buf_index_ < buf_last_);
-            return buf_[buf_index_];
+            if constexpr (FromFormat == ToFormat) {
+                return *curr();
+            } else {
+                BOOST_PARSER_DEBUG_ASSERT(buf_index_ < buf_last_);
+                return buf_[buf_index_];
+            }
         }
 
         constexpr utf_iterator & operator++()
         {
-            BOOST_PARSER_DEBUG_ASSERT(buf_index_ != buf_last_ || curr() != last_);
-            if (buf_index_ + 1 == buf_last_ && curr() != last_) {
-                if constexpr (
-#if BOOST_PARSER_DETAIL_TEXT_USE_CONCEPTS
-                    std::forward_iterator<I>
-#else
-                    is_forward<I>
-#endif
-                ) {
-                    std::advance(curr(), to_increment_);
+            if constexpr (FromFormat == ToFormat) {
+                ++curr();
+                return *this;
+            } else {
+                BOOST_PARSER_DEBUG_ASSERT(buf_index_ != buf_last_ || curr() != last_);
+                if (buf_index_ + 1 == buf_last_ && curr() != last_) {
+                    if constexpr (
+    #if BOOST_PARSER_DETAIL_TEXT_USE_CONCEPTS
+                        std::forward_iterator<I>
+    #else
+                        is_forward<I>
+    #endif
+                    ) {
+                        std::advance(curr(), to_increment_);
+                    }
+                    if (curr() == last_)
+                        buf_index_ = 0;
+                    else
+                        read();
+                } else if (buf_index_ + 1 <= buf_last_) {
+                    ++buf_index_;
                 }
-                if (curr() == last_)
-                    buf_index_ = 0;
-                else
-                    read();
-            } else if (buf_index_ + 1 <= buf_last_) {
-                ++buf_index_;
+                return *this;
             }
-            return *this;
         }
 
 #if !BOOST_PARSER_DETAIL_TEXT_USE_CONCEPTS
@@ -2760,12 +2773,17 @@ namespace boost::parser::detail { namespace text {
             requires std::bidirectional_iterator<I>
 #endif
         {
-            BOOST_PARSER_DEBUG_ASSERT(buf_index_ || curr() != first());
-            if (!buf_index_ && curr() != first())
-                read_reverse();
-            else if (buf_index_)
-                --buf_index_;
-            return *this;
+            if constexpr (FromFormat == ToFormat) {
+                --curr();
+                return *this;
+            } else {
+                BOOST_PARSER_DEBUG_ASSERT(buf_index_ || curr() != first());
+                if (!buf_index_ && curr() != first())
+                    read_reverse();
+                else if (buf_index_)
+                    --buf_index_;
+                return *this;
+            }
         }
 
         friend constexpr bool operator==(
@@ -2779,7 +2797,9 @@ namespace boost::parser::detail { namespace text {
             requires std::forward_iterator<I> || requires(I i) { i == i; }
 #endif
         {
-            if constexpr (
+            if constexpr (FromFormat == ToFormat) {
+                return lhs.curr() == rhs.curr();
+            } else if constexpr (
 #if BOOST_PARSER_DETAIL_TEXT_USE_CONCEPTS
                 std::forward_iterator<I>
 #else
@@ -2809,7 +2829,9 @@ namespace boost::parser::detail { namespace text {
 
         friend constexpr bool operator==(utf_iterator lhs, S rhs)
         {
-            if constexpr (
+            if constexpr (FromFormat == ToFormat) {
+                return lhs.curr() == rhs;
+            } else if constexpr (
 #if BOOST_PARSER_DETAIL_TEXT_USE_CONCEPTS
                 std::forward_iterator<I>
 #else

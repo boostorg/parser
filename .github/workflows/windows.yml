@@ -17,6 +17,12 @@ jobs:
       matrix:
         cxx_std: [17, 20, 23]
         os: [windows-2022]
+        disable_trace: [false]
+        include:
+          # Test with trace disabled
+          - cxx_std: 20
+            os: windows-2022
+            disable_trace: true
 
     runs-on: ${{ matrix.os }}
 
@@ -26,7 +32,13 @@ jobs:
       - name: Configure CMake
         # Configure CMake in a 'build' subdirectory. Visual Studio is a multi-config generator, so we don't use CMAKE_BUILD_TYPE.
         # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-        run: cmake -B build -DCXX_STD=${{ matrix.cxx_std }}
+        run: |
+          if ("${{ matrix.disable_trace }}" -eq "true") {
+            cmake -B build -DCXX_STD=${{ matrix.cxx_std }} -DDISABLE_TRACE=true
+          } else {
+            cmake -B build -DCXX_STD=${{ matrix.cxx_std }}
+          }
+        shell: pwsh
 
       - name: Build
         working-directory: build

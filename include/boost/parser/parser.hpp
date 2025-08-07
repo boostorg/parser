@@ -374,7 +374,10 @@ namespace boost { namespace parser {
         template<typename T>
         using print_type = typename print_t<T>::type;
 
-        template<typename R, typename Parser>
+        struct null_parser
+        {};
+
+        template<typename R, typename Parser, typename SkipParser = null_parser>
         struct attribute_impl;
 
         // Utility types.
@@ -1466,9 +1469,6 @@ namespace boost { namespace parser {
                    uint32_t(flags::in_apply_parser);
         }
 
-        struct null_parser
-        {};
-
         struct skip_skipper
         {
             template<
@@ -2541,7 +2541,7 @@ namespace boost { namespace parser {
             detail::skip(first, last, skip, flags);
             using attr_t = typename detail::attribute_impl<
                 BOOST_PARSER_SUBRANGE<std::remove_const_t<Iter>, Sentinel>,
-                Parser>::type;
+                Parser, SkipParser>::type;
             try {
                 attr_t attr_ =
                     parser(first, last, context, skip, flags, success);
@@ -9671,7 +9671,7 @@ namespace boost { namespace parser {
     }
 
     namespace detail {
-        template<typename R, typename Parser>
+        template<typename R, typename Parser, typename SkipParser>
         struct attribute_impl
         {
             using parser_type = typename Parser::parser_type;
@@ -9694,7 +9694,7 @@ namespace boost { namespace parser {
                 std::declval<iterator &>(),
                 std::declval<sentinel>(),
                 std::declval<context>(),
-                detail::null_parser{},
+                SkipParser{},
                 detail::flags::gen_attrs,
                 std::declval<bool &>()));
         };

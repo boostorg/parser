@@ -2265,7 +2265,7 @@ _eh_debugging_ section of the tutorial for details.
 [heading Globals and error handlers]
 
 Each call to _p_ can optionally have a globals object associated with it.  To
-use a particular globals object with you parser, you call _w_glb_ to create a
+use a particular globals object with your parser, you call _w_glb_ to create a
 new parser with the globals object in it:
 
     struct globals_t
@@ -2469,11 +2469,11 @@ defined somewhere.
     BOOST_PARSER_DEFINE_RULES(value);
 
 Notice the two expectation points.  One before `(value % ',')`, one before the
-final `'}'`.  Later, you call parse in some input:
+final `'}'`.  Later, you parse in some input:
 
     bp::parse("{ 4, 5 a", value, bp::ws);
 
-This runs should of the second expectation point, and produces output like this:
+This should have the second expectation point, and produces output like this:
 
 [pre
 1:7: error: Expected '}' here:
@@ -2493,7 +2493,7 @@ the earlier expectation:
 ]
 
 Not nearly as nice.  The problem is that the expectation is on `(value %
-',')`.  So, even thought we gave `value` reasonable diagnostic text, we put the
+',')`.  So, even though we gave `value` reasonable diagnostic text, we put the
 text on the wrong thing.  We can introduce a new rule to put the diagnostic
 text in the right place.
 
@@ -2520,7 +2520,7 @@ message:
 ]
 
 The _r_ `value` might be useful elsewhere in our code, perhaps in another
-parser.  It's diagnostic text is appropriate for those other potential uses.
+parser.  Its diagnostic text is appropriate for those other potential uses.
 
 [heading Recursive rules]
 

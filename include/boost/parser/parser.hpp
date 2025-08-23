@@ -5888,7 +5888,7 @@ namespace boost { namespace parser {
     };
 
     /** Returns a `parser_interface` with the same parser and error handler,
-        with `globals` added.  The resut of passing any non-top-level parser
+        with `globals` added.  The result of passing any non-top-level parser
         for the `parser` argument is undefined. */
     template<typename Parser, typename GlobalState, typename ErrorHandler>
     auto with_globals(
@@ -5900,7 +5900,7 @@ namespace boost { namespace parser {
     }
 
     /** Returns a `parser_interface` with the same parser and globals, with
-        `error_handler` added.  The resut of passing any non-top-level parser
+        `error_handler` added.  The result of passing any non-top-level parser
         for the `parser` argument is undefined. */
     template<typename Parser, typename GlobalState, typename ErrorHandler>
     auto with_error_handler(
@@ -7903,8 +7903,8 @@ namespace boost { namespace parser {
         few of which are Latin. */
     inline constexpr parser_interface<digit_parser> digit;
 
-    /** The hexidecimal digit parser.  Matches the full set of Unicode
-        hexidecimal digits (upper or lower case); in other words, all Unicode
+    /** The hexadecimal digit parser.  Matches the full set of Unicode
+        hexadecimal digits (upper or lower case); in other words, all Unicode
         code points with the "Hex_Digit" character property. */
     inline constexpr parser_interface<
         char_subrange_parser<detail::hex_digit_subranges>>

@@ -5915,7 +5915,7 @@ namespace boost { namespace parser {
 
     /** A `symbols<T>` represents the initial state of a symbol table parser
         that produces attributes of type `T`.  The entries in the symbol table
-        can be changed during parsing, but those mutations to not affect the
+        can be changed during parsing, but those mutations do not affect the
         `symbols<T>` object itself; all mutations happen to a copy of the
         symbol table in the parse context.  For table entries that should be
         used during every parse, add entries via `add()` or `operator()`.  For
@@ -6013,7 +6013,7 @@ namespace boost { namespace parser {
         }
 
         /** Inserts an entry consisting of a UTF-8 string to match `str`, and
-            an associtated attribute `x`, to the copy of the symbol table
+            an associated attribute `x`, to the copy of the symbol table
             inside the parse context `context`. */
         template<typename Context>
         void insert(Context const & context, std::string_view str, T x) const
@@ -6352,7 +6352,7 @@ namespace boost { namespace parser {
 
     // Directives.
 
-    /** Represents a unparameterized higher-order parser (e.g. `omit_parser`)
+    /** Represents an unparameterized higher-order parser (e.g. `omit_parser`)
         as a directive (e.g. `omit[other_parser]`). */
     template<template<class> class Parser>
     struct directive
@@ -6430,7 +6430,7 @@ namespace boost { namespace parser {
     }
 
     /** A directive that represents a `perm_parser`, where the items parsed
-        are delimited by `DelimiterParser`,
+        are delimited by `DelimiterParser`
         (e.g. `delimiter(delimter_parser)[some_perm_parser]`).  This directive
         only applies to `perm_parser`s. */
     template<typename DelimiterParser>
@@ -7233,7 +7233,7 @@ namespace boost { namespace parser {
 
     /** The single-character parser.  The produced attribute is the type of
         the matched code point (`char` or `char32_t`).  Used as-is, `char_`
-        matches any code point.  `char_` can also can be used to create code
+        matches any code point.  `char_` can also be used to create code
         point parsers that match one or more specific code point values, by
         calling it with: a single value comparable to a code point; a closed
         range of code point values `[lo, hi]`, or a set of code point values
@@ -7244,7 +7244,7 @@ namespace boost { namespace parser {
     inline constexpr parser_interface<char_parser<detail::nope>> char_;
 
     /** The code point parser.  It produces a `char32_t` attribute.  Used
-        as-is, `cp` matches any code point.  `cp` can also can be used to
+        as-is, `cp` matches any code point.  `cp` can also be used to
         create code point parsers that match one or more specific code point
         values, by calling it with: a single value comparable to a code point;
         a closed range of code point values `[lo, hi]`, or a set of code point

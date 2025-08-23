@@ -13,7 +13,7 @@ A /semantic action/ is an arbitrary bit of logic associated with a parser,
 that is only executed when the parser matches.
 
 Simpler parsers can be combined to form more complex parsers.  Given some
-combining operation `C`, and parsers `P0`, `P1`, ... `PN`, `C(P0, P1, ... PN)`
+combining operation `C`, and parsers `P0`, `P1`, ..., `PN`, `C(P0, P1, ..., PN)`
 creates a new parser `Q`.  This creates a /parse tree/.  `Q` is the parent of
 `P1`, `P2` is the child of `Q`, etc.  The parsers are applied in the top-down
 fashion implied by this topology.  When you use `Q` to parse a string, it
@@ -113,7 +113,7 @@ Also, just ignore for now the fact that _Parser_ somehow figured out that the
 result type of the `*bp::char_` parser is a _std_str_.  There are clear rules
 for this that we'll cover later.
 
-The effects of this call to _p_ is not very interesting _emdash_ since the
+The effects of this call to _p_ are not very interesting _emdash_ since the
 parser we gave it cannot ever fail, and because we're placing the output in
 the same type as the input, it just copies the contents of `input` to
 `result`.
@@ -403,7 +403,7 @@ Copying the entire context when mutating the context is therefore fast.  The
 context does no memory allocation.
 
 [tip All these functions that take the parse context as their first parameter
-will find by found by Argument-Dependent Lookup.  You will probably never need
+will be found by Argument-Dependent Lookup.  You will probably never need
 to qualify them with `boost::parser::`.]
 
 [heading Accessors for data that are always available]
@@ -632,7 +632,7 @@ All this is intended to introduce the notion of _rs_.  It still may be a bit
 unclear why you would want to use _rs_.  The use cases for, and lots of detail
 about, _rs_ is in a later section, _more_about_rules_.
 
-[note The existence of _rs_ means that will probably never have to write a
+[note The existence of _rs_ means that you will probably never have to write a
 low-level parser.  You can just put existing parsers together into _rs_
 instead.]
 
@@ -901,7 +901,7 @@ all parser in its sequence.  It then produces its attribute, a
 `bp::parse()`.
 
 Something to take note of between Steps #3 and #4: at the beginning of #4, the
-input position had returned to where is was at the beginning of #3.  This kind
+input position had returned to where it was at the beginning of #3.  This kind
 of backtracking happens in alternative parsers when an alternative fails.  The
 next page has more details on the semantics of backtracking.
 
@@ -1694,7 +1694,7 @@ the following steps applied:
 * all the `none` attributes are left out, and if any are, the attribute is
   wrapped in a `std::optional`, like `std::optional<std::variant</*...*/>>`;
 
-* duplicates in the `std::variant` template parameters `<T1, T2, ... Tn>` are
+* duplicates in the `std::variant` template parameters `<T1, T2, ..., Tn>` are
   removed; every type that appears does so exactly once;
 
 * if the attribute is `std::variant<T>` or `std::optional<std::variant<T>>`,

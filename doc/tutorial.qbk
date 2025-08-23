@@ -2571,7 +2571,7 @@ of a recursive _r_.  This is because each instance of the rule needs a place
 to put the attribute it generates from its parse.  However, we only want a
 single return value for the uppermost rule; if each instance had a separate
 value in `_val(ctx)`, then it would be impossible to build up the result of a
-recursive rule step by step during in the evaluation of the recursive
+recursive rule step by step during the evaluation of the recursive
 instantiations.
 
 Also, consider this rule:
@@ -2623,7 +2623,7 @@ use each other without introducing cycles:
 
     BOOST_PARSER_DEFINE_RULES(string, object_element, object, array, value);
 
-Here we have a parser for a Javascript-value-like type `value_type`.
+Here we have a parser for a JavaScript-value-like type `value_type`.
 `value_type` may be an array, which itself may contain other arrays, objects,
 strings, etc.  Since we need to be able to parse objects within arrays and
 vice versa, we need each of those two parsers to be able to refer to each
@@ -2661,7 +2661,7 @@ semantics, is a lot easier to read, and is a lot less code.]
 [heading Locals]
 
 The _r_ template takes another template parameter we have not discussed yet.
-You can pass a third parameter `LocalState` to _r_, which will be defaulted
+You can pass a third parameter `LocalState` to _r_, which will be default
 constructed by the _r_, and made available within semantic actions used in the
 rule as `_locals_np_(ctx)`.  This gives your rule some local state, if it
 needs it.  The type of `LocalState` can be anything regular.  It could be a
@@ -2773,7 +2773,7 @@ rewritten as:
 
     auto const foo_def = bp::repeat(bp::_p<0>)[' '_l];
 
-Using __p_ can prevent you from having to write a bunch of lambdas that get
+Using __p_ can prevent you from having to write a bunch of lambdas that
 each get an argument out of the parse context using `_params_np_(ctx)[0_c]` or
 similar.
 
@@ -3160,7 +3160,7 @@ worrying if the input is Unicode or not because, under the covers, what takes
 place is a simple comparison of two integral values.
 
 [note _Parser_ actually promotes any two values to a common type using
-`std::common_type` before comparing them.  This is almost always works because
+`std::common_type` before comparing them.  This almost always works because
 the input and any parameter passed to _ch_ must be character types. ]
 
 Since matches are always done at a code point level (remember, a "code point"
@@ -3441,7 +3441,7 @@ is not very useful.  Consider this.
     auto c_b = bp::char_('c') >> bp::char_('b');
     auto result = bp::parse("acb", a_b | c_b);
 
-If we reported the farthest-reaching parser and it's position, it would be the
+If we reported the farthest-reaching parser and its position, it would be the
 `a_b` parser, at position `"bc"` in the input.  Is this really enlightening?
 Was the error in the input putting the `'a'` at the beginning or putting the
 `'c'` in the middle?  If you point the user at `a_b` as the parser that
@@ -3610,7 +3610,7 @@ If we trace a substantial parser, we will see a *lot* of output.  Each code
 point of the input must be considered, one at a time, to see if a certain rule
 matches.  As an example, let's trace a parse using the JSON parser from
 _ex_json_.  The input is `"null"`.  `null` is one of the types that a
-Javascript value can have; the top-level parser in the JSON parser example is:
+JavaScript value can have; the top-level parser in the JSON parser example is:
 
     auto const value_p_def =
         number | bp::bool_ | null | string | array_p | object_p;
@@ -3798,7 +3798,7 @@ _Parser_ seldom allocates memory.  The exceptions to this are:
   useful for such replacements.
 
 With the exception of allocating the name of the parser that was expected in a
-failed expectation situation, _Parser_ does not does not allocate unless you
+failed expectation situation, _Parser_ does not allocate unless you
 tell it to, by using _symbols_, using a particular error_handler, turning on
 trace, or parsing into attributes that allocate.
 
@@ -3806,7 +3806,7 @@ trace, or parsing into attributes that allocate.
 
 [section Best Practices]
 
-[heading Parse unicode from the start]
+[heading Parse Unicode from the start]
 
 If you want to parse ASCII, using the Unicode parsing API will not actually
 cost you anything.  Your input will be parsed, `char` by `char`, and compared

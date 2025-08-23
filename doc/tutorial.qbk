@@ -2241,7 +2241,7 @@ encoding.  Here is how it deduces which case the call falls under:
 
 * Otherwise, the input is in a UTF encoding.
 
-[tip if you want to want to parse in ASCII-only mode, or in some other
+[tip If you want to parse in ASCII-only mode, or in some other
 non-Unicode encoding, use only sequences of `char`, like _std_str_ or `char
 const *`.]
 

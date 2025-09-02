@@ -6569,7 +6569,7 @@ namespace boost { namespace parser {
     /** Returns a `transform_directive` that uses invocable `F` to do its
         work. */
     template<typename F>
-    auto transform(F f)
+    constexpr auto transform(F f)
     {
         return transform_directive<F>{std::move(f)};
     }

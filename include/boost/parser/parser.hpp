@@ -1359,7 +1359,7 @@ namespace boost { namespace parser {
                 auto const r = cps | text::as_utf8;
                 c.insert(c.end(), r.begin(), r.end());
             } else {
-                detail::insert(c, std::move(x));
+                detail::insert(c, std::forward<T>(x));
             }
         }
 
@@ -1951,9 +1951,9 @@ namespace boost { namespace parser {
         template<typename T, typename Tuple, int... Is>
         auto
         make_from_tuple_impl(Tuple && tup, std::integer_sequence<int, Is...>)
-            -> decltype(T(parser::get(std::move(tup), llong<Is>{})...))
+            -> decltype(T(parser::get(std::forward<Tuple>(tup), llong<Is>{})...))
         {
-            return T(parser::get(std::move(tup), llong<Is>{})...);
+            return T(parser::get(std::forward<Tuple>(tup), llong<Is>{})...);
         }
 
         template<typename T, typename... Args>
@@ -1987,7 +1987,7 @@ namespace boost { namespace parser {
                 auto const r = cps | text::as_utf8;
                 c.insert(c.end(), r.begin(), r.end());
             } else if constexpr (std::is_convertible_v<just_u &&, just_t>) {
-                detail::insert(c, std::move(x));
+                detail::insert(c, std::forward<U>(x));
             } else if constexpr (
                 !is_tuple<just_t>::value && is_tuple<just_u>::value &&
                 std::is_aggregate_v<just_t> &&
@@ -1997,7 +1997,7 @@ namespace boost { namespace parser {
                     std::make_integer_sequence<int, tuple_size_<just_u>>();
                 detail::insert(
                     c,
-                    detail::tuple_to_aggregate<just_t>(std::move(x), int_seq));
+                    detail::tuple_to_aggregate<just_t>(std::forward<U>(x), int_seq));
             } else if constexpr (
                 is_tuple<just_t>::value && !is_tuple<just_u>::value &&
                 std::is_aggregate_v<just_u> &&
@@ -2014,7 +2014,7 @@ namespace boost { namespace parser {
                                      just_t,
                                      just_u>) {
                 detail::insert(
-                    c, detail::make_from_tuple<just_t>(std::move(x)));
+                    c, detail::make_from_tuple<just_t>(std::forward<U>(x)));
             } else {
                 static_assert(
                     sizeof(U) && false,
@@ -2029,7 +2029,7 @@ namespace boost { namespace parser {
         {
             if (!gen_attrs)
                 return;
-            detail::move_back_impl(c, std::move(x));
+            detail::move_back_impl(c, std::forward<T>(x));
         }
 
         template<typename Container>
@@ -2098,7 +2098,7 @@ namespace boost { namespace parser {
                     "is almost certainly not what you meant to write, so "
                     "Boost.Parser disallows it.  If you want to do this, write "
                     "a semantic action and do it explicitly.");
-                t = std::move(u);
+                t = std::forward<U>(u);
             } else if constexpr (
                 !is_tuple<just_t>::value && is_tuple<just_u>::value &&
                 std::is_aggregate_v<just_t> &&
@@ -2106,7 +2106,7 @@ namespace boost { namespace parser {
                 is_struct_assignable_v<just_t, just_u>) {
                 auto int_seq =
                     std::make_integer_sequence<int, tuple_size_<just_u>>();
-                t = detail::tuple_to_aggregate<just_t>(std::move(u), int_seq);
+                t = detail::tuple_to_aggregate<just_t>(std::forward<U>(u), int_seq);
             } else if constexpr (
                 is_tuple<just_t>::value && !is_tuple<just_u>::value &&
                 std::is_aggregate_v<just_u> &&
@@ -2120,7 +2120,7 @@ namespace boost { namespace parser {
             } else if constexpr (is_constructible_from_tuple_v<
                                      just_t,
                                      just_u>) {
-                t = detail::make_from_tuple<just_t>(std::move(u));
+                t = detail::make_from_tuple<just_t>(std::forward<U>(u));
             } else {
                 static_assert(
                     sizeof(T) && false,

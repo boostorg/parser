@@ -4251,7 +4251,11 @@ namespace boost { namespace parser {
             if constexpr (detail::is_optional_v<Attribute>) {
                 typename Attribute::value_type attr;
                 call(first, last, context, skip, flags, success, attr);
-                if (success)
+                if (success
+                    && detail::gen_attrs(flags)
+                    && !detail::is_nope_v<temp_result_attr_t> // not nope
+                    && !std::is_same_v<std::decay_t<temp_result_attr_t>, std::tuple<detail::nope>> // not tuple of nope
+                    )
                     detail::assign(retval, std::move(attr));
             } else if constexpr (
                 detail::is_tuple<Attribute>{} ||

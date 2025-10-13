@@ -472,6 +472,37 @@ namespace boost { namespace parser {
             nope_or_pointer_t<Where, true> where_{};
             int no_case_depth_ = 0;
 
+            // These exist in order to provide an address, if requested, for
+            // either kind of symbol table struct.  The nonstatic member
+            // pointers for these will be null if this context was created
+            // inside of detail::skip(), but nothing prevents the user from
+            // trying to use a symbol_parser anyway.  So, we have these.
+            static std::optional<symbol_table_tries_t>
+                empty_symbol_table_tries_;
+            static std::optional<pending_symbol_table_operations_t>
+                empty_pending_symbol_table_operations_;
+
+            symbol_table_tries_t & get_symbol_table_tries() const
+            {
+                if (symbol_table_tries_)
+                    return *symbol_table_tries_;
+                if (!empty_symbol_table_tries_)
+                    empty_symbol_table_tries_ = symbol_table_tries_t();
+                return *empty_symbol_table_tries_;
+            }
+
+            pending_symbol_table_operations_t &
+            get_pending_symbol_table_operations() const
+            {
+                if (pending_symbol_table_operations_)
+                    return *pending_symbol_table_operations_;
+                if (!empty_pending_symbol_table_operations_) {
+                    empty_pending_symbol_table_operations_ =
+                        pending_symbol_table_operations_t();
+                }
+                return *empty_pending_symbol_table_operations_;
+            }
+
             template<typename T>
             static auto nope_or_address(T & x)
             {
@@ -647,6 +678,64 @@ namespace boost { namespace parser {
                 no_case_depth_(other.no_case_depth_)
             {}
         };
+
+        template<
+            bool DoTrace,
+            bool UseCallbacks,
+            typename I,
+            typename S,
+            typename ErrorHandler,
+            typename GlobalState,
+            typename Callbacks,
+            typename Attr,
+            typename Val,
+            typename RuleTag,
+            typename RuleLocals,
+            typename RuleParams,
+            typename Where>
+        std::optional<symbol_table_tries_t> parse_context<
+            DoTrace,
+            UseCallbacks,
+            I,
+            S,
+            ErrorHandler,
+            GlobalState,
+            Callbacks,
+            Attr,
+            Val,
+            RuleTag,
+            RuleLocals,
+            RuleParams,
+            Where>::empty_symbol_table_tries_;
+
+        template<
+            bool DoTrace,
+            bool UseCallbacks,
+            typename I,
+            typename S,
+            typename ErrorHandler,
+            typename GlobalState,
+            typename Callbacks,
+            typename Attr,
+            typename Val,
+            typename RuleTag,
+            typename RuleLocals,
+            typename RuleParams,
+            typename Where>
+        std::optional<pending_symbol_table_operations_t> parse_context<
+            DoTrace,
+            UseCallbacks,
+            I,
+            S,
+            ErrorHandler,
+            GlobalState,
+            Callbacks,
+            Attr,
+            Val,
+            RuleTag,
+            RuleLocals,
+            RuleParams,
+            Where>::empty_pending_symbol_table_operations_;
 
         template<
             bool DoTrace,
@@ -1734,7 +1823,7 @@ namespace boost { namespace parser {
             using trie_t = text::trie_map<std::vector<char32_t>, T>;
             using result_type = std::pair<trie_t &, bool>;
             symbol_table_tries_t & symbol_table_tries =
-                *context.symbol_table_tries_;
+                context.get_symbol_table_tries();
 
             auto & [any, has_case_folded] =
                 symbol_table_tries[(void *)&sym_parser.ref()];
@@ -1773,7 +1862,7 @@ namespace boost { namespace parser {
             Context const & context, symbol_parser<T> const & sym_parser)
         {
             void const * ptr = static_cast<void const *>(&sym_parser);
-            auto & entry = (*context.pending_symbol_table_operations_)[ptr];
+            auto & entry = (context.get_pending_symbol_table_operations())[ptr];
             std::vector<detail::symbol_table_operation<T>> * retval = nullptr;
             if (entry.visit_) {
                 retval = std::any_cast<

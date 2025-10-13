@@ -330,7 +330,7 @@ the input they match unless otherwise stated in the table below.]
     [[ _symbols_t_ ]
      [ _symbols_ is an associative container of key, value pairs.  Each key is a _std_str_ and each value has type `T`.  In the Unicode parsing path, the strings are considered to be UTF-8 encoded; in the non-Unicode path, no encoding is assumed.  _symbols_ matches the longest prefix `pre` of the input that is equal to one of the keys `k`.  If the length `len` of `pre` is zero, and there is no zero-length key, it does not match the input.  If `len` is positive, the generated attribute is the value associated with `k`.]
      [ `T` ]
-     [ Unlike the other entries in this table, _symbols_ is a type, not an object. ]]
+     [ Unlike the other entries in this table, _symbols_ is a type, not an object.  Inside of skippers, all _symbols_ will appear empty. ]]
 
     [[ _quot_str_ ]
      [ Matches `'"'`, followed by zero or more characters, followed by `'"'`. ]

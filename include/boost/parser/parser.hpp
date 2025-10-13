@@ -513,6 +513,23 @@ namespace boost { namespace parser {
                 globals_(nope_or_address(globals))
             {}
 
+            parse_context(
+                std::bool_constant<DoTrace>,
+                std::bool_constant<UseCallbacks>,
+                I & first,
+                S last,
+                bool & success,
+                int & indent,
+                ErrorHandler const & error_handler,
+                GlobalState & globals) :
+                first_(first),
+                last_(last),
+                pass_(std::addressof(success)),
+                trace_indent_(std::addressof(indent)),
+                error_handler_(std::addressof(error_handler)),
+                globals_(nope_or_address(globals))
+            {}
+
             // With callbacks.
             parse_context(
                 std::bool_constant<DoTrace>,
@@ -766,6 +783,33 @@ namespace boost { namespace parser {
                 n,
                 symbol_table_tries,
                 pending_symbol_table_operations);
+        }
+
+        template<
+            bool DoTrace,
+            bool UseCallbacks,
+            typename Iter,
+            typename Sentinel,
+            typename ErrorHandler>
+        auto make_context(
+            Iter first,
+            Sentinel last,
+            bool & success,
+            int & indent,
+            ErrorHandler const & error_handler,
+            nope const & n,
+            nope const &,
+            nope const &) noexcept
+        {
+            return parse_context(
+                std::bool_constant<DoTrace>{},
+                std::bool_constant<UseCallbacks>{},
+                first,
+                last,
+                success,
+                indent,
+                error_handler,
+                n);
         }
 
         template<
@@ -1519,17 +1563,8 @@ namespace boost { namespace parser {
             int indent = 0;
             rethrow_error_handler eh;
             nope const n;
-            symbol_table_tries_t symbol_table_tries;
-            pending_symbol_table_operations_t pending_symbol_table_operations;
             auto const context = detail::make_context<false, false>(
-                first,
-                last,
-                success,
-                indent,
-                eh,
-                n,
-                symbol_table_tries,
-                pending_symbol_table_operations);
+                first, last, success, indent, eh, n, n, n);
             while (success) {
                 skip_(
                     first,

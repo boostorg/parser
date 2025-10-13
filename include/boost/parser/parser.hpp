@@ -3235,6 +3235,8 @@ namespace boost { namespace parser {
 
             //[ opt_parser_gen_attr_path
             parser_.call(first, last, context, skip, flags, success, retval);
+            if (!success)
+                retval = Attribute();
             success = true;
             //]
         }

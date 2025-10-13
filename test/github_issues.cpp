@@ -344,6 +344,23 @@ void github_issue_248()
     }
 }
 
+void github_issue_279()
+{
+    namespace bp = boost::parser;
+
+    constexpr auto condition_clause = bp::lit(U"while") >
+        bp::lit(U"someexpression") >> bp::attr(true);
+
+    constexpr auto do_statement =
+        bp::lexeme[bp::lit(U"do") >> &bp::ws] > -condition_clause > bp::eol;
+
+    auto const result = bp::parse(
+        U"do\n", do_statement, bp::blank, bp::trace::off);
+    BOOST_TEST(result);
+    std::optional<bool> const & condition = result.value();
+    BOOST_TEST(!condition.has_value());
+}
+
 
 int main()
 {
@@ -356,5 +373,6 @@ int main()
     github_issue_209();
     github_issue_223();
     github_issue_248();
+    github_issue_279();
     return boost::report_errors();
 }

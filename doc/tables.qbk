@@ -319,7 +319,7 @@ the input they match unless otherwise stated in the table below.]
 
     [[ `_if_np_(pred)[p]` ]
      [ Equivalent to `_e_(pred) >> p`. ]
-     [ `std::optional<_ATTR_np_(p)>` ]
+     [ `_ATTR_np_(p)` ]
      [ It is an error to write `_if_np_(pred)`.  That is, it is an error to omit the conditionally matched parser `p`. ]]
 
     [[ `_sw_np_(arg0)(arg1, p1)(arg2, p2) ...` ]
@@ -557,7 +557,7 @@ tables below:
 
     [[`_rpt_np_(arg0)[p]`]              [`std::string` if `_ATTR_np_(p)` is `char` or `char32_t`, otherwise `std::vector<_ATTR_np_(p)>`]]
     [[`_rpt_np_(arg0, arg1)[p]`]        [`std::string` if `_ATTR_np_(p)` is `char` or `char32_t`, otherwise `std::vector<_ATTR_np_(p)>`]]
-    [[`_if_np_(pred)[p]`]               [`std::optional<_ATTR_np_(p)>`]]
+    [[`_if_np_(pred)[p]`]               [`_ATTR_np_(p)`]]
     [[`_sw_np_(arg0)(arg1, p1)(arg2, p2)...`]
      [`std::variant<_ATTR_np_(p1), _ATTR_np_(p2), ...>`]]
 ]

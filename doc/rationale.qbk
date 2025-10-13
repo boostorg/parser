@@ -261,9 +261,8 @@ Also, Spirit-style looseness is more complicated than `parser` above
 indicates.  Remember, `int_ | eps` and `-int_` are supposed to be semantically
 equivalent.  To do otherwise this would be a profound violation of the
 principle of least surprise.  So, if they're equivalent, we would need to
-apply the same rule to `int_ | eps`.  Also, we would probably need to apply it
-to `if_(cond)[int_]`, which is also a `std::optional<int>`.  This is a lot to
-remember, and this is complicated to implement and maintain.
+apply the same rule to `int_ | eps`.  This is a lot to remember, and this is
+complicated to implement and maintain.
 
 I've been using Spirit 1 and later Spirit 2 since they were released.  I did
 not know about the particular looseness discussed here; a user pointed it out

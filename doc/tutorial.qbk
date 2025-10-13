@@ -2473,7 +2473,8 @@ final `'}'`.  Later, you parse in some input:
 
     bp::parse("{ 4, 5 a", value, bp::ws);
 
-This should have the second expectation point, and produces output like this:
+This runs afoul of the second expectation point, and produces output like
+this:
 
 [pre
 1:7: error: Expected '}' here:

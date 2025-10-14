@@ -361,6 +361,22 @@ void github_issue_279()
     BOOST_TEST(!condition.has_value());
 }
 
+void github_issue_279_2()
+{
+    namespace bp = boost::parser;
+
+    constexpr auto condition_clause = bp::lit(U"while") >
+        bp::lit(U"someexpression") >> bp::attr(true);
+
+    constexpr auto do_statement_reverse =
+        -condition_clause > bp::lexeme[bp::lit(U"do") >> &bp::ws] > bp::eol;
+
+    auto const result = bp::parse(
+        U"do\n", do_statement_reverse, bp::blank, bp::trace::off);
+    BOOST_TEST(result);
+    std::optional<bool> const & condition = result.value();
+    BOOST_TEST(!condition.has_value());
+}
 
 int main()
 {
@@ -374,5 +390,6 @@ int main()
     github_issue_223();
     github_issue_248();
     github_issue_279();
+    github_issue_279_2();
     return boost::report_errors();
 }

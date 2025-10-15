@@ -259,7 +259,7 @@ namespace boost::parser::detail { namespace stl_interfaces {
     template<typename F>
     struct closure : range_adaptor_closure<closure<F>>
     {
-        constexpr closure(F f) : f_(f) {}
+        constexpr closure(F f) : f_(std::move(f)) {}
 
 #if BOOST_PARSER_DETAIL_STL_INTERFACES_USE_CONCEPTS
         template<typename T>

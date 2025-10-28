@@ -361,6 +361,54 @@ void github_issue_279()
     BOOST_TEST(!condition.has_value());
 }
 
+namespace github_issue_286_ {
+    namespace bp = boost::parser;
+
+    struct Content
+    {
+        ~Content()
+        {
+            int setbreakpointhere = 0;
+        }
+    };
+    constexpr bp::rule<struct content_tag, std::shared_ptr<Content>> content = "content";
+    constexpr auto content_action = [](auto& ctx) {
+        std::shared_ptr<Content>& result = _val(ctx);
+        result = std::make_shared<Content>();
+    };
+    constexpr auto content_def = (bp::lit(U"content") >> bp::eol)[content_action];
+    BOOST_PARSER_DEFINE_RULES(content);
+
+}
+
+void github_issue_286()
+{
+    using namespace github_issue_286_;
+    namespace bp = boost::parser;
+
+    constexpr auto prolog = bp::lit(U"prolog") >> bp::eol;
+
+    constexpr auto epilog =
+        bp::no_case[bp::lexeme[bp::lit(U"epi") >> bp::lit(U"log")]]
+        >> bp::eol;
+
+    constexpr auto full_parser = prolog >> content >> epilog;
+
+    std::u8string teststring =
+        u8""
+        "prolog\n"
+        "content\n"
+        "epilog\n"
+    ;
+
+    // "content" produces a shared_ptr with the result.
+    // The "epilog" parser must not delete the result.
+
+    auto const result = bp::parse(teststring, full_parser, bp::blank);
+    BOOST_TEST(result);
+    BOOST_TEST(result.value().get() != nullptr);
+}
+
 
 int main()
 {
@@ -374,5 +422,6 @@ int main()
     github_issue_223();
     github_issue_248();
     github_issue_279();
+    github_issue_286();
     return boost::report_errors();
 }

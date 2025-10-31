@@ -4533,7 +4533,8 @@ namespace boost { namespace parser {
 
                 if constexpr (
                     (out_container == attr_container &&
-                     !was_merged_into_adjacent_container) ||
+                     !was_merged_into_adjacent_container &&
+                     !detail::is_nope_v<attr_t>) ||
                     is_in_a_group) {
                     parser.call(
                         first, last, context, skip, flags, success, out);
@@ -4559,7 +4560,9 @@ namespace boost { namespace parser {
                     }
                     using just_x = attr_t;
                     using just_out = detail::remove_cv_ref_t<decltype(out)>;
-                    if constexpr (
+                    if constexpr (detail::is_nope_v<attr_t>) {
+                        // nothing to do
+                    } if constexpr (
                         (!out_container ||
                          !std::is_same_v<just_x, just_out>) &&
                         std::is_assignable_v<just_out &, just_x &&> &&
@@ -4732,7 +4735,7 @@ namespace boost { namespace parser {
                 } else {
                     // If you see an error here, it's because you are using an
                     // invocable for a semantic action that returns a non-void
-                    // type Ret, but values fo type Ret is not assignable to
+                    // type Ret, but values of type Ret is not assignable to
                     // _val(ctx).  To fix this, only use this invocable within
                     // a rule whose attribute type is assignable from Ret, or
                     // remove the non-void return statement(s) from your

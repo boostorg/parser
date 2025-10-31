@@ -344,6 +344,55 @@ void github_issue_248()
     }
 }
 
+namespace github_issue_268_ {
+    namespace bp = boost::parser;
+    constexpr bp::rule<struct name, std::string_view> name = "name";
+    auto name_def = bp::string_view[bp::lexeme[+(bp::lower | bp::upper | bp::digit | bp::char_("_"))]];
+    BOOST_PARSER_DEFINE_RULES(name)
+    constexpr bp::rule<struct qd_vec, std::vector<double>> qd_vec = "qd_vec";
+    auto qd_vec_def = bp::lit("\"") >> bp::double_ % (bp::lit(",") | (bp::lit("\"") >> bp::lit(",") >> bp::lit("\""))) >> bp::lit('\"');
+    BOOST_PARSER_DEFINE_RULES(qd_vec)
+    struct lu_table_template_1
+    {
+        std::vector<double> index_1;
+        std::string_view variable_1;
+    };
+    constexpr boost::parser::rule<struct lu_table_template_1_tag, lu_table_template_1> lu_table_template_1_rule = "lu_table_template_1";
+    auto lu_table_template_1_rule_def = (bp::lit("index_1") >> '(' >> qd_vec >> ')' >> ';') >> (bp::lit("variable_1") >> ':' >> name >> ';');
+    BOOST_PARSER_DEFINE_RULES(lu_table_template_1_rule)
+
+    constexpr boost::parser::rule<struct lu_table_template_1_permut_tag, lu_table_template_1> lu_table_template_1_permut_rule = "lu_table_template_1";
+    auto lu_table_template_1_permut_rule_def = (bp::lit("index_1") >> '(' >> qd_vec >> ')' >> ';') || (bp::lit("variable_1") >> ':' >> name >> ';');
+    BOOST_PARSER_DEFINE_RULES(lu_table_template_1_permut_rule)
+}
+
+void github_issue_268()
+{
+    namespace bp = boost::parser;
+    using namespace github_issue_268_;
+    std::string inputstring = "index_1 ( \"1\" ) ; variable_1 : bier;";
+
+    auto const def_result = bp::parse(
+        inputstring, lu_table_template_1_rule_def, bp::blank, bp::trace::off);
+    std::cout<< "seq_parser generates this type:\n" << typeid(def_result.value()).name() << std::endl;
+    BOOST_TEST(def_result);
+
+    auto const permut_def_result = bp::parse(
+        inputstring, lu_table_template_1_permut_rule_def, bp::blank, bp::trace::off);
+    std::cout<< "permut_parser generates this type:\n" << typeid(permut_def_result.value()).name() << std::endl;
+    BOOST_TEST(permut_def_result);
+
+    auto const result = bp::parse(
+        inputstring, lu_table_template_1_rule, bp::blank, bp::trace::off);
+    std::cout<< "seq_parser in rule generates this type:\n" << typeid(result.value()).name() << std::endl;
+    BOOST_TEST(result);
+
+    auto const permut_result = bp::parse(
+        inputstring, lu_table_template_1_permut_rule, bp::blank, bp::trace::off);
+    std::cout<< "permut_parser generates this type:\n" << typeid(permut_result.value()).name() << std::endl;
+    BOOST_TEST(permut_result);
+}
+
 void github_issue_279()
 {
     namespace bp = boost::parser;
@@ -373,6 +422,7 @@ int main()
     github_issue_209();
     github_issue_223();
     github_issue_248();
+    github_issue_268();
     github_issue_279();
     return boost::report_errors();
 }

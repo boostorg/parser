@@ -3680,9 +3680,7 @@ namespace boost { namespace parser {
                 call(first, last, context, skip, flags, success, attr);
                 if (success)
                     detail::assign(retval, std::move(attr));
-            } else if constexpr (
-                detail::is_tuple<Attribute>{} ||
-                detail::is_struct_compatible_v<Attribute, result_t>) {
+            } else if constexpr (detail::is_tuple<Attribute>{}) {
                 call_impl(
                     first,
                     last,
@@ -3695,9 +3693,9 @@ namespace boost { namespace parser {
 
                 if (!success)
                     detail::assign(retval, Attribute());
-            } else if constexpr (detail::is_constructible_from_tuple_v<
-                                     Attribute,
-                                     result_t>) {
+            } else if constexpr (
+                detail::is_struct_compatible_v<Attribute, result_t> ||
+                detail::is_constructible_from_tuple_v<Attribute, result_t>) {
                 result_t temp_retval{};
                 call_impl(
                     first,
@@ -3710,10 +3708,16 @@ namespace boost { namespace parser {
                     indices);
 
                 if (success && detail::gen_attrs(flags)) {
-                    detail::assign(
-                        retval,
-                        detail::make_from_tuple<Attribute>(
-                            std::move(temp_retval)));
+                    if constexpr (detail::is_struct_compatible_v<
+                                      Attribute,
+                                      result_t>) {
+                        detail::assign(retval, temp_retval);
+                    } else {
+                        detail::assign(
+                            retval,
+                            detail::make_from_tuple<Attribute>(
+                                std::move(temp_retval)));
+                    }
                 }
             } else {
 #if 0 // TODO Seems incompatible with this parser.

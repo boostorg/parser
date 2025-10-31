@@ -24,7 +24,10 @@
 #define BOOST_PARSER_USE_CPP23_STD_RANGE_ADAPTOR_CLOSURE 0
 #endif
 
-#if !BOOST_PARSER_USE_CPP23_STD_RANGE_ADAPTOR_CLOSURE &&                       \
+#if !BOOST_STL_INTERFACES_USE_CPP23_STD_RANGE_ADAPTOR_CLOSURE &&               \
+    BOOST_STL_INTERFACES_USE_CONCEPTS && defined(BOOST_GCC) && 14 <= __GNUC__
+#define BOOST_PARSER_USE_LIBSTDCPP_GCC14_RANGE_ADAPTOR_CLOSURE 1
+#elif !BOOST_PARSER_USE_CPP23_STD_RANGE_ADAPTOR_CLOSURE &&                     \
     BOOST_PARSER_DETAIL_STL_INTERFACES_USE_CONCEPTS &&                         \
     defined(BOOST_PARSER_GCC) && 12 <= __GNUC__
 #define BOOST_PARSER_USE_LIBSTDCPP_GCC12_RANGE_ADAPTOR_CLOSURE 1
@@ -197,6 +200,11 @@ namespace boost::parser::detail { namespace stl_interfaces {
 
     template<typename D>
     using range_adaptor_closure = std::ranges::range_adaptor_closure<D>;
+
+#elif BOOST_PARSER_USE_LIBSTDCPP_GCC14_RANGE_ADAPTOR_CLOSURE
+
+    template<typename D>
+    using range_adaptor_closure = std::views::__adaptor::_RangeAdaptorClosure<D>;
 
 #elif BOOST_PARSER_USE_LIBSTDCPP_GCC12_RANGE_ADAPTOR_CLOSURE
 

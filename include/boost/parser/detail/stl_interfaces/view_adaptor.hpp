@@ -335,7 +335,7 @@ namespace boost::parser::detail { namespace stl_interfaces {
     template<typename F>
     struct adaptor
     {
-        constexpr adaptor(F f) : f_(f) {}
+        constexpr adaptor(F f) : f_(std::move(f)) {}
 
         template<typename... Args>
         constexpr auto operator()(Args &&... args) const

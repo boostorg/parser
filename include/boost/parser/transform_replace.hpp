@@ -292,7 +292,7 @@ namespace boost::parser {
             using value_type = range_value_t<decltype(r)>;
             if constexpr (std::is_same_v<value_type, char>) {
                 return detail::attr_search_impl(
-                    (R &&) r, parser, skip, trace_mode);
+                    std::forward<R>(r), parser, skip, trace_mode);
             } else {
                 auto r_unpacked = detail::text::unpack_iterator_and_sentinel(
                     text::detail::begin(r), text::detail::end(r));
@@ -741,7 +741,7 @@ namespace boost::parser {
                     std::is_same_v<Trace, trace>) {
                     // (r, parser, skip, f, trace) case
                     return impl(
-                        to_range<R>::call((R &&) r),
+                        to_range<R>::call(std::forward<R>(r)),
                         parser,
                         skip,
                         (F &&) f,
@@ -754,10 +754,10 @@ namespace boost::parser {
                     std::is_same_v<Trace, trace>) {
                     // (r, parser, f, trace) case
                     return impl(
-                        to_range<R>::call((R &&) r),
+                        to_range<R>::call(std::forward<R>(r)),
                         parser,
                         parser_interface<eps_parser<detail::phony>>{},
-                        (SkipParser &&) skip,
+                        std::forward<SkipParser>(skip),
                         f);
                 } else {
                     static_assert(
@@ -785,7 +785,7 @@ namespace boost::parser {
                 trace trace_mode = trace::off) const
             {
                 return transform_replace_view(
-                    (R &&) r,
+                    std::forward<R>(r),
                     parser,
                     skip,
                     utf_rvalue_shim<

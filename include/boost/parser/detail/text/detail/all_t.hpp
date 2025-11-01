@@ -122,7 +122,7 @@ namespace boost::parser::detail::text::detail {
         {
             using T = remove_cv_ref_t<R>;
             if constexpr (view<T>)
-                return (R &&) r;
+                return std::forward<R>(r);
             else if constexpr (can_ref_view<R>)
                 return ref_view(r);
             else

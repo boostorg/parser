@@ -40,10 +40,10 @@ namespace boost::parser::detail { namespace stl_interfaces { namespace detail {
 #else
         template<typename R>
         constexpr auto operator()(R && r) & -> decltype(
-            Func{}((R &&) r, std::declval<box<I, T> &>().value_...))
+            Func{}(std::forward<R>(r), std::declval<box<I, T> &>().value_...))
 #endif
         {
-            return Func{}((R &&) r, static_cast<box<I, T> &>(*this).value_...);
+            return Func{}(std::forward<R>(r), static_cast<box<I, T> &>(*this).value_...);
         }
 
 #if BOOST_PARSER_DETAIL_STL_INTERFACES_USE_CONCEPTS
@@ -55,11 +55,11 @@ namespace boost::parser::detail { namespace stl_interfaces { namespace detail {
 #else
         template<typename R>
         constexpr auto operator()(R && r) const & -> decltype(
-            Func{}((R &&) r, std::declval<box<I, T> const &>().value_...))
+            Func{}(std::forward<R>(r), std::declval<box<I, T> const &>().value_...))
 #endif
         {
             return Func{}(
-                (R &&) r, static_cast<box<I, T> const &>(*this).value_...);
+                std::forward<R>(r), static_cast<box<I, T> const &>(*this).value_...);
         }
 
 #if BOOST_PARSER_DETAIL_STL_INTERFACES_USE_CONCEPTS
@@ -71,10 +71,10 @@ namespace boost::parser::detail { namespace stl_interfaces { namespace detail {
 #else
         template<typename R>
         constexpr auto operator()(R && r) && -> decltype(
-            Func{}((R &&) r, std::declval<box<I, T> &&>().value_...))
+            Func{}(std::forward<R>(r), std::declval<box<I, T> &&>().value_...))
 #endif
         {
-            return Func{}((R &&) r, static_cast<box<I, T> &&>(*this).value_...);
+            return Func{}(std::forward<R>(r), static_cast<box<I, T> &&>(*this).value_...);
         }
     };
 

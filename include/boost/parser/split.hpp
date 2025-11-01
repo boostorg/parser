@@ -324,7 +324,7 @@ namespace boost::parser {
                     std::is_same_v<Trace, trace>) {
                     // (r, parser, trace) case
                     return impl(
-                        (R &&) r,
+                        std::forward<R>(r),
                         parser,
                         parser_interface<eps_parser<detail::phony>>{},
                         skip);
@@ -332,7 +332,7 @@ namespace boost::parser {
                     detail::is_parser_iface<SkipParser> &&
                     std::is_same_v<Trace, trace>) {
                     // (r, parser, skip, trace) case
-                    return impl((R &&) r, parser, skip, trace_mode);
+                    return impl(std::forward<R>(r), parser, skip, trace_mode);
                 } else {
                     static_assert(
                         sizeof(R) == 1 && false,
@@ -357,7 +357,7 @@ namespace boost::parser {
                 trace trace_mode = trace::off) const
             {
                 return split_view(
-                    to_range<R>::call((R &&) r), parser, skip, trace_mode);
+                    to_range<R>::call(std::forward<R>(r)), parser, skip, trace_mode);
             }
 
 #endif

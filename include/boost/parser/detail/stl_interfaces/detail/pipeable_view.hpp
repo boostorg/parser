@@ -68,23 +68,23 @@ namespace boost::parser::detail { namespace stl_interfaces { namespace detail {
     {
         template<typename R>
         friend constexpr auto operator|(R && r, Derived & d)
-            -> decltype(((Derived &&) d)((R &&) r))
+            -> decltype((std::forward<Derived>(d))(std::forward<R>(r)))
         {
-            return ((Derived &&) d)((R &&) r);
+            return (std::forward<Derived>(d))(std::forward<R>(r));
         }
 
         template<typename R>
         friend constexpr auto operator|(R && r, Derived const & d)
-            -> decltype(((Derived &&) d)((R &&) r))
+            -> decltype((std::forward<Derived>(d))(std::forward<R>(r)))
         {
-            return ((Derived &&) d)((R &&) r);
+            return (std::forward<Derived>(d))(std::forward<R>(r));
         }
 
         template<typename R>
         friend constexpr auto operator|(R && r, Derived && d)
-            -> decltype(((Derived &&) d)((R &&) r))
+            -> decltype((std::forward<Derived>(d))(std::forward<R>(r)))
         {
-            return ((Derived &&) d)((R &&) r);
+            return (std::forward<Derived>(d))(std::forward<R>(r));
         }
     };
 
@@ -109,10 +109,10 @@ namespace boost::parser::detail { namespace stl_interfaces { namespace detail {
 #else
         template<typename R>
         constexpr auto
-        operator()(R && r) & -> decltype(this->right_(this->left_((R &&) r)))
+        operator()(R && r) & -> decltype(this->right_(this->left_(std::forward<R>(r))))
 #endif
         {
-            return right_(left_((R &&) r));
+            return right_(left_(std::forward<R>(r)));
         }
 
 #if BOOST_PARSER_DETAIL_STL_INTERFACES_USE_CONCEPTS
@@ -123,10 +123,10 @@ namespace boost::parser::detail { namespace stl_interfaces { namespace detail {
 #else
         template<typename R>
         constexpr auto operator()(
-            R && r) const & -> decltype(this->right_(this->left_((R &&) r)))
+            R && r) const & -> decltype(this->right_(this->left_(std::forward<R>(r))))
 #endif
         {
-            return right_(left_((R &&) r));
+            return right_(left_(std::forward<R>(r)));
         }
 
 #if BOOST_PARSER_DETAIL_STL_INTERFACES_USE_CONCEPTS
@@ -137,10 +137,10 @@ namespace boost::parser::detail { namespace stl_interfaces { namespace detail {
 #else
         template<typename R>
         constexpr auto operator()(R && r) && -> decltype(std::move(
-            this->right_)(std::move(this->left_)((R &&) r)))
+            this->right_)(std::move(this->left_)(std::forward<R>(r))))
 #endif
         {
-            return std::move(right_)(std::move(left_)((R &&) r));
+            return std::move(right_)(std::move(left_)(std::forward<R>(r)));
         }
 
         T left_;

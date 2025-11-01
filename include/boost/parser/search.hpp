@@ -52,7 +52,7 @@ namespace boost::parser {
                             return BOOST_PARSER_SUBRANGE(
                                 first, plus_strlen(first));
                         } else {
-                            return (R &&) r;
+                            return std::forward<R>(r);
                         }
                     } else {
                         if constexpr (ToCommonRange) {
@@ -60,7 +60,7 @@ namespace boost::parser {
                                 first, plus_strlen(first)) |
                                    as_utf<OtherRangeFormat>;
                         } else {
-                            return (R &&) r | as_utf<OtherRangeFormat>;
+                            return std::forward<R>(r) | as_utf<OtherRangeFormat>;
                         }
                     }
                 } else if constexpr (text::detail::is_bounded_array_v<T>) {
@@ -76,7 +76,7 @@ namespace boost::parser {
                                as_utf<OtherRangeFormat>;
                     }
                 } else {
-                    return (R &&) r | as_utf<OtherRangeFormat>;
+                    return std::forward<R>(r) | as_utf<OtherRangeFormat>;
                 }
             }
         };
@@ -87,7 +87,7 @@ namespace boost::parser {
             template<typename R>
             static constexpr R && call(R && r)
             {
-                return (R &&) r;
+                return std::forward<R>(r);
             }
         };
 
@@ -150,7 +150,7 @@ namespace boost::parser {
         {
             using value_type = range_value_t<decltype(r)>;
             if constexpr (std::is_same_v<value_type, char>) {
-                return detail::search_impl((R &&) r, parser, skip, trace_mode);
+                return detail::search_impl(std::forward<R>(r), parser, skip, trace_mode);
             } else {
                 auto r_unpacked = detail::text::unpack_iterator_and_sentinel(
                     text::detail::begin(r), text::detail::end(r));
@@ -194,7 +194,7 @@ namespace boost::parser {
         trace trace_mode = trace::off)
     {
         return detail::search_repack_shim(
-            detail::to_range<R>::call((R &&) r), parser, skip, trace_mode);
+            detail::to_range<R>::call(std::forward<R>(r)), parser, skip, trace_mode);
     }
 
     /** Returns a subrange to the first match for parser `parser` in `[first,
@@ -255,7 +255,7 @@ namespace boost::parser {
         trace trace_mode = trace::off)
     {
         return parser::search(
-            (R &&) r,
+            std::forward<R>(r),
             parser,
             parser_interface<eps_parser<detail::phony>>{},
             trace_mode);
@@ -607,7 +607,7 @@ namespace boost::parser {
                     std::is_same_v<Trace, trace>) {
                     // (r, parser, trace) case
                     return impl(
-                        (R &&) r,
+                        std::forward<R>(r),
                         parser,
                         parser_interface<eps_parser<detail::phony>>{},
                         skip);
@@ -615,7 +615,7 @@ namespace boost::parser {
                     detail::is_parser_iface<SkipParser> &&
                     std::is_same_v<Trace, trace>) {
                     // (r, parser, skip, trace) case
-                    return impl((R &&) r, parser, skip, trace_mode);
+                    return impl(std::forward<R>(r), parser, skip, trace_mode);
                 } else {
                     static_assert(
                         sizeof(R) == 1 && false,
@@ -640,7 +640,7 @@ namespace boost::parser {
                 trace trace_mode = trace::off) const
             {
                 return search_all_view(
-                    to_range<R>::call((R &&) r), parser, skip, trace_mode);
+                    to_range<R>::call(std::forward<R>(r)), parser, skip, trace_mode);
             }
 
 #endif

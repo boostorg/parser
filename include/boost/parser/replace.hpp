@@ -612,10 +612,10 @@ namespace boost::parser {
                     std::is_same_v<Trace, trace>) {
                     // (r, parser, skip, replacement, trace) case
                     return impl(
-                        (R &&) r,
+                        std::forward<R>(r),
                         parser,
                         skip,
-                        (ReplacementR &&) replacement,
+                        std::forward<ReplacementR>(replacement),
                         trace_mode);
                 } else if constexpr (
                     is_range<remove_cv_ref_t<SkipParser>> &&
@@ -623,10 +623,10 @@ namespace boost::parser {
                     std::is_same_v<Trace, trace>) {
                     // (r, parser, replacement, trace) case
                     return impl(
-                        (R &&) r,
+                        std::forward<R>(r),
                         parser,
                         parser_interface<eps_parser<detail::phony>>{},
-                        (SkipParser &&) skip,
+                        std::forward<SkipParser>(skip),
                         replacement);
                 } else {
                     static_assert(
@@ -654,7 +654,7 @@ namespace boost::parser {
                 trace trace_mode = trace::off) const
             {
                 return replace_view(
-                    to_range<R>::call((R &&) r),
+                    to_range<R>::call(std::forward<R>(r)),
                     parser,
                     skip,
                     to_range<

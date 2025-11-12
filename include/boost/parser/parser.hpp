@@ -7635,9 +7635,10 @@ namespace boost { namespace parser {
 
             auto const prev_first = first;
 
-            auto append = [&retval,
+            std::string result;
+            auto append = [&result,
                            gen_attrs = detail::gen_attrs(flags)](auto & ctx) {
-                detail::move_back(retval, _attr(ctx), gen_attrs);
+                detail::move_back(result, _attr(ctx), gen_attrs);
             };
 
             auto quote_ch = [&]() {
@@ -7698,6 +7699,9 @@ namespace boost { namespace parser {
             if (!success) {
                 retval = Attribute();
                 first = prev_first;
+            }
+            else{
+                retval = std::move(result);
             }
         }
 

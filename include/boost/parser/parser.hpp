@@ -4562,7 +4562,7 @@ namespace boost { namespace parser {
                     using just_out = detail::remove_cv_ref_t<decltype(out)>;
                     if constexpr (detail::is_nope_v<attr_t>) {
                         // nothing to do
-                    } if constexpr (
+                    } else if constexpr (
                         (!out_container ||
                          !std::is_same_v<just_x, just_out>) &&
                         std::is_assignable_v<just_out &, just_x &&> &&

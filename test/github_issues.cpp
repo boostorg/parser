@@ -501,6 +501,17 @@ void github_issue_285()
     BOOST_TEST(result.value().get() != nullptr);
 }
 
+void github_pr_290()
+{
+    namespace bp = boost::parser;
+
+    auto const pTest = bp::lit("TEST:") > -bp::quoted_string;
+
+    auto result = bp::parse("TEST: \"foo\"", pTest, bp::blank);
+    BOOST_TEST(result);
+    BOOST_TEST(*result == "foo");
+}
+
 
 int main()
 {
@@ -516,5 +527,6 @@ int main()
     github_issue_268();
     github_issue_279();
     github_issue_285();
+    github_pr_290();
     return boost::report_errors();
 }

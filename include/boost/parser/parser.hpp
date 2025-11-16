@@ -4497,7 +4497,9 @@ namespace boost { namespace parser {
                 bool const can_backtrack =
                     parser::get(parser_index_merged_and_backtrack, 3_c);
 
-                if (!detail::gen_attrs(flags)) {
+                using attr_t = decltype(parser.call(
+                    first, last, context, skip, flags, success));
+                if (detail::is_nope_v<attr_t> || !detail::gen_attrs(flags)) {
                     parser.call(first, last, context, skip, flags, success);
                     if (!success && !can_backtrack) {
                         std::stringstream oss;
@@ -4525,8 +4527,6 @@ namespace boost { namespace parser {
                 }
                 auto & out = parser::get(retval, tuple_idx);
 
-                using attr_t = decltype(parser.call(
-                    first, last, context, skip, flags, success));
                 constexpr bool out_container =
                     container<std::decay_t<decltype(out)>>;
                 constexpr bool attr_container = container<attr_t>;

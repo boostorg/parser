@@ -5549,8 +5549,9 @@ namespace boost { namespace parser {
                 locals_type locals = detail::make_locals<locals_type>(context);
                 auto params = detail::resolve_rule_params(context, params_);
                 tag_type * const tag_ptr = nullptr;
+                attr_type attr{};
                 auto const rule_context = detail::make_rule_context(
-                    context, tag_ptr, retval, locals, params);
+                    context, tag_ptr, attr, locals, params);
 
                 [[maybe_unused]] auto _ = detail::scoped_trace(
                     *this, first, last, rule_context, flags, retval);
@@ -5565,9 +5566,22 @@ namespace boost { namespace parser {
                     flags,
                     success,
                     dont_assign,
-                    retval);
-                if (!success || dont_assign)
-                    retval = Attribute_();
+                    attr);
+
+                if (dont_assign)
+                    return;
+
+                if (!success)
+                    attr = attr_type{};
+
+                if constexpr (detail::is_nope_v<decltype(attr)>) {
+                    return;
+                } else if constexpr (
+                    container<Attribute_> && container<attr_type>) {
+                    detail::move_back(retval, attr, detail::gen_attrs(flags));
+                } else {
+                    detail::assign(retval, attr);
+                }
             }
         }
 

@@ -512,6 +512,42 @@ void github_pr_290()
     BOOST_TEST(*result == "foo");
 }
 
+namespace github_issue_294_ {
+    namespace bp = boost::parser;
+    struct Foo {};
+    constexpr bp::rule<struct foo_parser_tag, std::shared_ptr<Foo>> foo_parser = "foo_parser";
+    constexpr auto foo_parser_action = [](auto& ctx) {
+        std::shared_ptr<Foo>& val = _val(ctx);
+        val = std::shared_ptr<Foo>(new Foo{});
+    };
+    constexpr auto foo_parser_def = bp::eps[foo_parser_action];
+    struct Bar { std::shared_ptr<Foo> foo; };
+    constexpr bp::rule<struct bar_parser_tag, std::shared_ptr<Bar>> bar_parser = "bar_parser";
+    constexpr auto bar_parser_action = [](auto& ctx) {
+        std::shared_ptr<Bar>& val = _val(ctx);
+        val = std::shared_ptr<Bar>(new Bar{});
+        std::optional<std::shared_ptr<Foo>>& attr = _attr(ctx);
+        if (attr) {
+            val->foo = attr.value();
+        }
+    };
+    constexpr auto bar_parser_def =
+    (bp::lit("(") > -foo_parser > bp::lit(")"))[bar_parser_action];
+
+    BOOST_PARSER_DEFINE_RULES(
+        bar_parser,
+        foo_parser);
+
+
+}
+void github_issue_294()
+{
+    namespace bp = boost::parser;
+    using namespace github_issue_294_;
+
+    bp::parse("()", bar_parser, bp::blank);
+}
+
 namespace github_pr_297_ {
     namespace bp = boost::parser;
     constexpr auto bar_required_f = [](auto& ctx) -> bool {
@@ -573,6 +609,7 @@ int main()
     github_issue_279();
     github_issue_285();
     github_pr_290();
+    github_issue_294();
     github_pr_297();
     return boost::report_errors();
 }

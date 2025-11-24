@@ -8525,9 +8525,9 @@ namespace boost { namespace parser {
     template<typename SwitchValue, typename OrParser>
     struct switch_parser
     {
-        switch_parser() {}
-        switch_parser(SwitchValue switch_value) : switch_value_(switch_value) {}
-        switch_parser(SwitchValue switch_value, OrParser or_parser) :
+        constexpr switch_parser() {}
+        constexpr switch_parser(SwitchValue switch_value) : switch_value_(switch_value) {}
+        constexpr switch_parser(SwitchValue switch_value, OrParser or_parser) :
             switch_value_(switch_value), or_parser_(or_parser)
         {}
 

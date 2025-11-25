@@ -512,6 +512,51 @@ void github_pr_290()
     BOOST_TEST(*result == "foo");
 }
 
+namespace github_pr_297_ {
+    namespace bp = boost::parser;
+    constexpr auto bar_required_f = [](auto& ctx) -> bool {
+        const bool& argument = bp::_p<0>(ctx);
+        return argument;
+    };
+    constexpr bp::rule<struct foobar_parser_tag> foobar_parser = "foobar_parser";
+    constexpr auto foobar_parser_def =
+        bp::lit("foo")
+        >> bp::switch_(bar_required_f)
+            (true, bp::lit("bar"))
+            (false, -bp::lit("bar"));
+    BOOST_PARSER_DEFINE_RULES(foobar_parser);
+}
+
+void github_pr_297()
+{
+    namespace bp = boost::parser;
+    using namespace github_pr_297_;
+
+    {
+        const bool bar_required = true;
+        const bool result =
+            bp::parse("foo bar", foobar_parser.with(bar_required), bp::blank);
+        BOOST_TEST(result);
+    }
+    {
+        const bool bar_required = true;
+        const bool result =
+            bp::parse("foo", foobar_parser.with(bar_required), bp::blank);
+        BOOST_TEST(!result);
+    }
+    {
+        const bool bar_required = false;
+        const bool result =
+            bp::parse("foo bar", foobar_parser.with(bar_required), bp::blank);
+        BOOST_TEST(result);
+    }
+    {
+        const bool bar_required = false;
+        const bool result =
+            bp::parse("foo", foobar_parser.with(bar_required), bp::blank);
+        BOOST_TEST(result);
+    }
+}
 
 int main()
 {
@@ -528,5 +573,6 @@ int main()
     github_issue_279();
     github_issue_285();
     github_pr_290();
+    github_pr_297();
     return boost::report_errors();
 }

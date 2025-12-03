@@ -3529,7 +3529,9 @@ namespace boost { namespace parser {
                 else
                     use_parser.first_ = prev_first;
             };
-            detail::hl::for_each(parsers_, try_parser); // TODO: -> fold-expr
+            std::apply([&try_parser](auto&&... args) {
+                ((try_parser(args)), ...);
+            }, parsers_);
 
             if (!done)
                 success = false;
@@ -4578,7 +4580,9 @@ namespace boost { namespace parser {
 
             auto const parsers_and_indices =
                 detail::hl::zip(parsers_, indices, merged, backtracking{});
-            detail::hl::for_each(parsers_and_indices, use_parser);
+            std::apply([&use_parser](auto&&... args) {
+                ((use_parser(args)), ...);
+            }, parsers_and_indices);
         }
 
         template<bool AllowBacktracking, typename Parser>

@@ -455,7 +455,7 @@ namespace boost { namespace parser {
             static constexpr bool do_trace = DoTrace;
             static constexpr bool use_callbacks = UseCallbacks;
 
-            I first_;
+            I const & first_;
             S const & last_;
             bool * pass_ = nullptr;
             int * trace_indent_ = nullptr;
@@ -524,7 +524,7 @@ namespace boost { namespace parser {
             parse_context(
                 std::bool_constant<DoTrace>,
                 std::bool_constant<UseCallbacks>,
-                I & first,
+                I const & first,
                 S const & last,
                 bool & success,
                 int & indent,
@@ -547,7 +547,7 @@ namespace boost { namespace parser {
             parse_context(
                 std::bool_constant<DoTrace>,
                 std::bool_constant<UseCallbacks>,
-                I & first,
+                I const & first,
                 S const & last,
                 bool & success,
                 int & indent,
@@ -565,7 +565,7 @@ namespace boost { namespace parser {
             parse_context(
                 std::bool_constant<DoTrace>,
                 std::bool_constant<UseCallbacks>,
-                I & first,
+                I const & first,
                 S const & last,
                 bool & success,
                 int & indent,

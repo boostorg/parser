@@ -2422,7 +2422,7 @@ namespace boost { namespace parser {
             typename ErrorHandler>
         bool parse_impl(
             Iter & first,
-            Sentinel last,
+            Sentinel const & last,
             Parser const & parser,
             ErrorHandler const & error_handler,
             Attr & attr)
@@ -2475,7 +2475,7 @@ namespace boost { namespace parser {
             typename ErrorHandler>
         auto parse_impl(
             Iter & first,
-            Sentinel last,
+            Sentinel const & last,
             Parser const & parser,
             ErrorHandler const & error_handler)
         {
@@ -2531,7 +2531,7 @@ namespace boost { namespace parser {
             typename Callbacks>
         bool callback_parse_impl(
             Iter & first,
-            Sentinel last,
+            Sentinel const & last,
             Parser const & parser,
             ErrorHandler const & error_handler,
             Callbacks const & callbacks)
@@ -2586,7 +2586,7 @@ namespace boost { namespace parser {
             typename ErrorHandler>
         bool skip_parse_impl(
             Iter & first,
-            Sentinel last,
+            Sentinel const & last,
             Parser const & parser,
             SkipParser const & skip,
             ErrorHandler const & error_handler,
@@ -2636,7 +2636,7 @@ namespace boost { namespace parser {
             typename ErrorHandler>
         auto skip_parse_impl(
             Iter & first,
-            Sentinel last,
+            Sentinel const & last,
             Parser const & parser,
             SkipParser const & skip,
             ErrorHandler const & error_handler)
@@ -2691,7 +2691,7 @@ namespace boost { namespace parser {
             typename Callbacks>
         bool callback_skip_parse_impl(
             Iter & first,
-            Sentinel last,
+            Sentinel const & last,
             Parser const & parser,
             SkipParser const & skip,
             ErrorHandler const & error_handler,
@@ -2841,7 +2841,7 @@ namespace boost { namespace parser {
         T if_full_parse(
             I initial_first,
             I & first,
-            S last,
+            S const & last,
             ErrorHandler const & error_handler,
             T retval)
         {
@@ -9025,7 +9025,7 @@ namespace boost { namespace parser {
 #endif
     bool prefix_parse(
         I & first,
-        S last,
+        S const & last,
         parser_interface<Parser, GlobalState, ErrorHandler> const & parser,
         Attr & attr,
         trace trace_mode = trace::off)
@@ -9158,7 +9158,7 @@ namespace boost { namespace parser {
 #endif
     auto prefix_parse(
         I & first,
-        S last,
+        S const & last,
         parser_interface<Parser, GlobalState, ErrorHandler> const & parser,
         trace trace_mode = trace::off)
     {
@@ -9269,7 +9269,7 @@ namespace boost { namespace parser {
 #endif
     bool prefix_parse(
         I & first,
-        S last,
+        S const & last,
         parser_interface<Parser, GlobalState, ErrorHandler> const & parser,
         parser_interface<SkipParser> const & skip,
         Attr & attr,
@@ -9409,7 +9409,7 @@ namespace boost { namespace parser {
 #endif
     auto prefix_parse(
         I & first,
-        S last,
+        S const & last,
         parser_interface<Parser, GlobalState, ErrorHandler> const & parser,
         parser_interface<SkipParser> const & skip,
         trace trace_mode = trace::off)
@@ -9526,7 +9526,7 @@ namespace boost { namespace parser {
 #endif
     bool callback_prefix_parse(
         I & first,
-        S last,
+        S const & last,
         parser_interface<Parser, GlobalState, ErrorHandler> const & parser,
         Callbacks const & callbacks,
         trace trace_mode = trace::off)
@@ -9650,7 +9650,7 @@ namespace boost { namespace parser {
 #endif
     bool callback_prefix_parse(
         I & first,
-        S last,
+        S const & last,
         parser_interface<Parser, GlobalState, ErrorHandler> const & parser,
         parser_interface<SkipParser> const & skip,
         Callbacks const & callbacks,

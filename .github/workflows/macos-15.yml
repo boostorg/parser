@@ -1,4 +1,4 @@
-name: macos-13 - Clang 14
+name: macos-15 - Clang
 
 on:
   push:
@@ -14,9 +14,9 @@ jobs:
   build:
     strategy:
       matrix:
-        cxx_std: [17]
+        cxx_std: [17, 20]
 
-    runs-on: macos-13
+    runs-on: macos-15
 
     steps:
       - uses: actions/checkout@v4

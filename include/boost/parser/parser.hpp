@@ -456,7 +456,7 @@ namespace boost { namespace parser {
             static constexpr bool use_callbacks = UseCallbacks;
 
             I first_;
-            S last_;
+            S const & last_;
             bool * pass_ = nullptr;
             int * trace_indent_ = nullptr;
             symbol_table_tries_t * symbol_table_tries_ = nullptr;
@@ -525,7 +525,7 @@ namespace boost { namespace parser {
                 std::bool_constant<DoTrace>,
                 std::bool_constant<UseCallbacks>,
                 I & first,
-                S last,
+                S const & last,
                 bool & success,
                 int & indent,
                 ErrorHandler const & error_handler,
@@ -548,7 +548,7 @@ namespace boost { namespace parser {
                 std::bool_constant<DoTrace>,
                 std::bool_constant<UseCallbacks>,
                 I & first,
-                S last,
+                S const & last,
                 bool & success,
                 int & indent,
                 ErrorHandler const & error_handler,
@@ -566,7 +566,7 @@ namespace boost { namespace parser {
                 std::bool_constant<DoTrace>,
                 std::bool_constant<UseCallbacks>,
                 I & first,
-                S last,
+                S const & last,
                 bool & success,
                 int & indent,
                 ErrorHandler const & error_handler,

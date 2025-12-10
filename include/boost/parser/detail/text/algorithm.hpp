@@ -21,7 +21,7 @@ namespace boost::parser::detail { namespace text {
 
     namespace detail {
         template<typename Iter>
-        std::ptrdiff_t distance(Iter first, Iter const & last, non_sentinel_tag)
+        std::ptrdiff_t distance(Iter const & first, Iter const & last, non_sentinel_tag)
         {
             return std::distance(first, last);
         }
@@ -41,7 +41,7 @@ namespace boost::parser::detail { namespace text {
     /** Range-friendly version of `std::distance()`, taking an iterator and a
         sentinel. */
     template<typename Iter, typename Sentinel>
-    std::ptrdiff_t distance(Iter first, Sentinel const & last)
+    std::ptrdiff_t distance(Iter const & first, Sentinel const & last)
     {
         return detail::distance(
             first,
@@ -107,7 +107,7 @@ namespace boost::parser::detail { namespace text {
     /** Analogue of `std::find()` that finds the last value in `[first, last)`
         equal to `x`. */
     template<typename BidiIter, typename T>
-    BidiIter find_backward(BidiIter first, BidiIter last, T const & x)
+    BidiIter find_backward(BidiIter const & first, BidiIter const & last, T const & x)
     {
         auto it = last;
         while (it != first) {
@@ -120,7 +120,7 @@ namespace boost::parser::detail { namespace text {
     /** Analogue of `std::find()` that finds the last value in `[first, last)`
         not equal to `x`. */
     template<typename BidiIter, typename T>
-    BidiIter find_not_backward(BidiIter first, BidiIter last, T const & x)
+    BidiIter find_not_backward(BidiIter const & first, BidiIter const & last, T const & x)
     {
         auto it = last;
         while (it != first) {
@@ -133,7 +133,7 @@ namespace boost::parser::detail { namespace text {
     /** Analogue of `std::find()` that finds the last value `v` in `[first,
         last)` for which `p(v)` is true. */
     template<typename BidiIter, typename Pred>
-    BidiIter find_if_backward(BidiIter first, BidiIter last, Pred p)
+    BidiIter find_if_backward(BidiIter const & first, BidiIter const & last, Pred p)
     {
         auto it = last;
         while (it != first) {
@@ -146,7 +146,7 @@ namespace boost::parser::detail { namespace text {
     /** Analogue of `std::find()` that finds the last value `v` in `[first,
         last)` for which `p(v)` is false. */
     template<typename BidiIter, typename Pred>
-    BidiIter find_if_not_backward(BidiIter first, BidiIter last, Pred p)
+    BidiIter find_if_not_backward(BidiIter const & first, BidiIter const & last, Pred p)
     {
         auto it = last;
         while (it != first) {
@@ -290,9 +290,9 @@ namespace boost::parser::detail { namespace text {
         typename Iter2,
         typename Sentinel2>
     int lexicographical_compare_three_way(
-        Iter1 first1,
+        Iter1 const & first1,
         Sentinel1 const & last1,
-        Iter2 first2,
+        Iter2 const & first2,
         Sentinel2 const & last2)
     {
         auto const iters = boost::parser::detail::text::mismatch(first1, last1, first2, last2);

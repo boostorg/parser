@@ -764,7 +764,7 @@ int main()
         auto rng = "There are groups of [1, 2, 3, 4, 5] in the set." |
                    bp::transform_replace(
                        '[' >> bp::int_ % ',' >> ']', bp::ws, string_sum);
-        int count = 0;
+        [[maybe_unused]] int count = 0;
         // Prints "There are groups of 15 in the set".
         for (auto subrange : rng) {
             for (auto ch : subrange) {

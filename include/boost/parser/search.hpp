@@ -25,10 +25,16 @@ namespace boost::parser {
         constexpr auto as_utf<text::format::utf32> =
             text::detail::as_utf_impl<text::utf32_view, text::format::utf32>{};
 
+        template<typename R>
+        constexpr bool has_special_sentinel_v =
+            std::is_same_v<sentinel_t<remove_cv_ref_t<R>>, null_sentinel_t> ||
+            text::detail::is_bounded_array_v<remove_cv_ref_t<R>>;
+
         template<
             typename R_,
             bool ToCommonRange = false,
-            text::format OtherRangeFormat = no_format>
+            text::format OtherRangeFormat = no_format,
+            bool HasSpecialSentinel = has_special_sentinel_v<R_>>
         struct to_range
         {
             template<typename R>
@@ -36,7 +42,8 @@ namespace boost::parser {
             {
                 static_assert(std::is_same_v<R, R_>);
                 using T = remove_cv_ref_t<R>;
-                if constexpr (std::is_same_v<sentinel_t<T>, null_sentinel_t>) {
+                if constexpr (HasSpecialSentinel &&
+                              std::is_same_v<sentinel_t<T>, null_sentinel_t>) {
                     auto plus_strlen = [](auto * ptr) {
                         while (*ptr) {
                             ++ptr;
@@ -60,7 +67,8 @@ namespace boost::parser {
                             return (R &&) r | as_utf<OtherRangeFormat>;
                         }
                     }
-                } else if constexpr (text::detail::is_bounded_array_v<T>) {
+                } else if constexpr (HasSpecialSentinel &&
+                                     text::detail::is_bounded_array_v<T>) {
                     auto const first = std::begin(r);
                     auto last = std::end(r);
                     constexpr auto n = std::extent_v<T>;

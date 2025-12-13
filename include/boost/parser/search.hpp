@@ -28,10 +28,7 @@ namespace boost::parser {
         template<
             typename R_,
             bool ToCommonRange = false,
-            text::format OtherRangeFormat = no_format,
-            bool = std::is_same_v<sentinel_t<remove_cv_ref_t<R_>>,
-                                  null_sentinel_t> ||
-                   text::detail::is_bounded_array_v<remove_cv_ref_t<R_>>>
+            text::format OtherRangeFormat = no_format>
         struct to_range
         {
             template<typename R>
@@ -75,19 +72,11 @@ namespace boost::parser {
                         return BOOST_PARSER_SUBRANGE(first, last) |
                                as_utf<OtherRangeFormat>;
                     }
+                } else if constexpr (OtherRangeFormat == no_format) {
+                    return (R &&) r;
                 } else {
                     return (R &&) r | as_utf<OtherRangeFormat>;
                 }
-            }
-        };
-
-        template<typename R_, bool ToCommonRange>
-        struct to_range<R_, ToCommonRange, no_format, false>
-        {
-            template<typename R>
-            static constexpr R && call(R && r)
-            {
-                return (R &&) r;
             }
         };
 

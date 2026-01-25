@@ -2851,7 +2851,7 @@ namespace boost { namespace parser {
                                   last,
                                   parse_error<I>(first, "end of input")) ==
                                   error_handler_result::rethrow) {
-                    throw;
+                    throw parse_error<I>(first, "end of input");
                 }
                 if constexpr (std::is_same_v<T, bool>)
                     retval = false;

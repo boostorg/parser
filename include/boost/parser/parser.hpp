@@ -4292,10 +4292,10 @@ namespace boost { namespace parser {
         {
             Iter first = first_;
 
-            auto temp_result =
-                make_temp_result(first, last, context, skip, flags, success);
+            using temp_result_t =
+                decltype(make_temp_result(first, last, context, skip, flags, success));
 
-            std::decay_t<decltype(parser::get(temp_result, llong<0>{}))>
+            std::decay_t<decltype(parser::get(std::declval<temp_result_t>(), llong<0>{}))>
                 retval{};
 
             [[maybe_unused]] auto _ = detail::scoped_trace(
@@ -4307,9 +4307,9 @@ namespace boost { namespace parser {
                                                : flags,
                 retval);
 
-            std::decay_t<decltype(parser::get(temp_result, llong<1>{}))>
+            std::decay_t<decltype(parser::get(std::declval<temp_result_t>(), llong<1>{}))>
                 indices;
-            std::decay_t<decltype(parser::get(temp_result, llong<2>{}))>
+            std::decay_t<decltype(parser::get(std::declval<temp_result_t>(), llong<2>{}))>
                 merged;
             call_impl(
                 first,
@@ -4360,13 +4360,13 @@ namespace boost { namespace parser {
 
             Iter first = first_;
 
-            auto temp_result =
-                make_temp_result(first, last, context, skip, flags, success);
+            using temp_result_t =
+                decltype(make_temp_result(first, last, context, skip, flags, success));
             using temp_result_attr_t =
-                std::decay_t<decltype(parser::get(temp_result, llong<0>{}))>;
-            std::decay_t<decltype(parser::get(temp_result, llong<1>{}))>
+                std::decay_t<decltype(parser::get(std::declval<temp_result_t>(), llong<0>{}))>;
+            std::decay_t<decltype(parser::get(std::declval<temp_result_t>(), llong<1>{}))>
                 indices;
-            std::decay_t<decltype(parser::get(temp_result, llong<2>{}))> merged;
+            std::decay_t<decltype(parser::get(std::declval<temp_result_t>(), llong<2>{}))> merged;
 
             auto max_ = [](auto result, auto x) {
                 if constexpr (decltype(result)::value < decltype(x)::value) {

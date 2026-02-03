@@ -3716,7 +3716,7 @@ namespace boost { namespace parser {
                     if constexpr (detail::is_struct_compatible_v<
                                       Attribute,
                                       result_t>) {
-                        detail::assign(retval, temp_retval);
+                        detail::assign(retval, std::move(temp_retval));
                     } else {
                         detail::assign(
                             retval,
@@ -5488,7 +5488,7 @@ namespace boost { namespace parser {
                     dont_assign);
                 if (success && !dont_assign) {
                     if constexpr (!detail::is_nope_v<decltype(attr)>)
-                        detail::assign(retval, attr);
+                        detail::assign(retval, std::move(attr));
                 }
             }
 
@@ -5583,7 +5583,7 @@ namespace boost { namespace parser {
                     container<Attribute_> && container<attr_type>) {
                     detail::move_back(retval, attr, detail::gen_attrs(flags));
                 } else {
-                    detail::assign(retval, attr);
+                    detail::assign(retval, std::move(attr));
                 }
             }
         }

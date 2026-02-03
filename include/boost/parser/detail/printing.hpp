@@ -598,6 +598,7 @@ namespace boost { namespace parser { namespace detail {
     template<typename Context>
     auto resolve(Context const &, nope n);
 
+    #ifndef BOOST_PARSER_DISABLE_TRACE
     template<
         bool DoTrace,
         typename Iter,
@@ -708,6 +709,7 @@ namespace boost { namespace parser { namespace detail {
         }
         os << "--------------------" << std::endl;
     }
+    #endif // BOOST_PARSER_DISABLE_TRACE
 
 }}}
 

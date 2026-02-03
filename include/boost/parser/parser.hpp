@@ -2455,8 +2455,10 @@ namespace boost { namespace parser {
                     flags,
                     success,
                     attr);
+                #ifndef BOOST_PARSER_DISABLE_TRACE
                 if (Debug)
                     detail::final_trace(context, flags, attr);
+                #endif // BOOST_PARSER_DISABLE_TRACE
                 return success;
             } catch (parse_error<Iter> const & e) {
                 if (error_handler(initial_first, last, e) ==
@@ -2509,8 +2511,10 @@ namespace boost { namespace parser {
                     detail::null_parser{},
                     flags,
                     success);
+                #ifndef BOOST_PARSER_DISABLE_TRACE
                 if (Debug)
                     detail::final_trace(context, flags, nope{});
+                #endif // BOOST_PARSER_DISABLE_TRACE
                 return detail::make_parse_result(attr_, success);
             } catch (parse_error<Iter> const & e) {
                 if (error_handler(initial_first, last, e) ==
@@ -2564,8 +2568,10 @@ namespace boost { namespace parser {
                     detail::null_parser{},
                     flags,
                     success);
+                #ifndef BOOST_PARSER_DISABLE_TRACE
                 if (Debug)
                     detail::final_trace(context, flags, nope{});
+                #endif // BOOST_PARSER_DISABLE_TRACE
                 return success;
             } catch (parse_error<Iter> const & e) {
                 if (error_handler(initial_first, last, e) ==
@@ -2615,8 +2621,10 @@ namespace boost { namespace parser {
             try {
                 parser(first, last, context, skip, flags, success, attr);
                 detail::skip(first, last, skip, flags);
+                #ifndef BOOST_PARSER_DISABLE_TRACE
                 if (Debug)
                     detail::final_trace(context, flags, attr);
+                #endif // BOOST_PARSER_DISABLE_TRACE
                 return success;
             } catch (parse_error<Iter> const & e) {
                 if (error_handler(initial_first, last, e) ==
@@ -2668,8 +2676,10 @@ namespace boost { namespace parser {
                 attr_t attr_ =
                     parser(first, last, context, skip, flags, success);
                 detail::skip(first, last, skip, flags);
+                #ifndef BOOST_PARSER_DISABLE_TRACE
                 if (Debug)
                     detail::final_trace(context, flags, nope{});
+                #endif // BOOST_PARSER_DISABLE_TRACE
                 return detail::make_parse_result(attr_, success);
             } catch (parse_error<Iter> const & e) {
                 if (error_handler(initial_first, last, e) ==
@@ -2721,8 +2731,10 @@ namespace boost { namespace parser {
             try {
                 parser(first, last, context, skip, flags, success);
                 detail::skip(first, last, skip, flags);
+                #ifndef BOOST_PARSER_DISABLE_TRACE
                 if (Debug)
                     detail::final_trace(context, flags, nope{});
+                #endif // BOOST_PARSER_DISABLE_TRACE
                 return success;
             } catch (parse_error<Iter> const & e) {
                 if (error_handler(initial_first, last, e) ==
@@ -3177,6 +3189,7 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this,
                 first,
@@ -3185,6 +3198,7 @@ namespace boost { namespace parser {
                 detail::in_apply_parser(flags) ? detail::disable_trace(flags)
                                                : flags,
                 retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             if constexpr (detail::is_optional_v<Attribute>) {
                 detail::optional_type<Attribute> attr;
@@ -3341,8 +3355,10 @@ namespace boost { namespace parser {
             Attribute & retval) const
         {
             //[ opt_parser_trace
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
             //]
 
             //[ opt_parser_skip
@@ -3505,8 +3521,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             use_parser_t<Iter, Sentinel, Context, SkipParser> const use_parser{
                 first, last, context, skip, flags, success};
@@ -3629,8 +3647,10 @@ namespace boost { namespace parser {
                 decltype(detail::hl::transform(parsers_, use_parser));
             result_t retval{};
 
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first_, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             call_impl(
                 first,
@@ -3665,8 +3685,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first_, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             Iter first = first_;
             use_parser_t<Iter, Sentinel, Context, SkipParser> const use_parser{
@@ -4298,6 +4320,7 @@ namespace boost { namespace parser {
             std::decay_t<decltype(parser::get(temp_result, llong<0>{}))>
                 retval{};
 
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this,
                 first_,
@@ -4306,6 +4329,7 @@ namespace boost { namespace parser {
                 detail::in_apply_parser(flags) ? detail::disable_trace(flags)
                                                : flags,
                 retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             std::decay_t<decltype(parser::get(temp_result, llong<1>{}))>
                 indices;
@@ -4349,6 +4373,7 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this,
                 first_,
@@ -4357,6 +4382,7 @@ namespace boost { namespace parser {
                 detail::in_apply_parser(flags) ? detail::disable_trace(flags)
                                                : flags,
                 retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             Iter first = first_;
 
@@ -4703,8 +4729,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             auto const initial_first = first;
             auto attr = parser_.call(
@@ -4769,8 +4797,10 @@ namespace boost { namespace parser {
             detail::flags flags,
             bool & success) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, detail::global_nope);
+            #endif // BOOST_PARSER_DISABLE_TRACE
             auto attr =
                 parser_.call(first, last, context, skip, flags, success);
             if (success && detail::gen_attrs(flags))
@@ -4794,8 +4824,11 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
+
             auto attr =
                 parser_.call(first, last, context, skip, flags, success);
             if (success && detail::gen_attrs(flags))
@@ -4822,8 +4855,10 @@ namespace boost { namespace parser {
             detail::flags flags,
             bool & success) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, detail::global_nope);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             parser_.call(
                 first,
@@ -4850,8 +4885,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             parser_.call(
                 first,
@@ -4901,8 +4938,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             auto const initial_first = first;
             parser_.call(
@@ -4966,8 +5005,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             auto const initial_first = first;
             parser_.call(
@@ -5042,8 +5083,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             parser_.call(
                 first,
@@ -5102,8 +5145,10 @@ namespace boost { namespace parser {
             auto context = context_;
             ++context.no_case_depth_;
 
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             parser_.call(first, last, context, skip, flags, success, retval);
         }
@@ -5149,8 +5194,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             if constexpr (detail::is_nope_v<SkipParser>) {
                 parser_.call(
@@ -5213,8 +5260,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             auto first_copy = first;
             parser_.call(
@@ -5380,8 +5429,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             auto [trie, _0] = detail::get_trie(context, ref());
             auto const lookup = context.no_case_depth_
@@ -5455,8 +5506,10 @@ namespace boost { namespace parser {
             tag_type * const tag_ptr = nullptr;
             auto const rule_context = detail::make_rule_context(
                 context, tag_ptr, retval, locals, params);
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, rule_context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             bool dont_assign = false;
             if constexpr (in_recursion) {
@@ -5553,8 +5606,10 @@ namespace boost { namespace parser {
                 auto const rule_context = detail::make_rule_context(
                     context, tag_ptr, attr, locals, params);
 
+                #ifndef BOOST_PARSER_DISABLE_TRACE
                 [[maybe_unused]] auto _ = detail::scoped_trace(
                     *this, first, last, rule_context, flags, retval);
+                #endif // BOOST_PARSER_DISABLE_TRACE
 
                 bool dont_assign = false;
                 parse_rule(
@@ -6744,8 +6799,10 @@ namespace boost { namespace parser {
             detail::flags flags,
             bool & success) const noexcept
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, detail::global_nope);
+            #endif // BOOST_PARSER_DISABLE_TRACE
             BOOST_PARSER_SUBRANGE const where(first, first);
             auto const predicate_context = detail::make_action_context(
                 context, detail::global_nope, where);
@@ -6772,8 +6829,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
             BOOST_PARSER_SUBRANGE const where(first, first);
             auto const predicate_context = detail::make_action_context(
                 context, detail::global_nope, where);
@@ -6823,8 +6882,10 @@ namespace boost { namespace parser {
             detail::flags flags,
             bool & success) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, detail::global_nope);
+            #endif // BOOST_PARSER_DISABLE_TRACE
             if (first != last)
                 success = false;
             return {};
@@ -6845,8 +6906,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
             if (first != last)
                 success = false;
         }
@@ -6875,8 +6938,10 @@ namespace boost { namespace parser {
             detail::flags flags,
             bool &) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, detail::global_nope);
+            #endif // BOOST_PARSER_DISABLE_TRACE
             return detail::resolve(context, attr_);
         }
 
@@ -6895,8 +6960,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute_ & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
             if (detail::gen_attrs(flags))
                 detail::assign_copy(retval, detail::resolve(context, attr_));
         }
@@ -6961,8 +7028,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             if (first == last) {
                 success = false;
@@ -7126,8 +7195,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             if (first == last) {
                 success = false;
@@ -7277,8 +7348,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             if (first == last) {
                 success = false;
@@ -7357,8 +7430,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             if (first == last) {
                 success = false;
@@ -7479,8 +7554,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             if (first == last) {
                 success = false;
@@ -7643,8 +7720,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             if (first == last) {
                 success = false;
@@ -7964,8 +8043,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             if (first == last) {
                 success = false;
@@ -8131,8 +8212,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
 
             auto compare =
                 [no_case = context.no_case_depth_](char32_t a, char32_t b) {
@@ -8220,8 +8303,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
             T attr = 0;
             auto const initial = first;
             success =
@@ -8361,8 +8446,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
             T attr = 0;
             auto const initial = first;
             success =
@@ -8476,8 +8563,10 @@ namespace boost { namespace parser {
             bool & success,
             Attribute & retval) const
         {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
             T attr = 0;
             auto const initial = first;
             success = detail::numeric::parse_real(first, last, attr);
@@ -8570,8 +8659,10 @@ namespace boost { namespace parser {
             using attr_t = decltype(or_parser_.call(
                 first, last, context, skip, flags, success));
             attr_t attr{};
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ =
                 detail::scoped_trace(*this, first, last, context, flags, attr);
+            #endif // BOOST_PARSER_DISABLE_TRACE
             attr = or_parser_.call(first, last, context, skip, flags, success);
             return attr;
         }
@@ -8596,8 +8687,10 @@ namespace boost { namespace parser {
                  "It looks like you tried to write switch_(val).  You need at "
                  "least one alternative, like: switch_(val)(value_1, "
                  "parser_1)(value_2, parser_2)..."));
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             [[maybe_unused]] auto _ = detail::scoped_trace(
                 *this, first, last, context, flags, retval);
+            #endif // BOOST_PARSER_DISABLE_TRACE
             or_parser_.call(first, last, context, skip, flags, success, retval);
         }
 
@@ -9055,10 +9148,13 @@ namespace boost { namespace parser {
                 "If you're seeing this error, you're trying to get parse() to "
                 "fill in attr above, using the attribute generated by parser. "
                 "However, parser does not generate an attribute.");
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             if (trace_mode == trace::on) {
                 return reset = detail::parse_impl<true>(
                            first, last, parser, parser.error_handler_, attr);
-            } else {
+            } else
+            #endif // BOOST_PARSER_DISABLE_TRACE
+            {
                 return reset = detail::parse_impl<false>(
                            first, last, parser, parser.error_handler_, attr);
             }
@@ -9073,10 +9169,13 @@ namespace boost { namespace parser {
                 "If you're seeing this error, you're trying to get parse() to "
                 "fill in attr above, using the attribute generated by parser. "
                 "However, parser does not generate an attribute.");
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             if (trace_mode == trace::on) {
                 return reset = detail::parse_impl<true>(
                            f, l, parser, parser.error_handler_, attr);
-            } else {
+            } else
+            #endif // BOOST_PARSER_DISABLE_TRACE
+            {
                 return reset = detail::parse_impl<false>(
                            f, l, parser, parser.error_handler_, attr);
             }
@@ -9177,10 +9276,13 @@ namespace boost { namespace parser {
         trace trace_mode = trace::off)
     {
         if constexpr (!detail::is_char8_iter_v<I>) {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             if (trace_mode == trace::on) {
                 return detail::parse_impl<true>(
                     first, last, parser, parser.error_handler_);
-            } else {
+            } else
+            #endif // BOOST_PARSER_DISABLE_TRACE
+            {
                 return detail::parse_impl<false>(
                     first, last, parser, parser.error_handler_);
             }
@@ -9190,10 +9292,13 @@ namespace boost { namespace parser {
             auto f = r.begin();
             auto const l = r.end();
             auto _ = detail::scoped_base_assign(first, f);
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             if (trace_mode == trace::on) {
                 return detail::parse_impl<true>(
                     f, l, parser, parser.error_handler_);
-            } else {
+            } else
+            #endif // BOOST_PARSER_DISABLE_TRACE
+            {
                 return detail::parse_impl<false>(
                     f, l, parser, parser.error_handler_);
             }
@@ -9296,6 +9401,7 @@ namespace boost { namespace parser {
                 "If you're seeing this error, you're trying to get parse() to "
                 "fill in attr above, using the attribute generated by parser. "
                 "However, parser does not generate an attribute.");
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             if (trace_mode == trace::on) {
                 return reset = detail::skip_parse_impl<true>(
                            first,
@@ -9304,7 +9410,9 @@ namespace boost { namespace parser {
                            skip,
                            parser.error_handler_,
                            attr);
-            } else {
+            } else
+            #endif // BOOST_PARSER_DISABLE_TRACE
+            {
                 return reset = detail::skip_parse_impl<false>(
                            first,
                            last,
@@ -9324,10 +9432,13 @@ namespace boost { namespace parser {
                 "If you're seeing this error, you're trying to get parse() to "
                 "fill in attr above, using the attribute generated by parser. "
                 "However, parser does not generate an attribute.");
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             if (trace_mode == trace::on) {
                 return reset = detail::skip_parse_impl<true>(
                            f, l, parser, skip, parser.error_handler_, attr);
-            } else {
+            } else
+            #endif // BOOST_PARSER_DISABLE_TRACE
+            {
                 return reset = detail::skip_parse_impl<false>(
                            f, l, parser, skip, parser.error_handler_, attr);
             }
@@ -9429,10 +9540,13 @@ namespace boost { namespace parser {
         trace trace_mode = trace::off)
     {
         if constexpr (!detail::is_char8_iter_v<I>) {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             if (trace_mode == trace::on) {
                 return detail::skip_parse_impl<true>(
                     first, last, parser, skip, parser.error_handler_);
-            } else {
+            } else
+            #endif // BOOST_PARSER_DISABLE_TRACE
+            {
                 return detail::skip_parse_impl<false>(
                     first, last, parser, skip, parser.error_handler_);
             }
@@ -9442,10 +9556,13 @@ namespace boost { namespace parser {
             auto f = r.begin();
             auto const l = r.end();
             auto _ = detail::scoped_base_assign(first, f);
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             if (trace_mode == trace::on) {
                 return detail::skip_parse_impl<true>(
                     f, l, parser, skip, parser.error_handler_);
-            } else {
+            } else
+            #endif // BOOST_PARSER_DISABLE_TRACE
+            {
                 return detail::skip_parse_impl<false>(
                     f, l, parser, skip, parser.error_handler_);
             }
@@ -9546,10 +9663,13 @@ namespace boost { namespace parser {
         trace trace_mode = trace::off)
     {
         if constexpr (!detail::is_char8_iter_v<I>) {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             if (trace_mode == trace::on) {
                 return detail::callback_parse_impl<true>(
                     first, last, parser, parser.error_handler_, callbacks);
-            } else {
+            } else
+            #endif // BOOST_PARSER_DISABLE_TRACE
+            {
                 return detail::callback_parse_impl<false>(
                     first, last, parser, parser.error_handler_, callbacks);
             }
@@ -9559,10 +9679,13 @@ namespace boost { namespace parser {
             auto f = r.begin();
             auto const l = r.end();
             auto _ = detail::scoped_base_assign(first, f);
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             if (trace_mode == trace::on) {
                 return detail::callback_parse_impl<true>(
                     f, l, parser, parser.error_handler_, callbacks);
-            } else {
+            } else
+            #endif // BOOST_PARSER_DISABLE_TRACE
+            {
                 return detail::callback_parse_impl<false>(
                     f, l, parser, parser.error_handler_, callbacks);
             }
@@ -9671,6 +9794,7 @@ namespace boost { namespace parser {
         trace trace_mode = trace::off)
     {
         if constexpr (!detail::is_char8_iter_v<I>) {
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             if (trace_mode == trace::on) {
                 return detail::callback_skip_parse_impl<true>(
                     first,
@@ -9679,7 +9803,9 @@ namespace boost { namespace parser {
                     skip,
                     parser.error_handler_,
                     callbacks);
-            } else {
+            } else
+            #endif // BOOST_PARSER_DISABLE_TRACE
+            {
                 return detail::callback_skip_parse_impl<false>(
                     first,
                     last,
@@ -9694,10 +9820,13 @@ namespace boost { namespace parser {
             auto f = r.begin();
             auto const l = r.end();
             auto _ = detail::scoped_base_assign(first, f);
+            #ifndef BOOST_PARSER_DISABLE_TRACE
             if (trace_mode == trace::on) {
                 return detail::callback_skip_parse_impl<true>(
                     f, l, parser, skip, parser.error_handler_, callbacks);
-            } else {
+            } else
+            #endif // BOOST_PARSER_DISABLE_TRACE
+            {
                 return detail::callback_skip_parse_impl<false>(
                     f, l, parser, skip, parser.error_handler_, callbacks);
             }

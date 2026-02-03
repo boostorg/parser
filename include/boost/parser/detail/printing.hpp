@@ -593,7 +593,7 @@ namespace boost { namespace parser { namespace detail {
     }
 
     template<typename Context, typename T>
-    auto resolve(Context const & context, T const & x);
+    decltype(auto) resolve(Context const & context, T const & x);
 
     template<typename Context>
     auto resolve(Context const &, nope n);

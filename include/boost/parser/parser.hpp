@@ -2168,7 +2168,10 @@ namespace boost { namespace parser {
         {
             if (!gen_attrs || !x)
                 return;
-            c.insert(c.end(), x->begin(), x->end());
+            c.insert(c.end(),
+                std::make_move_iterator(x->begin()),
+                std::make_move_iterator(x->end())
+                );
         }
 
         template<typename Container, typename T>

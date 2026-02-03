@@ -1020,7 +1020,7 @@ namespace boost { namespace parser {
             bool Callable = is_detected_v<callable, T const &, Context const &>>
         struct resolve_impl
         {
-            static auto call(Context const &, T const & x) { return x; }
+            static auto& call(Context const &, T const & x) { return x; }
         };
 
         template<typename Context, typename T>
@@ -1033,7 +1033,7 @@ namespace boost { namespace parser {
         };
 
         template<typename Context, typename T>
-        auto resolve(Context const & context, T const & x)
+        decltype(auto) resolve(Context const & context, T const & x)
         {
             return resolve_impl<Context, T>::call(context, x);
         }
@@ -4331,7 +4331,7 @@ namespace boost { namespace parser {
             // A 1-tuple is converted to a scalar.
             if constexpr (detail::hl::size(retval) == llong<1>{}) {
                 using namespace literals;
-                return parser::get(retval, 0_c);
+                return parser::get(std::move(retval), 0_c);
             } else {
                 return retval;
             }

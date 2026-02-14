@@ -21,13 +21,13 @@ namespace boost::parser::detail { namespace text {
 
     namespace detail {
         template<typename Iter>
-        std::ptrdiff_t distance(Iter first, Iter last, non_sentinel_tag)
+        std::ptrdiff_t distance(Iter const & first, Iter const & last, non_sentinel_tag)
         {
             return std::distance(first, last);
         }
 
         template<typename Iter, typename Sentinel>
-        std::ptrdiff_t distance(Iter first, Sentinel last, sentinel_tag)
+        std::ptrdiff_t distance(Iter first, Sentinel const & last, sentinel_tag)
         {
             std::ptrdiff_t retval = 0;
             while (first != last) {
@@ -41,7 +41,7 @@ namespace boost::parser::detail { namespace text {
     /** Range-friendly version of `std::distance()`, taking an iterator and a
         sentinel. */
     template<typename Iter, typename Sentinel>
-    std::ptrdiff_t distance(Iter first, Sentinel last)
+    std::ptrdiff_t distance(Iter const & first, Sentinel const & last)
     {
         return detail::distance(
             first,
@@ -55,7 +55,7 @@ namespace boost::parser::detail { namespace text {
     /** Range-friendly version of `std::find()`, taking an iterator and a
         sentinel. */
     template<typename BidiIter, typename Sentinel, typename T>
-    BidiIter find(BidiIter first, Sentinel last, T const & x)
+    BidiIter find(BidiIter first, Sentinel const & last, T const & x)
     {
         while (first != last) {
             if (*first == x)
@@ -68,7 +68,7 @@ namespace boost::parser::detail { namespace text {
     /** A range-friendly compliment to `std::find()`; returns an iterator to
         the first element not equal to `x`. */
     template<typename BidiIter, typename Sentinel, typename T>
-    BidiIter find_not(BidiIter first, Sentinel last, T const & x)
+    BidiIter find_not(BidiIter first, Sentinel const & last, T const & x)
     {
         while (first != last) {
             if (*first != x)
@@ -81,7 +81,7 @@ namespace boost::parser::detail { namespace text {
     /** Range-friendly version of `std::find_if()`, taking an iterator and a
         sentinel. */
     template<typename BidiIter, typename Sentinel, typename Pred>
-    BidiIter find_if(BidiIter first, Sentinel last, Pred p)
+    BidiIter find_if(BidiIter first, Sentinel const & last, Pred p)
     {
         while (first != last) {
             if (p(*first))
@@ -94,7 +94,7 @@ namespace boost::parser::detail { namespace text {
     /** Range-friendly version of `std::find_if_not()`, taking an iterator and
         a sentinel. */
     template<typename BidiIter, typename Sentinel, typename Pred>
-    BidiIter find_if_not(BidiIter first, Sentinel last, Pred p)
+    BidiIter find_if_not(BidiIter first, Sentinel const & last, Pred p)
     {
         while (first != last) {
             if (!p(*first))
@@ -107,7 +107,7 @@ namespace boost::parser::detail { namespace text {
     /** Analogue of `std::find()` that finds the last value in `[first, last)`
         equal to `x`. */
     template<typename BidiIter, typename T>
-    BidiIter find_backward(BidiIter first, BidiIter last, T const & x)
+    BidiIter find_backward(BidiIter const & first, BidiIter const & last, T const & x)
     {
         auto it = last;
         while (it != first) {
@@ -120,7 +120,7 @@ namespace boost::parser::detail { namespace text {
     /** Analogue of `std::find()` that finds the last value in `[first, last)`
         not equal to `x`. */
     template<typename BidiIter, typename T>
-    BidiIter find_not_backward(BidiIter first, BidiIter last, T const & x)
+    BidiIter find_not_backward(BidiIter const & first, BidiIter const & last, T const & x)
     {
         auto it = last;
         while (it != first) {
@@ -133,7 +133,7 @@ namespace boost::parser::detail { namespace text {
     /** Analogue of `std::find()` that finds the last value `v` in `[first,
         last)` for which `p(v)` is true. */
     template<typename BidiIter, typename Pred>
-    BidiIter find_if_backward(BidiIter first, BidiIter last, Pred p)
+    BidiIter find_if_backward(BidiIter const & first, BidiIter const & last, Pred p)
     {
         auto it = last;
         while (it != first) {
@@ -146,7 +146,7 @@ namespace boost::parser::detail { namespace text {
     /** Analogue of `std::find()` that finds the last value `v` in `[first,
         last)` for which `p(v)` is false. */
     template<typename BidiIter, typename Pred>
-    BidiIter find_if_not_backward(BidiIter first, BidiIter last, Pred p)
+    BidiIter find_if_not_backward(BidiIter const & first, BidiIter const & last, Pred p)
     {
         auto it = last;
         while (it != first) {
@@ -166,7 +166,7 @@ namespace boost::parser::detail { namespace text {
         the first element of the subsequence.  Subranges passed to `f` are
         non-overlapping. */
     template<typename FwdIter, typename Sentinel, typename Func>
-    Func foreach_subrange(FwdIter first, Sentinel last, Func f)
+    Func foreach_subrange(FwdIter first, Sentinel const & last, Func f)
     {
         while (first != last) {
             auto const & x = *first;
@@ -185,7 +185,7 @@ namespace boost::parser::detail { namespace text {
         `proj(e)` each compares equal to `proj()` of the first element of the
         subsequence.  Subranges passed to `f` are non-overlapping. */
     template<typename FwdIter, typename Sentinel, typename Func, typename Proj>
-    Func foreach_subrange(FwdIter first, Sentinel last, Func f, Proj proj)
+    Func foreach_subrange(FwdIter first, Sentinel const & last, Func f, Proj proj)
     {
         using value_type = typename std::iterator_traits<FwdIter>::value_type;
         while (first != last) {
@@ -207,7 +207,7 @@ namespace boost::parser::detail { namespace text {
         is a contiguous subsequence of elements, each of which is equal to
         `x`.  Subranges passed to `f` are non-overlapping. */
     template<typename FwdIter, typename Sentinel, typename T, typename Func>
-    Func foreach_subrange_of(FwdIter first, Sentinel last, T const & x, Func f)
+    Func foreach_subrange_of(FwdIter first, Sentinel const & last, T const & x, Func f)
     {
         while (first != last) {
             first = boost::parser::detail::text::find(first, last, x);
@@ -225,7 +225,7 @@ namespace boost::parser::detail { namespace text {
         is a contiguous subsequence of elements `ei` for which `p(ei)` is
         true.  Subranges passed to `f` are non-overlapping. */
     template<typename FwdIter, typename Sentinel, typename Pred, typename Func>
-    Func foreach_subrange_if(FwdIter first, Sentinel last, Pred p, Func f)
+    Func foreach_subrange_if(FwdIter first, Sentinel const & last, Pred p, Func f)
     {
         while (first != last) {
             first = boost::parser::detail::text::find_if(first, last, p);
@@ -241,7 +241,7 @@ namespace boost::parser::detail { namespace text {
 
     /** Sentinel-friendly version of `std::all_of()`. */
     template<typename Iter, typename Sentinel, typename Pred>
-    bool all_of(Iter first, Sentinel last, Pred p)
+    bool all_of(Iter first, Sentinel const & last, Pred p)
     {
         for (; first != last; ++first) {
             if (!p(*first))
@@ -256,7 +256,7 @@ namespace boost::parser::detail { namespace text {
         typename Sentinel1,
         typename Iter2,
         typename Sentinel2>
-    bool equal(Iter1 first1, Sentinel1 last1, Iter2 first2, Sentinel2 last2)
+    bool equal(Iter1 first1, Sentinel1 const & last1, Iter2 first2, Sentinel2 const & last2)
     {
         for (; first1 != last1 && first2 != last2; ++first1, ++first2) {
             if (*first1 != *first2)
@@ -272,7 +272,7 @@ namespace boost::parser::detail { namespace text {
         typename Iter2,
         typename Sentinel2>
     std::pair<Iter1, Iter2>
-    mismatch(Iter1 first1, Sentinel1 last1, Iter2 first2, Sentinel2 last2)
+    mismatch(Iter1 first1, Sentinel1 const & last1, Iter2 first2, Sentinel2 const & last2)
     {
         for (; first1 != last1 && first2 != last2; ++first1, ++first2) {
             if (*first1 != *first2)
@@ -290,7 +290,10 @@ namespace boost::parser::detail { namespace text {
         typename Iter2,
         typename Sentinel2>
     int lexicographical_compare_three_way(
-        Iter1 first1, Sentinel1 last1, Iter2 first2, Sentinel2 last2)
+        Iter1 const & first1,
+        Sentinel1 const & last1,
+        Iter2 const & first2,
+        Sentinel2 const & last2)
     {
         auto const iters = boost::parser::detail::text::mismatch(first1, last1, first2, last2);
         if (iters.first == last1) {

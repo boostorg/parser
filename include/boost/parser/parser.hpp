@@ -3212,18 +3212,44 @@ namespace boost { namespace parser {
 
                 int64_t count = 0;
 
-                for (int64_t end = detail::resolve(context, min_); count != end;
-                     ++count) {
+                auto const iteration = [&](auto prev_first, auto on_fail) {
+                    if constexpr (!detail::is_nope_v<DelimiterParser>) {
+                        if (count) {
+                            detail::skip(first, last, skip, flags);
+                            delimiter_parser_.call(
+                                first,
+                                last,
+                                context,
+                                skip,
+                                detail::disable_attrs(flags),
+                                success);
+                            if (!success) {
+                                on_fail(prev_first);
+                                return false;
+                            }
+                        }
+                    }
+
                     detail::skip(first, last, skip, flags);
                     attr_t attr{};
                     parser_.call(
                         first, last, context, skip, flags, success, attr);
                     if (!success) {
-                        detail::assign(retval, Attribute());
-                        return;
+                        on_fail(prev_first);
+                        return false;
                     }
                     detail::move_back(
                         retval, std::move(attr), detail::gen_attrs(flags));
+                    return true;
+                };
+
+                for (int64_t end = detail::resolve(context, min_); count != end;
+                     ++count) {
+                    if (!iteration(first, [&](auto prev_first) {
+                            detail::assign(retval, Attribute());
+                        })) {
+                        return;
+                    }
                 }
 
                 int64_t const end = detail::resolve(context, max_);
@@ -3234,37 +3260,12 @@ namespace boost { namespace parser {
                     !detail::is_unconditional_eps<Parser>{} || end < Inf);
 
                 for (; count != end; ++count) {
-                    auto const prev_first = first;
-                    // This is only ever used in delimited_parser, which
-                    // always has a min=1; we therefore know we're after a
-                    // previous element when this executes.
-                    if constexpr (!detail::is_nope_v<DelimiterParser>) {
-                        detail::skip(first, last, skip, flags);
-                        delimiter_parser_.call(
-                            first,
-                            last,
-                            context,
-                            skip,
-                            detail::disable_attrs(flags),
-                            success);
-                        if (!success) {
+                    if (!iteration(first, [&](auto prev_first) {
                             success = true;
                             first = prev_first;
-                            break;
-                        }
+                        })) {
+                        return;
                     }
-
-                    detail::skip(first, last, skip, flags);
-                    attr_t attr{};
-                    parser_.call(
-                        first, last, context, skip, flags, success, attr);
-                    if (!success) {
-                        success = true;
-                        first = prev_first;
-                        break;
-                    }
-                    detail::move_back(
-                        retval, std::move(attr), detail::gen_attrs(flags));
                 }
             }
         }
@@ -6588,20 +6589,24 @@ namespace boost { namespace parser {
 
     /** Represents a `repeat_parser` as a directive
         (e.g. `repeat[other_parser]`). */
-    template<typename MinType, typename MaxType>
+    template<
+        typename MinType,
+        typename MaxType,
+        typename DelimiterParser = detail::nope>
     struct repeat_directive
     {
         template<typename Parser2>
         constexpr auto operator[](parser_interface<Parser2> rhs) const noexcept
         {
             using repeat_parser_type =
-                repeat_parser<Parser2, detail::nope, MinType, MaxType>;
+                repeat_parser<Parser2, DelimiterParser, MinType, MaxType>;
             return parser_interface{
-                repeat_parser_type{rhs.parser_, min_, max_}};
+                repeat_parser_type{rhs.parser_, min_, max_, delimiter_}};
         }
 
         MinType min_;
         MaxType max_;
+        DelimiterParser delimiter_;
     };
 
     /** Returns a `repeat_directive` that repeats exactly `n` times, and whose
@@ -6613,6 +6618,18 @@ namespace boost { namespace parser {
         return repeat_directive<T, T>{n, n};
     }
 
+    /** Returns a `repeat_directive` that repeats exactly `n` times, where the
+        items parsed are delimited by `DelimiterParser`.  The value returned
+        has an `operator[]` that returns a
+        `parser_interface<repeat_parser<P>>` from a given parser of type
+        `parser_interface<P>`. */
+    template<typename T, typename DelimiterParser>
+    inline repeat_directive<T, T, DelimiterParser>
+    repeat(T n, parser_interface<DelimiterParser> sep) noexcept
+    {
+        return repeat_directive<T, T, DelimiterParser>{n, n, sep.parser_};
+    }
+
     /** Returns a `repeat_directive` that repeats between `min_` and `max_`
         times, inclusive, and whose `operator[]` returns a
         `parser_interface<repeat_parser<P>>` from a given parser of type
@@ -6622,6 +6639,21 @@ namespace boost { namespace parser {
     repeat(MinType min_, MaxType max_) noexcept
     {
         return repeat_directive<MinType, MaxType>{min_, max_};
+    }
+
+    /** Returns a `repeat_directive` that repeats between `min_` and `max_`
+        times, inclusive, where the items parsed are delimited by
+        `DelimiterParser`.  The value returned has an `operator[]` that
+        returns a `parser_interface<repeat_parser<P>>` from a given parser of
+        type `parser_interface<P>`. */
+    template<typename MinType, typename MaxType, typename DelimiterParser>
+    inline repeat_directive<MinType, MaxType, DelimiterParser> repeat(
+        MinType min_,
+        MaxType max_,
+        parser_interface<DelimiterParser> sep) noexcept
+    {
+        return repeat_directive<MinType, MaxType, DelimiterParser>{
+            min_, max_, sep.parser_};
     }
 
     /** A directive that represents a `perm_parser`, where the items parsed

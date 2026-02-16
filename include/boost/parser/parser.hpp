@@ -4237,14 +4237,13 @@ namespace boost { namespace parser {
         {
             using namespace literals;
 
-            detail::
-                dummy_use_parser_t<Iter, Sentinel, Context, SkipParser> const
-                    dummy_use_parser(
-                        first, last, context, skip, flags, success);
+            using local_dummy_use_parser_t = detail::
+                dummy_use_parser_t<Iter, Sentinel, Context, SkipParser> const;
 
             // A result type for each of the parsers in parsers_.
             using all_types =
-                decltype(detail::hl::transform(parsers_, dummy_use_parser));
+                decltype(detail::hl::transform(parsers_,
+                std::declval<local_dummy_use_parser_t>()));
 
             // Same as above, wrapped in detail::wrapper.
             using all_types_wrapped =

@@ -81,7 +81,7 @@ namespace boost::parser::detail { namespace text {
             typename OutIter>
         transcode_result<InputIter, OutIter> transcode_utf_8_to_16(
             InputIter first,
-            Sentinel last,
+            Sentinel const & last,
             std::ptrdiff_t n,
             OutIter out,
             std::input_iterator_tag)
@@ -103,7 +103,7 @@ namespace boost::parser::detail { namespace text {
         template<bool UseN, typename Iter, typename OutIter>
         transcode_result<Iter, OutIter> transcode_utf_8_to_16(
             Iter first,
-            Iter last,
+            Iter const & last,
             std::ptrdiff_t n,
             OutIter out,
             std::random_access_iterator_tag)
@@ -119,7 +119,7 @@ namespace boost::parser::detail { namespace text {
             typename OutIter>
         transcode_result<InputIter, OutIter> transcode_utf_8_to_32(
             InputIter first,
-            Sentinel last,
+            Sentinel const & last,
             std::ptrdiff_t n,
             OutIter out,
             std::input_iterator_tag)
@@ -141,7 +141,7 @@ namespace boost::parser::detail { namespace text {
         template<bool UseN, typename Iter, typename OutIter>
         transcode_result<Iter, OutIter> transcode_utf_8_to_32(
             Iter first,
-            Iter last,
+            Iter const & last,
             std::ptrdiff_t n,
             OutIter out,
             std::random_access_iterator_tag)
@@ -158,7 +158,7 @@ namespace boost::parser::detail { namespace text {
         transcode_result<Iter, OutIter> transcode_to_8(
             tag_t<format::utf8>,
             Iter first,
-            Sentinel last,
+            Sentinel const & last,
             std::ptrdiff_t n,
             OutIter out)
         {
@@ -173,7 +173,7 @@ namespace boost::parser::detail { namespace text {
         transcode_result<Iter, OutIter> transcode_to_16(
             tag_t<format::utf8>,
             Iter first,
-            Sentinel last,
+            Sentinel const & last,
             std::ptrdiff_t n,
             OutIter out)
         {
@@ -189,7 +189,7 @@ namespace boost::parser::detail { namespace text {
         transcode_result<Iter, OutIter> transcode_to_32(
             tag_t<format::utf8>,
             Iter first,
-            Sentinel last,
+            Sentinel const & last,
             std::ptrdiff_t n,
             OutIter out)
         {
@@ -205,7 +205,7 @@ namespace boost::parser::detail { namespace text {
         transcode_result<Iter, OutIter> transcode_to_8(
             tag_t<format::utf16>,
             Iter first,
-            Sentinel last,
+            Sentinel const & last,
             std::ptrdiff_t n,
             OutIter out)
         {
@@ -247,7 +247,7 @@ namespace boost::parser::detail { namespace text {
         transcode_result<Iter, OutIter> transcode_to_16(
             tag_t<format::utf16>,
             Iter first,
-            Sentinel last,
+            Sentinel const & last,
             std::ptrdiff_t n,
             OutIter out)
         {
@@ -261,7 +261,7 @@ namespace boost::parser::detail { namespace text {
         transcode_result<Iter, OutIter> transcode_to_32(
             tag_t<format::utf16>,
             Iter first,
-            Sentinel last,
+            Sentinel const & last,
             std::ptrdiff_t n,
             OutIter out)
         {
@@ -304,7 +304,7 @@ namespace boost::parser::detail { namespace text {
         transcode_result<Iter, OutIter> transcode_to_8(
             tag_t<format::utf32>,
             Iter first,
-            Sentinel last,
+            Sentinel const & last,
             std::ptrdiff_t n,
             OutIter out)
         {
@@ -318,7 +318,7 @@ namespace boost::parser::detail { namespace text {
         transcode_result<Iter, OutIter> transcode_to_16(
             tag_t<format::utf32>,
             Iter first,
-            Sentinel last,
+            Sentinel const & last,
             std::ptrdiff_t n,
             OutIter out)
         {
@@ -332,7 +332,7 @@ namespace boost::parser::detail { namespace text {
         transcode_result<Iter, OutIter> transcode_to_32(
             tag_t<format::utf32>,
             Iter first,
-            Sentinel last,
+            Sentinel const & last,
             std::ptrdiff_t n,
             OutIter out)
         {

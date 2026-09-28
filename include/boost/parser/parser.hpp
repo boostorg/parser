@@ -4587,7 +4587,13 @@ namespace boost { namespace parser {
                          !std::is_same_v<just_x, just_out>) &&
                         std::is_assignable_v<just_out &, just_x &&> &&
                         (!std::is_same_v<just_out, std::string> ||
-                         !std::is_integral_v<just_x>)) {
+                         !std::is_integral_v<just_x>) &&
+                        (!std::is_integral_v<just_x> ||
+                         (!std::is_same_v<just_out, std::u32string>
+#if defined(__cpp_char8_t)
+                          && !std::is_same_v<just_out, std::u8string>
+#endif
+                         ))) {
                         detail::assign(out, std::move(x));
                     } else {
                         detail::move_back(

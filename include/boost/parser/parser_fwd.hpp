@@ -111,7 +111,7 @@ namespace boost { namespace parser {
             typename ErrorHandler>
         inline auto make_context(
             Iter first,
-            Sentinel last,
+            Sentinel const & last,
             bool & success,
             int & indent,
             ErrorHandler const & error_handler,
